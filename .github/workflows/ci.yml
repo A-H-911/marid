@@ -75,6 +75,12 @@ jobs:
         run: GITHUB_ACTIONS=false bun turbo test
         env:
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
+          # marid: pin os.tmpdir() to the workspace drive so Windows cross-drive path tests
+          # round-trip. GitHub windows-latest puts the workspace on D: but default TEMP on C:;
+          # runner.temp (D:\a\_temp) shares the workspace drive. Fixes the tests via the
+          # environment instead of editing them, so upstream syncs never reintroduce the failure.
+          TMP: ${{ runner.temp }}
+          TEMP: ${{ runner.temp }}
 
   smoke:
     name: smoke (${{ matrix.os }})
