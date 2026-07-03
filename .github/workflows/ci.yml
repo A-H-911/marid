@@ -70,17 +70,21 @@ jobs:
       - name: Install ripgrep (Windows)
         if: runner.os == 'Windows'
         run: choco install ripgrep -y
+      - name: Prepare temp dir on workspace drive (Windows)
+        if: runner.os == 'Windows'
+        run: mkdir -p /d/opencode-tmp
       - name: Run unit tests
         timeout-minutes: 20
         run: GITHUB_ACTIONS=false bun turbo test
         env:
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
-          # marid: pin os.tmpdir() to the workspace drive so Windows cross-drive path tests
-          # round-trip. GitHub windows-latest puts the workspace on D: but default TEMP on C:;
-          # runner.temp (D:\a\_temp) shares the workspace drive. Fixes the tests via the
-          # environment instead of editing them, so upstream syncs never reintroduce the failure.
-          TMP: ${{ runner.temp }}
-          TEMP: ${{ runner.temp }}
+          # marid: put os.tmpdir() on the workspace drive (D:) at a path with NO single-letter first
+          # component. GitHub windows-latest workspace is D:\a\...; temp under \a\ (e.g. runner.temp =
+          # D:\a\_temp) makes drive-stripped test paths "/a/..." get misread by FSUtil.windowsPath as
+          # drive A:. D:\opencode-tmp shares the workspace drive AND avoids that misread, fixing the
+          # path-permission tests via the environment (no test edits) so syncs never reintroduce them.
+          TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+          TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
 
   smoke:
     name: smoke (${{ matrix.os }})

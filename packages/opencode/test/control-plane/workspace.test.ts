@@ -1414,7 +1414,8 @@ describe("workspace sync state", () => {
         { git: true },
       )
     })
-  })
+  // marid: 60s budget — git init + workspace-sync polling is slow on cold Windows CI (flaked at 23.6s).
+  }, 60_000)
 
   it.live("SSE forwards non-heartbeat events and ignores heartbeats", () =>
     Effect.gen(function* () {
