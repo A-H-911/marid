@@ -1,0 +1,29 @@
+name: pr-title
+
+# Marid-owned replacement for upstream's pr-standards governance. Enforces
+# Conventional Commits PR titles WITHOUT upstream's external-contributor machinery
+# (no pull_request_target, no .github/TEAM_MEMBERS, no `dev` branch dependency).
+# Kept across upstream syncs via the KEEP allowlist in script/strip-upstream-workflows.ts.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce Conventional Commits PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR title: $TITLE"
+          printf '%s' "$TITLE" | grep -qE '^(feat|fix|chore|refactor|docs|test|perf|ci|build|revert|style|sync|release)(\([a-zA-Z0-9 ._/-]+\))?!?: .+' \
+            || {
+              echo "::error::PR title must follow Conventional Commits, e.g. 'feat: ...' or 'fix(scope): ...'."
+              echo "::error::Allowed types: feat, fix, chore, refactor, docs, test, perf, ci, build, revert, style, sync, release."
+              exit 1
+            }
