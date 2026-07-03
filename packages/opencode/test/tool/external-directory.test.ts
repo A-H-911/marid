@@ -116,6 +116,9 @@ describe("tool.assertExternalDirectory", () => {
           yield* Effect.promise(() => Bun.write(path.join(outerTmp, "outside.txt"), "x"))
 
           const target = path.join(outerTmp, "outside.txt")
+          // marid: the drive-strip variant only round-trips when tmp and cwd share a drive;
+          // GitHub windows-latest puts the workspace on D: and os.tmpdir() on C:, so skip there.
+          if (path.parse(outerTmp).root.toLowerCase() !== path.parse(process.cwd()).root.toLowerCase()) return
           const alt = target
             .replace(/^[A-Za-z]:/, "")
             .replaceAll("\\", "/")

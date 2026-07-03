@@ -192,6 +192,9 @@ describe("tool.read external_directory permission", () => {
 
         const { items, next } = asks()
         const target = path.join(dir, "test.txt")
+        // marid: the drive-strip variant only round-trips when tmp and cwd share a drive;
+        // GitHub windows-latest puts the workspace on D: and os.tmpdir() on C:, so skip there.
+        if (path.parse(dir).root.toLowerCase() !== path.parse(process.cwd()).root.toLowerCase()) return
         const alt = target
           .replace(/^[A-Za-z]:/, "")
           .replaceAll("\\", "/")
