@@ -73,12 +73,17 @@ describe("opencode run (non-interactive subprocess)", () => {
       Effect.gen(function* () {
         const result = yield* opencode.run("say hi", {
           model: "test/nonexistent-model",
-          timeoutMs: 15_000,
+          // marid: budget widened 15_000 -> 30_000 for headroom on cold 2-core
+          // GitHub-hosted runners (upstream's warm blacksmith runners surface the
+          // error in <15s; ours took ~15.25s). Still catches #27371's *infinite*
+          // hang: a hung process is force-killed at timeoutMs, so durationMs >= it
+          // and the assertion below fails.
+          timeoutMs: 30_000,
         })
         expect(result.exitCode).not.toBe(0)
-        expect(result.durationMs).toBeLessThan(15_000)
+        expect(result.durationMs).toBeLessThan(30_000)
       }),
-    30_000,
+    60_000,
   )
 
   // The test provider's SSE error item is interpreted by the SDK as an unknown
