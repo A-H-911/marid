@@ -75,7 +75,11 @@ jobs:
         run: mkdir -p /d/opencode-tmp
       - name: Run unit tests
         timeout-minutes: 20
-        run: GITHUB_ACTIONS=false bun turbo test
+        # marid: raise bun's default per-test timeout (5s) to 30s. Git-heavy tests
+        # (snapshot worktree/index ops) run ~5s on cold 2-core Windows runners and
+        # intermittently cross the 5s line -> flaky. Tests needing more set explicit
+        # timeouts which still override. Class fix, no per-test edits.
+        run: GITHUB_ACTIONS=false bun turbo test -- --timeout 30000
         env:
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
           # marid: put os.tmpdir() on the workspace drive (D:) at a path with NO single-letter first
