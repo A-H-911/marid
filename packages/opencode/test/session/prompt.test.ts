@@ -1701,7 +1701,8 @@ it.instance(
       expect(yield* llm.calls).toBe(1)
     }),
   { git: true },
-  10_000,
+  // marid: widened 10s -> 30s; shell (sleep 0.2) + loop wakeup exceeded 10s on loaded Windows CI.
+  30_000,
 )
 
 it.instance(

@@ -432,6 +432,11 @@ describe("tool.shell permissions", () => {
           item,
           Effect.gen(function* () {
             const tmp = yield* tmpdirScoped()
+            // marid: use the temp dir's actual drive instead of a hardcoded C:. GitHub windows
+            // runners put the workspace/temp on D:, and PowerShell drive-relative "X:.." resolves
+            // against that drive's current directory (= the workdir). Hardcoding C: only works on
+            // C:-based runners (upstream blacksmith); this keeps the test drive-agnostic.
+            const drive = path.parse(tmp).root.replace(/[\\/]+$/, "")
             yield* runIn(
               tmp,
               Effect.gen(function* () {
@@ -440,7 +445,7 @@ describe("tool.shell permissions", () => {
                 expect(
                   yield* fail(
                     {
-                      command: 'Get-Content "C:../outside.txt"',
+                      command: `Get-Content "${drive}../outside.txt"`,
                     },
                     capture(requests, err),
                   ),

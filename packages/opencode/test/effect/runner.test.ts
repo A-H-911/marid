@@ -277,16 +277,18 @@ describe("Runner", () => {
           }),
         )
         .pipe(Effect.forkChild)
-      yield* Deferred.await(started).pipe(Effect.timeout("250 millis"))
+      // marid: widened 250ms -> 5s; these guard against a stuck fiber, and 250ms is
+      // too tight for scheduling latency on loaded Windows CI runners (flaked at 268ms).
+      yield* Deferred.await(started).pipe(Effect.timeout("5 seconds"))
       yield* Effect.gen(function* () {
         while (runner.state._tag !== "Running") yield* Effect.yieldNow
-      }).pipe(Effect.timeout("250 millis"))
+      }).pipe(Effect.timeout("5 seconds"))
 
       const exit = yield* runner.startShell(Effect.succeed("nope")).pipe(Effect.exit)
       expect(Exit.isFailure(exit)).toBe(true)
 
       yield* runner.cancel
-      yield* Fiber.await(fiber).pipe(Effect.timeout("250 millis"))
+      yield* Fiber.await(fiber).pipe(Effect.timeout("5 seconds"))
     }),
   )
 
