@@ -77,15 +77,28 @@ re-introduced upstream workflows are removed automatically. Must be applied to *
 `ci.yml`, not in upstream sources, so they are immune to upstream churn:
 - ripgrep: GitHub Windows runners lack `rg`; `ci.yml` runs `choco install ripgrep` so opencode's
   `which("rg.exe")` short-circuits the download/extract fallback that fails in CI.
-- Windows temp drive: `ci.yml` sets `TMP`/`TEMP` = `${{ runner.temp }}` (on the workspace drive) so
-  `os.tmpdir()` shares the CWD drive and the `external_directory`/read path-permission tests round-trip.
+- Windows temp path: GitHub's workspace is `D:\a\...`, and `FSUtil.windowsPath` misreads a leading `/a/`
+  (produced when a test strips the drive from a `D:\a\...` path) as drive **`A:`** — breaking the
+  `external_directory`/read/workdir path-permission tests. `ci.yml` sets `TMP`/`TEMP` = `D:\opencode-tmp`
+  (a path on the workspace drive with **no single-letter first component**) and pre-creates it, so
+  `os.tmpdir()` avoids both the cross-drive mismatch and the `/a/`→`A:` misread — tests pass unmodified.
+  (Do NOT use `runner.temp` here: it is `D:\a\_temp`, under `\a\`, which re-triggers the bug.)
 
-**P-CI-3 · Timing test edits (unavoidable upstream-file edits — enumerated for conflict review).** GitHub
-`windows-latest` is ~2-core vs upstream's ~4-core `blacksmith`; several "promptly" timing thresholds are
-just-too-tight and were widened (each carries a `marid:` comment so a sync conflict is self-explanatory):
-- `packages/opencode/test/cli/run/run-process.test.ts` — #27371 budget 15s → 30s.
+**P-CI-3 · Upstream test edits (unavoidable — enumerated for conflict review).** Each carries a `marid:`
+comment so a sync conflict is self-explanatory. Two kinds:
+
+*Timing* — GitHub `windows-latest` is ~2-core vs upstream's ~4-core `blacksmith`; several thresholds were
+just-too-tight and were widened:
+- `packages/opencode/test/cli/run/run-process.test.ts` — #27371 budget 15s → 30s (also failed on ubuntu).
 - `packages/opencode/test/effect/runner.test.ts` — "shell rejects when run is active" 250ms → 5s.
 - `packages/opencode/test/session/prompt.test.ts` — "loop waits while shell runs" 10s → 30s.
-On sync, if upstream touches these lines, resolve by re-applying the widen (or adopting upstream's value
-if larger). If this class keeps growing, prefer a **larger CI runner class** (≈4-core) over accumulating
-per-test edits — it attacks the root cause (runner speed) and would let the timing tests pass unmodified.
+- `packages/opencode/test/control-plane/workspace.test.ts` — "sync history …" test timeout → 60s (git
+  init + sync polling is slow on cold Windows CI).
+
+*Drive-hardcode* — a test hardcoded drive `C:`, which only resolves on a C:-based runner:
+- `packages/opencode/test/tool/shell.test.ts` — "drive-relative PowerShell paths" now uses the temp
+  dir's actual drive instead of `C:` (drive-agnostic; correct on any drive).
+
+On sync, if upstream touches these lines, re-apply the edit (or adopt upstream's value if it's larger /
+already drive-agnostic). If the timing class keeps growing, prefer a **larger CI runner class** (≈4-core)
+over accumulating per-test edits — it attacks the root cause (runner speed) and lets them pass unmodified.
