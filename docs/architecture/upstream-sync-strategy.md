@@ -68,7 +68,8 @@ same CI breakage. Three tiers, most-durable first:
 reintroduced failure is caught before merge and never silently shipped. This is the load-bearing guarantee.
 
 **P-CI-1 · Workflows (automated, self-healing).** All upstream workflows are stripped; only Marid-owned
-`ci.yml` is kept. The strip is idempotent: `script/strip-upstream-workflows.ts` (allowlist = `ci.yml`).
+`ci.yml` is kept. The strip is idempotent: `script/strip-upstream-workflows.ts` (allowlist = `ci.yml`,
+`marid-pr-title.yml` — a Marid-owned Conventional-Commits PR-title check replacing upstream's `pr-standards`).
 The sync loop MUST run it right after merging `upstream/dev` (a step in the sync workflow, WBS-5.3), so
 re-introduced upstream workflows are removed automatically. Must be applied to **both `main` and
 `develop`**. Add any new Marid-owned workflow to the script's `KEEP` allowlist.
