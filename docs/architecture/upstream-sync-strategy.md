@@ -55,3 +55,37 @@ Name approved (Marid ✓) · baseline recorded (candidate ✓, re-confirm) · st
 gate 9) · local working tree inspected: **untracked planning artifacts** (docs/brief.md, docs/diagrams/,
 docs/<this package>, CLAUDE.md, .claude/) imported via a dedicated `feature/planning-package` branch with
 provenance notes; secrets/caches/binaries excluded by .gitignore review; nothing committed silently (INV-003).
+
+## CI & test adaptations for GitHub-hosted runners (durability — so syncs don't re-break)
+
+Upstream CI targets its own infra: self-hosted `blacksmith-*` runners, the `dev` branch,
+`.github/TEAM_MEMBERS` governance, and org publish/deploy/release/stats/beta pipelines. On the Marid
+fork those fail, queue forever, or fire scheduled publish/deploy jobs (a security concern on a public
+repo). The downstream delta is deliberately small and enforced so an upstream merge never re-opens the
+same CI breakage. Three tiers, most-durable first:
+
+**Enforcement backstop.** `ci.yml` runs on every PR — including every `sync/upstream-<date>` PR — so any
+reintroduced failure is caught before merge and never silently shipped. This is the load-bearing guarantee.
+
+**P-CI-1 · Workflows (automated, self-healing).** All upstream workflows are stripped; only Marid-owned
+`ci.yml` is kept. The strip is idempotent: `script/strip-upstream-workflows.ts` (allowlist = `ci.yml`).
+The sync loop MUST run it right after merging `upstream/dev` (a step in the sync workflow, WBS-5.3), so
+re-introduced upstream workflows are removed automatically. Must be applied to **both `main` and
+`develop`**. Add any new Marid-owned workflow to the script's `KEEP` allowlist.
+
+**P-CI-2 · Environmental fixes (no upstream files touched — syncs can't reintroduce these).** Fixed in
+`ci.yml`, not in upstream sources, so they are immune to upstream churn:
+- ripgrep: GitHub Windows runners lack `rg`; `ci.yml` runs `choco install ripgrep` so opencode's
+  `which("rg.exe")` short-circuits the download/extract fallback that fails in CI.
+- Windows temp drive: `ci.yml` sets `TMP`/`TEMP` = `${{ runner.temp }}` (on the workspace drive) so
+  `os.tmpdir()` shares the CWD drive and the `external_directory`/read path-permission tests round-trip.
+
+**P-CI-3 · Timing test edits (unavoidable upstream-file edits — enumerated for conflict review).** GitHub
+`windows-latest` is ~2-core vs upstream's ~4-core `blacksmith`; several "promptly" timing thresholds are
+just-too-tight and were widened (each carries a `marid:` comment so a sync conflict is self-explanatory):
+- `packages/opencode/test/cli/run/run-process.test.ts` — #27371 budget 15s → 30s.
+- `packages/opencode/test/effect/runner.test.ts` — "shell rejects when run is active" 250ms → 5s.
+- `packages/opencode/test/session/prompt.test.ts` — "loop waits while shell runs" 10s → 30s.
+On sync, if upstream touches these lines, resolve by re-applying the widen (or adopting upstream's value
+if larger). If this class keeps growing, prefer a **larger CI runner class** (≈4-core) over accumulating
+per-test edits — it attacks the root cause (runner speed) and would let the timing tests pass unmodified.
