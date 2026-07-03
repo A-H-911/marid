@@ -1,0 +1,73 @@
+# opencode — Architecture Diagrams
+
+Newcomer-oriented diagrams of the opencode monorepo. Each has a **`.png`** (open it) and a
+**`.svg`** (crisp zoom); the editable Tarseem spec lives in **`specs/`**.
+
+Suggested reading order:
+
+| # | Diagram | Type | What it teaches |
+|---|---------|------|-----------------|
+| 01 | [Architecture overview](01-architecture-overview.png) | architecture | The whole system on one line: surfaces → CLI/API → session → LLM/tools/DB |
+| 02 | [Package dependencies](02-package-dependencies.png) | dependency | How the 25 `@opencode-ai/*` packages depend on each other (the decomposition) |
+| 03 | [Technology stack](03-tech-stack.png) | mindmap | The libraries/tech grouped by concern — start here to learn the stack |
+| 04 | [Module map](04-modules-map.png) | mindmap | A tour of `packages/opencode/src/` modules by responsibility |
+| 05 | [Runtime data flow](05-data-flow.png) | flowchart | What happens when you send a prompt (request → LLM → tool loop → DB → UI) |
+| 06 | [Agent run loop](06-session-sequence.png) | sequence | The same flow as a sequence diagram across actors (usage view) |
+| 07 | [Database (ER)](07-database-er.png) | er | SQLite tables in `packages/core` and their relationships |
+
+## Change-impact / extension-point diagrams
+
+These answer *"if I change X, what moves?"* — use them when modifying, not just learning.
+
+| # | Diagram | For the task… | What it shows |
+|---|---------|---------------|---------------|
+| 08 | [TUI seam](08-tui-seam.png) | remove / replace the TUI | red `[DELETE]` vs green `[keep]`: exactly which files/route-groups to drop and which stay |
+| 09 | [TUI blast-radius](09-tui-blast-radius.png) | remove any package | reverse-deps (consumers above, deps below) — the safe-removal scope |
+| 10 | [Streaming pipeline](10-streaming-pipeline.png) | add a stream channel | the 4 edit points: schema event → emit → projector → client subscribe |
+| 11 | [Streaming sequence](11-streaming-sequence.png) | add a stream channel | server→client ordering + **replay** via the `seq` columns |
+| 12 | [Boot & layers](12-boot-layers.png) | add observability | where the Effect layers compose → where to inject the OTel layer + trace middleware |
+| 13 | [Process & telemetry](13-deployment.png) | add observability | runtime processes (server, MCP/LSP subprocesses, client) + where spans export (OTLP) |
+| 14 | [Capability registry](14-capability-registry.png) | add a tool/provider/MCP | the registry extension points = add-a-capability recipe |
+
+## Deep-dive diagrams
+
+| # | Diagram | Type | What it teaches |
+|---|---------|------|-----------------|
+| 15 | [Session lifecycle](15-session-lifecycle.png) | state | Legal session transitions: idle ⇄ busy ⇄ retry, compacting, archive, fork, revert (status values from `schema/session-status-event.ts`) |
+| 16 | [Message domain model](16-message-domain-model.png) | class | Session → MessageV2 → Part union (`text` / `reasoning` / `tool` / `file` / `step-start`) with branded IDs — read before touching rendering or storage |
+| 17 | [Permission flow](17-permission-flow.png) | activity | Tool call → rule eval (`allow`/`deny`/`ask`) → question → reply (`once`/`always`/`reject`) — the human-in-the-loop path |
+| 18 | [Contributor workflow](18-contributor-workflow.png) | swimlane | The dev loop across You / Local repo / GitHub-CI lanes (install → dev → check → test → generate → PR to `dev`) |
+| 19 | [Codegen pipelines](19-codegen-pipeline.png) | flowchart | The two generate-then-commit chains: API (`./script/generate.ts` → openapi + SDK) and DB (`bun db generate` → `schema.gen.ts`) |
+
+> Verified wiring: OTel lives in `packages/core/src/observability/otlp.ts` (spans via `Effect.withSpan`);
+> boot is `packages/opencode/src/cli/bootstrap`; streaming persists to `event_sequence`/`event` and the
+> projector layer (`server/projectors.ts`) is still nascent (`initProjectors()` is currently a stub).
+
+## Where to go in the code
+
+- **Start the app:** `packages/opencode/src/index.ts` (CLI) → `@opencode-ai/{server,tui}`
+- **API surface:** `packages/protocol/src/api.ts` (Effect `HttpApi`)
+- **Agent loop:** `packages/opencode/src/session/` (`session.ts`, `processor.ts`)
+- **Tools:** `packages/opencode/src/tool/` · **Providers:** `…/provider/` · **LLM:** `packages/llm/src/`
+- **Database:** `packages/core/src/database/`
+
+See [`../CODEMAPS/`](../CODEMAPS/) for the token-lean text companion to these diagrams.
+
+## Regenerate
+
+These are rendered with [Tarseem](https://github.com/) from the JSON specs in `specs/`:
+
+```bash
+# render one spec to PNG + SVG
+tarseem generate docs/diagrams/specs/01-architecture-overview.json -f svg,png -o docs/diagrams/ -n 01-architecture-overview
+
+# render all
+for f in docs/diagrams/specs/*.json; do
+  tarseem generate "$f" -f svg,png -o docs/diagrams/ -n "$(basename "$f" .json)"
+done
+```
+
+Edit a `specs/*.json` file and re-run to update a diagram. Other export formats: `-f pdf,drawio,pptx`.
+
+> Snapshot date: 2026-06-29. The monorepo is mid-decomposition (`opencode` monolith → `@opencode-ai/*`);
+> re-render after large structural changes.

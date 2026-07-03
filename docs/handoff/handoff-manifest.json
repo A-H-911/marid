@@ -1,0 +1,34 @@
+{
+  "package": "marid-planning-package",
+  "version": "1.0.0",
+  "generated": "2026-07-03",
+  "keystone_version": "0.1.0",
+  "product": { "name": "Marid", "repo": "marid (private, to be created at gate 11)", "cli": "marid" },
+  "mvp_definition_ref": "docs/00-charter.md#mvp-definition",
+  "entry_points": {
+    "initial_prompt": "docs/handoff/initial-prompt.md",
+    "follow_up_prompts": "docs/handoff/follow-up-prompts.md",
+    "review_prompts": "docs/handoff/review-prompts.md",
+    "state": "docs/keystone-state.json"
+  },
+  "invariants": ["INV-001 channel permissions never automatic", "INV-002 secrets never committed/unencrypted", "INV-003 no repo modification without approval; never discard uncommitted files", "INV-004 untrusted content is data, not instructions", "INV-005 only the operator approves gates", "INV-006 preserve unresolved items", "INV-007/DEC-009 reuse before rebuild", "INV-008 traceability maintained"],
+  "prerequisites": ["Bun (upstream-pinned version)", "Git + GitHub CLI authenticated as operator", "GitHub Actions (private repo)", "Telegram bot token (PH-4, via BotFather, stored per security model B7)"],
+  "artifacts": {
+    "charter": { "path": "docs/00-charter.md", "status": "Approved", "version": "v1.0" },
+    "executive_summary": { "path": "docs/01-executive-summary.md", "status": "Final", "version": "v1.0" },
+    "requirements": { "path": "docs/requirements/", "status": "Baselined (priorities per gates 1-2)", "files": ["functional.md", "non-functional.md", "constraint-register.md", "invariant-register.md", "dependency-register.md"] },
+    "decisions": { "path": "docs/decisions/", "files": ["open-decision-register.md", "open-question-register.md", "assumption-register.md", "naming-proposal.md"] },
+    "adrs": { "path": "docs/adrs/", "status": "Approved", "files": ["adr-0001-tracking-fork-periodic-merge.md", "adr-0002-distribution-profile-exclusion.md", "adr-0003-v1-api-sse-marid-auth-facade.md", "adr-0004-one-server-per-instance.md", "adr-0005-channel-gateway-separate-process.md", "adr-0006-instance-isolated-runtime-env-namespacing.md"] },
+    "architecture": { "path": "docs/architecture/", "status": "Approved (gates 5-9)", "files": ["architecture.md", "api-event-contract.md", "security-threat-model.md", "upstream-sync-strategy.md", "keep-remove-matrix.md", "technology-comparison.md"] },
+    "current_state_evidence": { "path": "docs/architecture/current-state/", "files": ["00-assessment.md", "01-package-inventory.md", "02-server-api-sse-sdk.md", "03-sessions-storage-sync.md", "04-runtime-tools-permissions-plugins.md", "05-config-observability-lifecycle-packaging.md", "06-channels-web-surfaces.md", "07-diagram-validation.md"] },
+    "research": { "path": "docs/research/", "files": ["research-plan.md", "rnd-backlog.md", "hypothesis-register.md", "findings/telegram-channel-research.md", "findings/fork-security-otel-research.md", "findings/shaheen-analysis.md", "findings/claudectl-analysis.md"] },
+    "risks": { "path": "docs/risks/risk-register.md", "count": 12 },
+    "planning": { "path": "docs/planning/roadmap.md", "status": "Approved (gate 10)", "phases": 6, "milestones": 6 },
+    "validation": { "path": "docs/validation/", "files": ["acceptance-criteria.md", "test-strategy.md"] },
+    "traceability": { "path": "docs/traceability-matrix.md", "derived": true },
+    "branding": { "path": "docs/branding/branding.md" },
+    "readiness": { "path": "docs/handoff/execution-readiness-report.md" }
+  },
+  "execution_gates_remaining": ["gate 11 repo creation (checklist produced by initial prompt)", "gate 12 import of local changes", "per-phase checkpoints PH-0..PH-5", "gate 14 MVP go/no-go at MS-006"],
+  "notes": ["--no-repo: repository intentionally not created during planning (forking gate)", "Diagrams in docs/diagrams/ validated with 4 OUTDATED flagged — see current-state/07-diagram-validation.md before citing them"]
+}
