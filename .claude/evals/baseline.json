@@ -1,0 +1,29 @@
+{
+  "project": "opencode",
+  "version": "1.14.39",
+  "sha": "38b0cdc14",
+  "timestamp": "2026-05-06",
+  "capabilities": [
+    "cli-tui-session",
+    "cli-serve",
+    "session-create-run-abort",
+    "session-compaction-revert",
+    "tool-read-write-edit",
+    "tool-shell-glob-grep",
+    "tool-lsp",
+    "tool-mcp",
+    "tool-websearch-webfetch",
+    "provider-anthropic",
+    "provider-openai",
+    "provider-google",
+    "provider-copilot",
+    "mcp-server-registry",
+    "http-api-sessions",
+    "http-api-sse-stream",
+    "http-api-pty",
+    "sqlite-persistence",
+    "session-sharing",
+    "plugin-loader"
+  ],
+  "regressions": []
+}
