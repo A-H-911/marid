@@ -1,0 +1,58 @@
+---
+artifact: open-decision-register
+status: Draft
+version: v0.1
+updated: 2026-07-03
+---
+
+# Open-Decision Register (DEC-)
+
+Decision points detected at intake — including solution choices the brief itself embeds (lifted here so
+the underlying need stays a requirement) and tensions that need a recorded resolution. Statuses follow
+governance: Proposed / Approved / Rejected / Superseded / Deferred. Nothing here is Approved yet.
+
+| ID | Decision point | Options on the table | Brief's stated lean | Gate | Status |
+|---|---|---|---|---|---|
+| DEC-001 | Component reduction strategy per package: delete vs build-time exclusion vs feature flag vs package boundary vs distribution profile | All five, compared per candidate (§2, §5) | "Do not assume stripping requires deleting"; prefer small patch surface | 6 | Proposed (open) |
+| DEC-002 | Primary streaming protocol for the remote API | SSE-first; WebSocket only where SSE+HTTP insufficient | SSE-first (§6) — treated as a proposal from the brief, to be confirmed against upstream's existing mechanism | 7 | Proposed |
+| DEC-003 | Upstream synchronization model | downstream fork w/ upstream remote · periodic merge · periodic rebase · patch-stack · minimal-diff distribution · flags/exclusion · cherry-pick · external adapter layer (§13) | Prefer small isolated patch surface | 9 | Proposed (open) |
+| DEC-004 | Reuse vs extend vs wrap vs replace for each existing capability: server, SDK, SSE/streaming, session sync, event bus, `packages/slack` channel pattern | Per-capability verdict with evidence (§3) | Reuse-first (INV-007) | 4→6 | Proposed (open) |
+| DEC-005 | Authoritative session store + concurrency model (optimistic vs pessimistic, queueing/steering semantics) | To be derived from upstream's actual session storage + sync design | None — §7 requires definition, forbids silently assuming distributed coordination | 7 | Proposed (open) |
+| DEC-006 | MVP distribution method | standalone binary · npm/Bun install · Docker/Compose · native packages (§12) | One MVP method + expansion path; no format explosion | 10 | Proposed (open) |
+| DEC-007 | Branching model details (Git Flow adaptation for solo downstream fork) | Git Flow as mandated, adapted (§14) | Git Flow is a constraint (CON-007); the *adaptation* is the decision | 9 | Proposed (open) |
+| DEC-008 | Product/repo/CLI naming | wakil / sanad / rafiq / marid (see naming-proposal.md) | None | 3 | **Approved: Marid** (2026-07-03) |
+| DEC-009 | Reuse-first principle: always reuse upstream capability rather than build new, unless a justified reason is recorded | (stated by owner at gate 4) | — | 4 | **Approved** (2026-07-03) — strengthens INV-007 |
+| DEC-010 | Source repository visibility (`A-H-911/marid`) | private (charter default) · public (unlocks free branch protection/rulesets) | Charter: "private downstream distribution" | 11 (execution) | **Approved: Public** (operator-directed, 2026-07-03) — amends charter Mission |
+
+## Tensions logged at Stage 6 (contradiction/dependency detection)
+
+| # | Tension | Resolution path |
+|---|---|---|
+| T-1 | "Keep the Web user interfaces" (CON-005) vs "remove duplicate clients that add maintenance cost" (CON-004) — several web-ish packages exist (`app`, `web`, `console`, `session-ui`, `storybook`) | OQ-005: exact keep-list decided at gate 6 from the component inventory, not from names |
+| T-2 | Minimal architecture / no overengineering (NFR-002) vs the very broad §6–§11 capability list | MVP/Full split at scope gate (OQ-002); "Full" items stay in registers as deferred, not deleted |
+| T-3 | Small upstream patch surface (NFR-001) vs removing/stripping components (§5) | DEC-001 compares strategies per candidate; deletion is last resort per §2 |
+| T-4 | Rich remote API surface (§6) vs "do not expose internal implementation types as long-term public API" (§6) | API/event contract gate (gate 7) decides versioned facade vs direct reuse of upstream SDK contracts |
+
+No mutually exclusive hard contradictions were found; all four tensions have a resolution path inside the
+planned gates, so G-CONFLICT passes for proceeding to clarification/scope.
+
+## DEC-010 detail — repository made public (execution-time scope change)
+
+**Decision (operator-directed, 2026-07-03):** set `A-H-911/marid` to **public**. Recorded per the charter's
+scope-change rule; supersedes the "private" assumption for the *source repository* only.
+
+**Driver:** branch protection / rulesets are gated behind a paid plan for private repos on GitHub Free
+(HTTP 403 — see `deviation-branch-protection.md`). Public unlocks them at no cost. The operator chose this
+over GitHub Pro after the contradiction and irreversibility were surfaced twice.
+
+**What it changes:** source repo + its history are world-readable (already mirrors public upstream
+`anomalyco/opencode` at `eb3476660`); **GitHub Releases become public** — this affects WBS-5.1's "private
+releases" premise, to be reconciled when PH-5 is built.
+
+**What it does NOT change:** the API network-exposure non-goal (OQ-004 — running service stays
+private-network-only) is unchanged; **INV-002 remains enforced** (no secrets ever committed — the planning
+package was secret-scanned clean before any import). Irreversibility acknowledged: public code can be
+cloned/forked/indexed/cached regardless of later visibility flips.
+
+**Traceability:** amends `docs/00-charter.md` (Mission); resolves the blocker in
+`docs/decisions/deviation-branch-protection.md`; unblocks WBS-0.3 protection; flags WBS-5.1 for reconciliation.

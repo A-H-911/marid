@@ -1,0 +1,74 @@
+{
+  "keystone_version": "0.1.0",
+  "package_dir": "docs/",
+  "mode": "full",
+  "flags": { "no_repo": true, "profile": "ai-agentic" },
+  "project_profile": {
+    "type": "ai-agentic",
+    "subtype": "downstream-fork platform / R&D-heavy",
+    "size": "large",
+    "risk_profile": "high (fork maintenance, security surface, streaming/sync concurrency)",
+    "justification": "Brief is a research+architecture+handoff mission over an existing large TypeScript/Bun monorepo (OpenCode), adding remote API, channel adapters, multi-instance isolation."
+  },
+  "input": {
+    "source": "docs/brief.md",
+    "format": "long-form structured prose (23 sections)",
+    "captured": "2026-07-03",
+    "sha_note": "brief.md as present in working tree at intake; untracked in git"
+  },
+  "verified_facts": [
+    { "id": "FACT-001", "fact": "Local clone origin = https://github.com/anomalyco/opencode.git; default branch dev; HEAD eb3476660 (2026-07-03)", "method": "git remote -v; git log", "date": "2026-07-03" },
+    { "id": "FACT-002", "fact": "github.com/ahmadabusa3/shaheen is PRIVATE but accessible to the authenticated gh account (metadata retrieved; updated 2026-07-02)", "method": "gh repo view", "date": "2026-07-03" },
+    { "id": "FACT-003", "fact": "github.com/A-H-911/keystone is PUBLIC and accessible", "method": "gh repo view", "date": "2026-07-03" },
+    { "id": "FACT-004", "fact": "Upstream packages/ contains: app, cli, client, codemode, console, containers, core, desktop, docs, effect-drizzle-sqlite, effect-sqlite-node, enterprise, function, httpapi-codegen, http-recorder, identity, llm, opencode, plugin, protocol, schema, script, sdk, sdk-next, server, session-ui, slack, stats, storybook, tui, ui, web", "method": "ls packages/", "date": "2026-07-03" },
+    { "id": "FACT-005", "fact": "docs/diagrams contains 19 diagrams (SVG+PNG) with JSON specs and a README; brief requires validating them against source in current-state analysis", "method": "find docs/", "date": "2026-07-03" }
+  ],
+  "stages": {
+    "1-intake": { "status": "done", "date": "2026-07-03" },
+    "2-classify": { "status": "done", "date": "2026-07-03" },
+    "3-extract": { "status": "done", "date": "2026-07-03" },
+    "4-normalize": { "status": "done", "date": "2026-07-03", "note": "registers Draft; priorities provisional pending OQ-002" },
+    "5-ambiguity": { "status": "done", "date": "2026-07-03" },
+    "6-contradiction": { "status": "done", "date": "2026-07-03" },
+    "7-clarify": {
+      "status": "done", "date": "2026-07-03",
+      "answers": {
+        "OQ-001": "instance = isolated runtime (own config/storage/cache/ports/secrets/logs; may serve multiple projects)",
+        "OQ-002": "MVP = remote API+SSE, cross-interface sync, Telegram adapter, multi-instance; WhatsApp post-MVP",
+        "OQ-003": "single operator; apps/channels use operator-issued API keys/tokens",
+        "OQ-004": "private network only (localhost/LAN/VPN); channels via outbound or webhook relay"
+      }
+    },
+    "8-scope": { "status": "done", "date": "2026-07-03", "note": "charter Approved at gate 2" },
+    "9-research-plan": { "status": "done", "date": "2026-07-03", "note": "tracks R-01..R-10; R-01..07,09,10 launched as parallel agents; R-08 (diagram validation) queued behind R-01..06" },
+    "10-arch-explore": { "status": "done", "date": "2026-07-03", "note": "all tracks R-01..R-11 complete (R-11 = user-supplied claudectl); gate 4 APPROVED with principle 'reuse over new unless justified' (DEC-009); gate 3 APPROVED: name = Marid (DEC-008); OQ-007 moot, OQ-008 closed (MIT)" },
+    "11-option-compare": { "status": "done", "date": "2026-07-03", "note": "C-1..C-7 in technology-comparison.md" },
+    "12-hypotheses": { "status": "done", "date": "2026-07-03", "note": "HYP-001..004" },
+    "13-experiments": { "status": "done", "date": "2026-07-03", "note": "EXP-001..004 planned as execution phase 0" },
+    "14-decisions": { "status": "done", "date": "2026-07-03", "note": "gates 5,6,7,8,9 ALL APPROVED; ADRs 0001..0006 recorded; api-event-contract, security-threat-model, upstream-sync-strategy all Approved v1.0. RULE: never proceed past an unanswered gate (user instruction)" },
+    "15-risk": { "status": "done", "date": "2026-07-03", "note": "RISK-001..012" },
+    "16-exec-plan": { "status": "done", "date": "2026-07-03", "note": "roadmap APPROVED (gate 10): PH-0..5, MS-001..006, WBS with DoD" },
+    "17-artifacts": { "status": "done", "date": "2026-07-03", "note": "validation (AC-001..016, test strategy), branding, traceability matrix, exec summary, handoff package (initial/follow-up/review prompts, manifest, readiness report)" },
+    "18-repo-init": { "status": "skipped (--no-repo; brief forking gate defers repo creation to explicit approval)" },
+    "19-quality": { "status": "done", "date": "2026-07-03", "note": "all quality gates PASS (G-CLAIM with enumerated unverified items) — see handoff/execution-readiness-report.md" },
+    "20-handoff": { "status": "done", "date": "2026-07-03", "note": "gate 13 ACCEPTED" },
+    "21-updates": { "status": "n/a during planning; execution updates via keystone update mode" },
+    "22-readiness": { "status": "done", "date": "2026-07-03", "note": "gate 14 GO — execution cleared; next act = operator pastes handoff/initial-prompt.md into an execution session (gate 11 checklist first)" }
+  },
+  "registers": {
+    "functional": "requirements/functional.md",
+    "non_functional": "requirements/non-functional.md",
+    "constraints": "requirements/constraint-register.md",
+    "invariants": "requirements/invariant-register.md",
+    "dependencies": "requirements/dependency-register.md",
+    "open_questions": "decisions/open-question-register.md",
+    "assumptions": "decisions/assumption-register.md",
+    "open_decisions": "decisions/open-decision-register.md"
+  },
+  "decision_gates_from_brief": [
+    "1 clarification batch", "2 scope+MVP", "3 name", "4 current-state assessment", "5 target architecture",
+    "6 keep/modify/exclude/remove", "7 public API+event model", "8 security+permission model",
+    "9 upstream sync strategy", "10 roadmap", "11 repo creation", "12 import local changes",
+    "13 final handoff", "14 go/no-go"
+  ]
+}
