@@ -1,2 +1,7 @@
 packages/core/migration/**/snapshot.json linguist-generated
 packages/core/src/database/migration.gen.ts linguist-generated
+
+# Composite actions are checked out and run as bash on all runners; force LF so a
+# Windows runner (core.autocrlf=true) can't inject \r into the shell script and break it.
+.github/actions/**/action.yml text eol=lf
+*.sh text eol=lf
