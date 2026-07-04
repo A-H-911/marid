@@ -15,7 +15,7 @@ review checkpoint with the operator.
 
 | Phase | Goal | Milestone (exit) | Depends on |
 |---|---|---|---|
-| PH-0 Foundations | Fork exists, CI skeleton green, all 4 experiments answered | MS-001: EXP-001..004 reports accepted; fallbacks recorded if any FAIL | Gates 9, 11, 12 |
+| PH-0 Foundations ✅ | Fork exists, CI skeleton green, all 4 experiments answered | **MS-001 MET (2026-07-04)**: EXP-001..004 all PASS (no FAIL → no fallbacks); reports in `../research/experiments/`. Shipped PR #9. | Gates 9, 11, 12 |
 | PH-1 Marid layer | marid-auth + distribution profile + branding | MS-002: authenticated `marid serve` binary from the `marid` profile passes contract tests | PH-0 |
 | PH-2 Instances | marid-instance CLI + isolation | MS-003: KPI-003 (≥2 instances, isolation suite green, 3 OSes) | PH-1 |
 | PH-3 Cross-interface | TUI-as-client default + §7 flow verified | MS-004: KPI-001 demo repeatable; concurrency semantics documented | PH-1 (parallel with PH-2) |
@@ -24,16 +24,16 @@ review checkpoint with the operator.
 
 ## Work breakdown
 
-### PH-0 Foundations
-| WBS | Item | DoD | Traces |
-|---|---|---|---|
-| WBS-0.1 | Create private repo from local clone; add `upstream` fetch-only remote; tag baseline | Repo exists; INV-003 respected; baseline tag pushed | Gate 11, ADR-0001 |
-| WBS-0.2 | Import planning package + local artifacts via `feature/planning-package` PR | Gate-12 approval; nothing committed silently | INV-003 |
-| WBS-0.3 | Branch protection + CI skeleton (lint, typecheck, unit, 3-OS smoke) | Required checks enforced on main/develop | FR-062/064 |
-| WBS-0.4 | EXP-001 concurrency probe | PASS/FAIL report; DEC recorded if FAIL | HYP-001, RISK-010 |
-| WBS-0.5 | EXP-002 isolation probe | Report; leaking paths enumerated if any | HYP-002, RISK-002 |
-| WBS-0.6 | EXP-003 Telegram cadence probe | Report; cadence constants fixed | HYP-003 |
-| WBS-0.7 | EXP-004 profile build probe | Report; P-1 seam question answered | HYP-004, DEC-001 |
+### PH-0 Foundations — ✅ COMPLETE (MS-001 met, 2026-07-04)
+| WBS | Item | DoD | Traces | Status |
+|---|---|---|---|---|
+| WBS-0.1 | Create private repo from local clone; add `upstream` fetch-only remote; tag baseline | Repo exists; INV-003 respected; baseline tag pushed | Gate 11, ADR-0001 | ✅ done |
+| WBS-0.2 | Import planning package + local artifacts via `feature/planning-package` PR | Gate-12 approval; nothing committed silently | INV-003 | ✅ done |
+| WBS-0.3 | Branch protection + CI skeleton (lint, typecheck, unit, 3-OS smoke) | Required checks enforced on main/develop | FR-062/064 | ✅ done (+ CI flake class fixed, P-CI-4, PR #10) |
+| WBS-0.4 | EXP-001 concurrency probe | PASS/FAIL report; DEC recorded if FAIL | HYP-001, RISK-010 | ✅ PASS — no marid concurrency layer needed |
+| WBS-0.5 | EXP-002 isolation probe | Report; leaking paths enumerated if any | HYP-002, RISK-002 | ✅ PASS (audit) — live tree-diff deferred |
+| WBS-0.6 | EXP-003 Telegram cadence probe | Report; cadence constants fixed | HYP-003 | ✅ PASS (live) — ≥2s cadence, 0×429 |
+| WBS-0.7 | EXP-004 profile build probe | Report; P-1 seam question answered | HYP-004, DEC-001 | ✅ PASS (analysis) — P-1 dropped; live build deferred |
 
 ### PH-1 Marid layer
 | WBS | Item | DoD | Traces |
