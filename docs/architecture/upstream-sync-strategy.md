@@ -78,6 +78,13 @@ re-introduced upstream workflows are removed automatically. Must be applied to *
 `ci.yml`, not in upstream sources, so they are immune to upstream churn:
 - ripgrep: GitHub Windows runners lack `rg`; `ci.yml` runs `choco install ripgrep` so opencode's
   `which("rg.exe")` short-circuits the download/extract fallback that fails in CI.
+- `bun install` retry: GitHub runners (esp. `windows-latest`) intermittently fail to resolve a valid
+  pinned catalog version — e.g. `No version matching "1.0.0-rc.2" found for specifier "drizzle-orm" (but
+  package exists)` — even when the identical lockfile installs fine on another matrix runner in the same
+  run. All jobs install via the repo-owned composite action `.github/actions/bun-install` (bounded 3×
+  retry + backoff) instead of a bare `bun install`, so a transient blip rides out while a genuinely-missing
+  package still fails all attempts. The composite action lives under `.github/actions/` (NOT
+  `.github/workflows/`), so the strip script never removes it; syncs leave it intact.
 - Windows temp path: GitHub's workspace is `D:\a\...`, and `FSUtil.windowsPath` misreads a leading `/a/`
   (produced when a test strips the drive from a `D:\a\...` path) as drive **`A:`** — breaking the
   `external_directory`/read/workdir path-permission tests. `ci.yml` sets `TMP`/`TEMP` = `D:\opencode-tmp`
