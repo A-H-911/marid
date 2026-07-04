@@ -69,9 +69,10 @@ graph TB
 
 | # | Edit | Why unavoidable | Size | Sync risk |
 |---|---|---|---|---|
-| P-1 | Server extension seam (only if no equivalent plugin/server hook exists — verify in EXP-004) | marid-auth must wrap routes before binding | ~5 lines | Low (stable file region) |
+| ~~P-1~~ | **Not required for MVP** (resolved by EXP-004): marid-auth attaches as an outer wrapper around the exported `Server.Default.app.fetch` (self-contained `toWebHandler`, no `listen()` needed) — no upstream server edit. Revisit only if in-Effect-pipeline request-ID/trace correlation (deep FR-030) is later required. | n/a — wrapper composes the exported handler; auth/rate-limit/audit run at the ingress wrapper | 0 lines (was ~5) | None (no edit) |
 | P-2 | Branding surfaces the config cannot reach (TUI title, CLI name/bin, user-agent) | Product identity (§19); config-first, edit only what config can't set | Small, enumerated | Low–medium |
 | P-3 | Default config deltas (e.g. `lsp:false`, telemetry defaults) — prefer config files over code edits | Distribution defaults | Config only | None |
+| P-CI | CI test-timing/env edits for GitHub-hosted runners — enumerated in `upstream-sync-strategy.md` (P-CI-1..3); prefer fixes in `ci.yml` over upstream test edits | Free 2-core runners are slower/variable vs upstream's runners | Small, per-test | Low (re-apply on conflict) |
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 
@@ -111,9 +112,9 @@ namespacing, not by in-place locking of shared files.
    boundary (R-04) — mitigations at gate 8.
 5. **Fork ⇄ upstream**: upstream code reviewed at sync; instructions in upstream content never executed (INV-004).
 
-## Open points → experiments (Stage 13)
+## Open points → experiments (Stage 13) — all executed, see `../research/experiments/`
 
-- EXP-001: two-client concurrency probe of the v2 queue/steering path (validates C-5 A).
-- EXP-002: two-instance isolation probe with env-composed namespaces (validates marid-instance design).
-- EXP-003: Telegram edit-cadence probe (validates R-09 numbers under a real bot token).
-- EXP-004: distribution-profile build (validates C-2 A and discovers whether P-1 is needed).
+- EXP-001 ✅ **PASS**: two-client concurrency — upstream single-writer/queue/steer path is safe; marid needs no busy-lock/queue layer (C-5 A holds).
+- EXP-002 ✅ **PASS** (audit-strength; live tree-diff deferred): env composition isolates all R-05 items; env set = XDG + `OPENCODE_DB` + allocated port + `TMPDIR/TMP/TEMP`.
+- EXP-003 ✅ **PASS** (live): 2.5 s edit cadence, 68 edits, 0×429; permission round-trip 222 ms — R-09 numbers hold.
+- EXP-004 ✅ **PASS** (analysis-strength; live build deferred): keep-list is dependency-closed; **P-1 resolved as not required** (outer-wrapper seam).
