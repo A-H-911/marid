@@ -16,7 +16,7 @@ review checkpoint with the operator.
 | Phase | Goal | Milestone (exit) | Depends on |
 |---|---|---|---|
 | PH-0 Foundations ✅ | Fork exists, CI skeleton green, all 4 experiments answered | **MS-001 MET (2026-07-04)**: EXP-001..004 all PASS (no FAIL → no fallbacks); reports in `../research/experiments/`. Shipped PR #9. | Gates 9, 11, 12 |
-| PH-1 Marid layer | marid-auth + distribution profile + branding | MS-002: authenticated `marid serve` binary from the `marid` profile passes contract tests | PH-0 |
+| PH-1 Marid layer ✅ | marid-auth + distribution profile + branding | **MS-002 MET (2026-07-04)**: authenticated `marid` binary from the `marid` profile passes contract tests; 3-OS `marid-build` green. Shipped PR #13. | PH-0 |
 | PH-2 Instances | marid-instance CLI + isolation | MS-003: KPI-003 (≥2 instances, isolation suite green, 3 OSes) | PH-1 |
 | PH-3 Cross-interface | TUI-as-client default + §7 flow verified | MS-004: KPI-001 demo repeatable; concurrency semantics documented | PH-1 (parallel with PH-2) |
 | PH-4 Telegram | marid-telegram + capability policy | MS-005: KPI-002 (round trip + policy denial paths) | PH-1; PH-3 for live-update assertions |
@@ -35,14 +35,14 @@ review checkpoint with the operator.
 | WBS-0.6 | EXP-003 Telegram cadence probe | Report; cadence constants fixed | HYP-003 | ✅ PASS (live) — ≥2s cadence, 0×429 |
 | WBS-0.7 | EXP-004 profile build probe | Report; P-1 seam question answered | HYP-004, DEC-001 | ✅ PASS (analysis) — P-1 dropped; live build deferred |
 
-### PH-1 Marid layer
-| WBS | Item | DoD | Traces |
-|---|---|---|---|
-| WBS-1.1 | `marid` distribution profile (workspace filter, build scripts, binary target) | Binary builds on 3 OSes; excluded pkgs absent | FR-060, ADR-0002 |
-| WBS-1.2 | marid-auth: bearer tokens + scopes (`marid token` CLI) | 401 without token; scopes enforced; unit+integration tests | FR-031 |
-| WBS-1.3 | marid-auth: rate limiting + audit JSONL + request-ID | 429 behavior; audit lines complete; redaction test | FR-030/032/033, FR-059 |
-| WBS-1.4 | Contract tests pinning committed v1 routes/events | Suite fails on any breaking upstream change | FR-035, RISK-001 |
-| WBS-1.5 | Branding pass P-2 (name/TUI title/user-agent) + config defaults P-3 (`lsp:false` etc.) | Patch-surface register updated; grep-based hygiene test (Shaheen pattern) | FR-065, NFR-001 |
+### PH-1 Marid layer — ✅ COMPLETE (MS-002 met, 2026-07-04, PR #13)
+| WBS | Item | DoD | Traces | Status |
+|---|---|---|---|---|
+| WBS-1.1 | `marid` distribution profile (workspace filter, build scripts, binary target) | Binary builds on 3 OSes; excluded pkgs absent | FR-060, ADR-0002 | ✅ done (additive `src/marid.ts` + `script/marid-build.ts`, P-ENTRY; 3-OS `marid-build` CI green; hygiene grep) |
+| WBS-1.2 | marid-auth: bearer tokens + scopes (`marid token` CLI) | 401 without token; scopes enforced; unit+integration tests | FR-031 | ✅ done (`@marid/auth`; 401/403; client scope fork-aware + durable ownership DEC-011a) |
+| WBS-1.3 | marid-auth: rate limiting + audit JSONL + request-ID | 429 behavior; audit lines complete; redaction test | FR-030/032/033, FR-059 | ✅ done (token-bucket 10/s·30, SSE cap 4, 429+retry-after; audit +session; x-request-id echo) |
+| WBS-1.4 | Contract tests pinning committed v1 routes/events | Suite fails on any breaking upstream change | FR-035, RISK-001 | ✅ done (TEST-CONTRACT: routes via `Server.openapi()` + events via `EventManifest` + live `/event` SSE) |
+| WBS-1.5 | Branding pass P-2 (name/TUI title/user-agent) + config defaults P-3 (`lsp:false` etc.) | Patch-surface register updated; grep-based hygiene test (Shaheen pattern) | FR-065, NFR-001 | ✅ identity done (name + `serve`/`token`); cosmetic P-2 (README/TUI title/UA/logo) + config P-3 deferred to PH-5 (DEC-011c) |
 
 ### PH-2 Instances
 | WBS | Item | DoD | Traces |
