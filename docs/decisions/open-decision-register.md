@@ -56,3 +56,54 @@ cloned/forked/indexed/cached regardless of later visibility flips.
 
 **Traceability:** amends `docs/00-charter.md` (Mission); resolves the blocker in
 `docs/decisions/deviation-branch-protection.md`; unblocks WBS-0.3 protection; flags WBS-5.1 for reconciliation.
+
+## DEC-011 detail — PH-1 execution decisions (marid-auth + profile build)
+
+Three operator-directed decisions made while building PH-1 (2026-07-04), recorded per the docs-as-source-of-truth rule.
+
+**(a) `client`-scope session ownership is durable, not in-memory.** The api-event-contract defines `client` as
+"sessions it created + its own events." Upstream sessions carry no creator field and the marid-auth wrapper runs
+outside the Effect pipeline (EXP-004), so marid-auth tracks token→session ownership itself. Operator chose a
+**durable 0600 sidecar** (`ownership.json`, same store pattern as `tokens.json`) over an in-memory map: a `client`
+token keeps access to sessions it created across a `marid serve` restart (mirrors upstream's event-sourced session
+durability). Ownership is recorded on the two session-*creating* ops — `POST /session` (create) and
+`POST /session/:id/fork` (branch). Impl: `packages/marid-auth/src/ownership.ts`.
+
+**(b) marid binary entry is additive (new `src/marid.ts`), not a parameterizing edit to `index.ts`.** See P-ENTRY
+in the patch-surface register. Zero upstream edits; accepts command-list drift, reconciled on sync.
+
+**(c) Branding split — CLI identity in PH-1, cosmetic in PH-5.** Resolves the CLAUDE.md-vs-roadmap conflict the way
+CLAUDE.md intends: the `marid` binary name + `serve`/`token` commands (MS-002 identity) land now; README / TUI title /
+user-agent string / logo defer to PH-5. See P-2/P-3.
+
+**Documented seam limitation (not a decision, a consequence):** the outer-wrapper ingress sees HTTP only, so
+`client` enforcement is per-session *route* ownership; body-filtering the global `/event` firehose and `GET /session`
+list is in-pipeline work left out of the wrapper altitude (same boundary as the deferred FR-030 trace correlation).
+
+**Traceability:** implements FR-030/031/032/033 (marid-auth envelope), FR-035 (contract pinning via TEST-CONTRACT),
+FR-060 (profile build); amends `architecture.md` (patch-surface register, P-2/P-3/P-ENTRY); to be reconciled into
+`upstream-sync-strategy.md` (marid.ts + marid-build.ts reconcile checklist).
+
+## Deferred (follow-up) — strict `client`-scope event isolation (firehose/list body filtering)
+
+**Status: Deferred (flagged by operator, 2026-07-04).** The marid-auth outer-wrapper seam (EXP-004) sees HTTP
+only, so `client`-scope enforcement is per-session *route* ownership. It does NOT body-filter the global SSE
+firehose (`GET /event`) or the `GET /session` list — a `client` token subscribing to `/event` sees all sessions'
+events, and listing returns all sessions. This is a genuine gap vs the contract's literal "sessions it created +
+**its own events**."
+
+**Why deferred:** body/stream filtering belongs *inside* the Effect pipeline (parse SSE frames, drop non-owned
+aggregates; filter the list payload) — the same altitude as the deferred FR-030 in-pipeline trace correlation
+(the one caveat EXP-004 left for a possible small P-1 edit). It is out of the wrapper's reach without either a
+server edit or a filtering proxy that understands the event schema.
+
+**Trigger to build:** operator wants strict least-privilege `client` tokens where event/list isolation matters
+(e.g. exposing a `client` token to a party that must not observe other sessions). Until then, `client` is
+"restricted on session *actions* (cannot touch sessions it doesn't own), permissive on session *observation*."
+
+**Options when triggered:** (a) in-pipeline SSE/list filter middleware inside the Effect handler (a scoped P-1
+edit); (b) a marid-owned filtering proxy that parses event frames by aggregate and drops non-owned ones;
+(c) per-session subscription only for `client` (deny the global firehose, require `/session/:id`-scoped streams).
+
+**Traceability:** consequence of ADR-0003 (v1 + wrapper) + EXP-004 seam; documented in `architecture.md`
+patch-surface register; relates to FR-024/025 (events) and the `client` scope in `api-event-contract.md`.

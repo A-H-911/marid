@@ -108,6 +108,11 @@ jobs:
           # path-permission tests via the environment (no test edits) so syncs never reintroduce them.
           TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
           TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+      # marid (WBS-1.2/1.3): TEST-AUTH. @marid/auth is not enumerated in turbo.json,
+      # so run its suite directly. Dependency-free + OS-agnostic (posix-only 0600
+      # assertions self-skip on Windows), so no extra env needed.
+      - name: Run marid-auth tests
+        run: bun --cwd packages/marid-auth test
 
   smoke:
     name: smoke (${{ matrix.os }})
@@ -131,3 +136,31 @@ jobs:
       # on all 3 OSes (the real cross-OS risk). A CLI boot/--version smoke gets added once
       # non-interactive flags are confirmed (WBS-1.x / EXP-004). Upgrade path: add a run step here.
       - uses: ./.github/actions/bun-install
+
+  # marid (WBS-1.1 / MS-002): the marid distribution profile builds a single `marid`
+  # binary from src/marid.ts on all 3 OSes, and the build script self-smokes it
+  # (`marid --version`). Excluded packages are absent by construction (hygiene test +
+  # EXP-004 Q1). --skip-install: the current-platform native modules from bun-install
+  # already suffice for a --single build (the cross-platform install is release-only).
+  marid-build:
+    name: marid-build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: ./.github/actions/bun-install
+      - name: Build marid binary + smoke (--version)
+        run: bun run script/marid-build.ts --single --skip-install
+        working-directory: packages/opencode
