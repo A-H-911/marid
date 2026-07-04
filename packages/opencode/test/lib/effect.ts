@@ -64,24 +64,43 @@ const sharedRun: Runner = (value, layer) =>
     return yield* exit
   }).pipe(Effect.runPromise)
 
+// marid: CI timing scale (P-CI-4). Every timing flake in this repo has had one
+// root cause — budgets calibrated for fast dev machines / upstream's warm
+// blacksmith runners, running on slow load-variable GitHub-hosted runners.
+// Instead of widening budgets one flake at a time, ci.yml sets
+// OPENCODE_TIMING_SCALE per OS (Windows 4, others 2) and the wrappers below —
+// which every explicit per-test budget and poll ceiling flows through — scale
+// by it. Local runs default to 1 (unchanged). NOTE: bun applies an explicit
+// per-test timeout OVER the global `--timeout` flag, so the CI-level 60s global
+// cap never protects tests that pass their own budget; this does.
+export const TIMING_SCALE = Number(process.env.OPENCODE_TIMING_SCALE) || 1
+
+export const scaleTestOpts = (opts?: number | TestOptions): number | TestOptions | undefined => {
+  if (typeof opts === "number") return opts * TIMING_SCALE
+  if (opts?.timeout !== undefined) return { ...opts, timeout: opts.timeout * TIMING_SCALE }
+  return opts
+}
+
+const scaleDuration = (duration: Duration.Input) => Duration.millis(Duration.toMillis(duration) * TIMING_SCALE)
+
 const make = <R, E>(testLayer: Layer.Layer<R, E>, liveLayer: Layer.Layer<R, E>, run: Runner = isolatedRun) => {
   const effect = <A, E2>(name: string, value: Body<A, E2, R | Scope.Scope>, opts?: number | TestOptions) =>
-    test(name, () => run(value, testLayer), opts)
+    test(name, () => run(value, testLayer), scaleTestOpts(opts))
 
   effect.only = <A, E2>(name: string, value: Body<A, E2, R | Scope.Scope>, opts?: number | TestOptions) =>
-    test.only(name, () => run(value, testLayer), opts)
+    test.only(name, () => run(value, testLayer), scaleTestOpts(opts))
 
   effect.skip = <A, E2>(name: string, value: Body<A, E2, R | Scope.Scope>, opts?: number | TestOptions) =>
-    test.skip(name, () => run(value, testLayer), opts)
+    test.skip(name, () => run(value, testLayer), scaleTestOpts(opts))
 
   const live = <A, E2>(name: string, value: Body<A, E2, R | Scope.Scope>, opts?: number | TestOptions) =>
-    test(name, () => run(value, liveLayer), opts)
+    test(name, () => run(value, liveLayer), scaleTestOpts(opts))
 
   live.only = <A, E2>(name: string, value: Body<A, E2, R | Scope.Scope>, opts?: number | TestOptions) =>
-    test.only(name, () => run(value, liveLayer), opts)
+    test.only(name, () => run(value, liveLayer), scaleTestOpts(opts))
 
   live.skip = <A, E2>(name: string, value: Body<A, E2, R | Scope.Scope>, opts?: number | TestOptions) =>
-    test.skip(name, () => run(value, liveLayer), opts)
+    test.skip(name, () => run(value, liveLayer), scaleTestOpts(opts))
 
   const instance = <A, E2, E3 = never>(
     name: string,
@@ -93,7 +112,7 @@ const make = <R, E>(testLayer: Layer.Layer<R, E>, liveLayer: Layer.Layer<R, E>, 
     return test(
       name,
       () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer),
-      args.testOptions,
+      scaleTestOpts(args.testOptions),
     )
   }
 
@@ -107,7 +126,7 @@ const make = <R, E>(testLayer: Layer.Layer<R, E>, liveLayer: Layer.Layer<R, E>, 
     return test.only(
       name,
       () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer),
-      args.testOptions,
+      scaleTestOpts(args.testOptions),
     )
   }
 
@@ -121,7 +140,7 @@ const make = <R, E>(testLayer: Layer.Layer<R, E>, liveLayer: Layer.Layer<R, E>, 
     return test.skip(
       name,
       () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer),
-      args.testOptions,
+      scaleTestOpts(args.testOptions),
     )
   }
 
@@ -153,7 +172,7 @@ export const awaitWithTimeout = <A, E, R>(
 ) =>
   self.pipe(
     Effect.timeoutOrElse({
-      duration,
+      duration: scaleDuration(duration),
       orElse: () => Effect.fail(new Error(message)),
     }),
   )
@@ -171,7 +190,7 @@ export const pollWithTimeout = <A, E, R>(
     }
   }).pipe(
     Effect.timeoutOrElse({
-      duration,
+      duration: scaleDuration(duration),
       orElse: () => Effect.fail(new Error(message)),
     }),
   )

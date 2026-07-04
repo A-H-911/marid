@@ -7,6 +7,7 @@ import { describe, expect } from "bun:test"
 import { Effect } from "effect"
 import { reply } from "../../lib/llm-server"
 import { cliIt } from "../../lib/cli-process"
+import { TIMING_SCALE } from "../../lib/effect"
 
 describe("opencode run (non-interactive subprocess)", () => {
   // Happy path: prompt completes, output reaches stdout, process exits 0.
@@ -75,13 +76,15 @@ describe("opencode run (non-interactive subprocess)", () => {
           model: "test/nonexistent-model",
           // marid: budget widened 15_000 -> 30_000 for headroom on cold 2-core
           // GitHub-hosted runners (upstream's warm blacksmith runners surface the
-          // error in <15s; ours took ~15.25s). Still catches #27371's *infinite*
-          // hang: a hung process is force-killed at timeoutMs, so durationMs >= it
-          // and the assertion below fails.
+          // error in <15s; ours took ~15.25s). The harness additionally scales
+          // this by TIMING_SCALE on CI (P-CI-4), and the assertion below scales
+          // with it. Still catches #27371's *infinite* hang: a hung process is
+          // force-killed at (scaled) timeoutMs, so durationMs >= it and the
+          // (equally scaled) assertion below fails.
           timeoutMs: 30_000,
         })
         expect(result.exitCode).not.toBe(0)
-        expect(result.durationMs).toBeLessThan(30_000)
+        expect(result.durationMs).toBeLessThan(30_000 * TIMING_SCALE)
       }),
     60_000,
   )
@@ -329,7 +332,7 @@ describe("opencode run (non-interactive subprocess)", () => {
         const result = yield* run.result
 
         expect(result.exitCode).not.toBe(0)
-        expect(result.durationMs).toBeLessThan(30_000)
+        expect(result.durationMs).toBeLessThan(30_000 * TIMING_SCALE)
       }),
     30_000,
   )

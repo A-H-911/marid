@@ -18,6 +18,16 @@ Basis: ADR-0001 (tracking fork, periodic merge, additive delta). Fulfills §13 +
 - **Cadence:** scheduled **weekly conflict check** (automation, no merge) + **monthly merge** by default;
   **security fast-path**: upstream security releases merged out-of-band within days.
 
+## Marid-owned paths (upstream never touches these)
+
+`docs/`, `CLAUDE.md`, and `.claude/` are **Marid-only additions** — verified absent from `upstream/dev`
+and the baseline tag via `git ls-tree` (2026-07-04). No upstream merge can conflict on them today. If
+upstream ever adds its own `CLAUDE.md` or docs tree, **resolve in favor of Marid** (`git checkout --ours`
+on these paths): they are Marid operating docs, not tracked upstream code. Same rule as workflow
+ownership (P-CI-1) — Marid-owned files win on sync. (Note: `CLAUDE.md` was imported with the planning
+package (commit `29038f6bc`, WBS-0.2) and describes the OpenCode codebase, but is absent from upstream's
+tree at the baseline — how it was originally authored is not otherwise verified.)
+
 ## The sync loop (automated where boring)
 
 1. Scheduled workflow fetches upstream, creates `sync/upstream-<date>` from `develop`, merges
@@ -127,3 +137,30 @@ just-too-tight and were widened:
 On sync, if upstream touches these lines, re-apply the edit (or adopt upstream's value if it's larger /
 already drive-agnostic). If the timing class keeps growing, prefer a **larger CI runner class** (≈4-core)
 over accumulating per-test edits — it attacks the root cause (runner speed) and lets them pass unmodified.
+
+**P-CI-4 · Centralized env-scaled timing (magnitude lives in `ci.yml`, read at the wrapper choke
+points).** Every timing flake so far shares one root cause: budgets calibrated for fast dev machines /
+upstream's warm blacksmith runners, running on slow load-variable GitHub-hosted runners. Each earlier fix
+addressed one budget *layer* (job cap 35min; bun global `--timeout 60000`; P-CI-3 per-test widenings) —
+but bun applies an explicit per-test timeout **over** the global `--timeout`, and the harness has its own
+internal deadlines, so new layers kept surfacing (observed sequence: windows `workspace waitForSync` 25ms
+fence; windows `workspace sync state` 1500ms poll ceiling; ubuntu `run-process` killed by the harness's
+30s subprocess deadline under the `.concurrent` transpile stampede — every subprocess test spawns
+`bun src/index.ts` simultaneously). The total fix: **one knob**, `OPENCODE_TIMING_SCALE`, set per-OS in
+KEEP-listed `ci.yml` (Windows `4`, others `2`; local default `1` = unchanged), read at the choke points
+every budget flows through:
+
+- `test/lib/effect.ts` — `TIMING_SCALE` + `scaleTestOpts` (the single source); scales all explicit
+  per-test budgets via the `testEffect` wrappers (`effect/live/instance` + `.only/.skip`) and the
+  `awaitWithTimeout`/`pollWithTimeout` ceilings.
+- `test/lib/cli-process.ts` — scales the subprocess kill deadline (`timeoutMs ?? 30_000`), the serve-boot
+  readiness deadline (`readyTimeoutMs ?? 15_000`), and the raw `cliIt.concurrent` bun-test budgets.
+- `test/control-plane/workspace.test.ts` — `eventuallyEffect` poll ceiling (`1500 × SCALE`) and the
+  `waitForSync` fence (`25 × SCALE`); imports the shared constant.
+- `test/cli/run/run-process.test.ts` — the two `durationMs` hang-detection bounds scale with the (now
+  scaled) kill deadlines they pair with, preserving fail-fast-vs-hang semantics at any scale.
+
+All read-sites carry `marid:` comments. On sync, re-apply on conflict; the `ci.yml` env survives
+untouched. Any **new** timing flake should be fixed by routing its budget through this scale (or, if it
+already flows through a wrapper above, it is covered automatically) — not by another one-off widening.
+If the class keeps growing anyway, a larger runner (≈4-core) remains the deeper fix.

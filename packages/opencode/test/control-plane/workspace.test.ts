@@ -19,7 +19,7 @@ import { SessionProjector } from "@opencode-ai/core/session/projector"
 import { EventSequenceTable } from "@opencode-ai/core/event/sql"
 import { resetDatabase } from "../fixture/db"
 import { disposeAllInstances, provideTmpdirInstance, requireInstance, TestInstance } from "../fixture/fixture"
-import { testEffect } from "../lib/effect"
+import { testEffect, TIMING_SCALE } from "../lib/effect"
 import { registerAdapter } from "../../src/control-plane/adapters"
 import { WorkspaceV2 } from "@opencode-ai/core/workspace"
 import { WorkspaceTable } from "@opencode-ai/core/control-plane/workspace.sql"
@@ -151,7 +151,10 @@ function expectExitContains(exit: Exit.Exit<unknown, unknown>, ...messages: stri
   for (const message of messages) expect(String(exit.cause)).toContain(message)
 }
 
-function eventuallyEffect(effect: Effect.Effect<void>, timeout = 1500) {
+// marid: scale the poll ceiling and fence deadline by the shared CI timing
+// scale (P-CI-4, defined in ../lib/effect) — these it.live tests do real
+// HTTP+SSE+git and their dev-machine-calibrated deadlines flake on slow runners.
+function eventuallyEffect(effect: Effect.Effect<void>, timeout = 1500 * TIMING_SCALE) {
   return Effect.gen(function* () {
     const started = Date.now()
     let last: unknown
@@ -1691,7 +1694,7 @@ describe("workspace waitForSync", () => {
         const sessionID = SessionID.descending("ses_wait_timeout")
         expectExitContains(
           yield* Effect.exit(
-            workspace.waitForSync(WorkspaceV2.ID.ascending("wrk_wait_timeout"), { [sessionID]: 1 }, undefined, 25),
+            workspace.waitForSync(WorkspaceV2.ID.ascending("wrk_wait_timeout"), { [sessionID]: 1 }, undefined, 25 * TIMING_SCALE),
           ),
           `Timed out waiting for sync fence: {"${sessionID}":1}`,
         )

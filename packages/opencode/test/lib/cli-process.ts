@@ -28,7 +28,7 @@ import { ChildProcess } from "effect/unstable/process"
 import path from "node:path"
 import { TestLLMServer } from "./llm-server"
 import { testProviderConfig } from "./test-provider"
-import { it } from "./effect"
+import { it, scaleTestOpts, TIMING_SCALE } from "./effect"
 
 const opencodeRoot = path.resolve(import.meta.dir, "../../")
 const cliEntry = path.join(opencodeRoot, "src/index.ts")
@@ -206,7 +206,11 @@ export function withCliFixture<A, E>(
 
     const spawn = Effect.fn("opencode.spawn")(function* (args: string[], opts?: SpawnOpts) {
       const start = Date.now()
-      const timeoutMs = opts?.timeoutMs ?? 30_000
+      // marid: scale the subprocess kill deadline (P-CI-4). Every `.concurrent`
+      // test spawns `bun src/index.ts` (full transpile) simultaneously, and on a
+      // loaded CI runner that stampede pushed legit runs past 30s (observed:
+      // ubuntu-unit killed a run at 30s -> missing JSON events -> flake).
+      const timeoutMs = (opts?.timeoutMs ?? 30_000) * TIMING_SCALE
       // stdin: "ignore" so the child doesn't see a piped stdin and block
       // on `Bun.stdin.text()` (see src/cli/cmd/run.ts — non-TTY stdin is
       // consumed as the prompt). The old Process.run wrapper defaulted to
@@ -360,7 +364,9 @@ export function withCliFixture<A, E>(
         ),
       )
 
-      const readyTimeoutMs = opts?.readyTimeoutMs ?? 15_000
+      // marid: scale serve-boot readiness the same way (P-CI-4) — a server
+      // subprocess pays the same transpile stampede before it can print ready.
+      const readyTimeoutMs = (opts?.readyTimeoutMs ?? 15_000) * TIMING_SCALE
       const match = yield* Deferred.await(readyDeferred).pipe(
         Effect.timeoutOrElse({
           duration: Duration.millis(readyTimeoutMs),
@@ -530,6 +536,7 @@ export const cliIt = {
     (process.platform === "win32" ? test : test.concurrent)(
       name,
       () => Effect.runPromise(Effect.scoped(withCliFixture(body))),
-      opts,
+      // marid: raw bun test path bypasses the it.live wrapper, so scale here too (P-CI-4).
+      scaleTestOpts(opts),
     ),
 }
