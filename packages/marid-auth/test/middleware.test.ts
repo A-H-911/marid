@@ -139,6 +139,104 @@ describe("marid-auth middleware", () => {
     expect(onChild.status).toBe(200)
   })
 
+  test("client GET /session list is filtered to the sessions it owns", async () => {
+    const { auth, tokens, ownership } = await build()
+    const { secret } = await tokens.create("c", "client")
+    await ownership.record("c", "ses_mine")
+    const res = await auth.handle(
+      new Request("http://x/session", { method: "GET", headers: bearer(secret) }),
+      okNext([{ id: "ses_mine", title: "a" }, { id: "ses_other", title: "b" }]),
+    )
+    expect(res.status).toBe(200)
+    const list = (await res.json()) as Array<{ id: string }>
+    expect(list.map((s) => s.id)).toEqual(["ses_mine"])
+  })
+
+  test("client GET /permission list is filtered by the permission's sessionID", async () => {
+    const { auth, tokens, ownership } = await build()
+    const { secret } = await tokens.create("c", "client")
+    await ownership.record("c", "ses_mine")
+    const res = await auth.handle(
+      new Request("http://x/permission", { method: "GET", headers: bearer(secret) }),
+      okNext([
+        { id: "per_1", sessionID: "ses_mine" },
+        { id: "per_2", sessionID: "ses_other" },
+      ]),
+    )
+    expect(res.status).toBe(200)
+    const list = (await res.json()) as Array<{ id: string }>
+    expect(list.map((p) => p.id)).toEqual(["per_1"])
+  })
+
+  test("strips accept-encoding before delegating a filtered list route (so upstream returns uncompressed JSON)", async () => {
+    const { auth, tokens, ownership } = await build()
+    const { secret } = await tokens.create("c", "client")
+    await ownership.record("c", "ses_mine")
+    let seen: string | null = "unset"
+    await auth.handle(
+      new Request("http://x/session", { method: "GET", headers: { ...bearer(secret), "accept-encoding": "gzip, deflate" } }),
+      async (req) => {
+        seen = req.headers.get("accept-encoding")
+        return new Response(JSON.stringify([{ id: "ses_mine" }]), { status: 200, headers: { "content-type": "application/json" } })
+      },
+    )
+    expect(seen).toBeNull() // upstream never sees accept-encoding, so it cannot gzip the body the filter must parse
+  })
+
+  test("admin keeps accept-encoding (compression is only sacrificed on filtered non-admin routes)", async () => {
+    const { auth, tokens } = await build()
+    const { secret } = await tokens.create("root", "admin")
+    let seen: string | null = "unset"
+    await auth.handle(
+      new Request("http://x/session", { method: "GET", headers: { ...bearer(secret), "accept-encoding": "gzip" } }),
+      async (req) => {
+        seen = req.headers.get("accept-encoding")
+        return new Response("[]", { status: 200, headers: { "content-type": "application/json" } })
+      },
+    )
+    expect(seen).toBe("gzip")
+  })
+
+  test("admin GET /session list is never filtered", async () => {
+    const { auth, tokens } = await build()
+    const { secret } = await tokens.create("root", "admin")
+    const res = await auth.handle(
+      new Request("http://x/session", { method: "GET", headers: bearer(secret) }),
+      okNext([{ id: "ses_a" }, { id: "ses_b" }]),
+    )
+    const list = (await res.json()) as Array<{ id: string }>
+    expect(list.map((s) => s.id)).toEqual(["ses_a", "ses_b"])
+  })
+
+  test("client /event stream drops other sessions' frames but keeps its own + infrastructure", async () => {
+    const { auth, tokens, ownership } = await build()
+    const { secret } = await tokens.create("c", "client")
+    await ownership.record("c", "ses_mine")
+    const evt = (type: string, properties: Record<string, unknown>) =>
+      `event: message\ndata: ${JSON.stringify({ id: "e", type, properties })}\n\n`
+    const frames =
+      evt("server.connected", {}) +
+      evt("message.part.updated", { sessionID: "ses_mine" }) +
+      evt("message.part.updated", { sessionID: "ses_other" })
+    const res = await auth.handle(
+      new Request("http://x/event", { headers: { ...bearer(secret), accept: "text/event-stream" } }),
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode(frames))
+              controller.close()
+            },
+          }),
+          { headers: { "content-type": "text/event-stream" } },
+        ),
+    )
+    const out = await res.text()
+    expect(out).toContain("server.connected")
+    expect(out).toContain("ses_mine")
+    expect(out).not.toContain("ses_other")
+  })
+
   test("audit lines carry the session id for session-scoped routes", async () => {
     const { auth, tokens } = await build()
     const { secret } = await tokens.create("root", "admin")
