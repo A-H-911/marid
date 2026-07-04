@@ -127,3 +127,17 @@ just-too-tight and were widened:
 On sync, if upstream touches these lines, re-apply the edit (or adopt upstream's value if it's larger /
 already drive-agnostic). If the timing class keeps growing, prefer a **larger CI runner class** (≈4-core)
 over accumulating per-test edits — it attacks the root cause (runner speed) and lets them pass unmodified.
+
+**P-CI-4 · Env-scaled timing (magnitude lives in `ci.yml`, not the test body).** For timing-sensitive
+tests whose short deadlines flake on the slow 2-core Windows runner, prefer scaling by an env var over
+hardcoding a bigger number in the test — the durable lever (the multiplier) then lives in KEEP-listed
+`ci.yml` and only the read-site (`Number(process.env.OPENCODE_TIMING_SCALE) || 1`) is an upstream-file
+edit. Applied to `packages/opencode/test/control-plane/workspace.test.ts`: `eventuallyEffect`'s poll
+ceiling (`1500ms → ×SCALE`, covers ~10 `it.live` sync-status assertions incl. "remote start emits…") and
+the `waitForSync` fence deadline (`25ms → ×SCALE`, the "times out with the requested fence" test — still
+asserts a timeout, just with margin against scheduling jitter). `ci.yml` sets `OPENCODE_TIMING_SCALE=4`
+for the Windows unit job only; local/Linux runs use the default `1` (unchanged). Root cause: two
+consecutive `develop`/PR flakes (`workspace waitForSync` 7.2s, `workspace sync state` 32.7s) on docs-only
+changes — timing, not logic. On sync, re-apply the two `× TIMING_SCALE` edits (self-explanatory via their
+`marid:` comment); the `ci.yml` env survives untouched. Preferred over P-CI-3's per-test widenings for any
+new timing flake, since it centralizes the knob.

@@ -91,6 +91,11 @@ jobs:
         run: GITHUB_ACTIONS=false bun turbo test -- --timeout 60000
         env:
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
+          # marid: scale short hardcoded test deadlines on the slow 2-core Windows runner.
+          # workspace-sync it.live tests (real HTTP+SSE+git) flake when their 1500ms poll /
+          # 25ms fence deadlines miss under load; read by TIMING_SCALE in workspace.test.ts.
+          # Durable lever lives here in ci.yml; the test-body reads default 1 locally. P-CI-4.
+          OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '1' }}
           # marid: put os.tmpdir() on the workspace drive (D:) at a path with NO single-letter first
           # component. GitHub windows-latest workspace is D:\a\...; temp under \a\ (e.g. runner.temp =
           # D:\a\_temp) makes drive-stripped test paths "/a/..." get misread by FSUtil.windowsPath as

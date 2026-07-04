@@ -151,7 +151,13 @@ function expectExitContains(exit: Exit.Exit<unknown, unknown>, ...messages: stri
   for (const message of messages) expect(String(exit.cause)).toContain(message)
 }
 
-function eventuallyEffect(effect: Effect.Effect<void>, timeout = 1500) {
+// marid: CI timing scale. Free 2-core Windows runners are ~5-10x slower and
+// load-variable, so short hardcoded deadlines calibrated for dev machines flake
+// intermittently (the workspace-sync `it.live` tests do real HTTP+SSE+git). ci.yml
+// sets this to 4 on Windows; default 1 keeps local/fast runs unchanged. See P-CI-4.
+const TIMING_SCALE = Number(process.env.OPENCODE_TIMING_SCALE) || 1
+
+function eventuallyEffect(effect: Effect.Effect<void>, timeout = 1500 * TIMING_SCALE) {
   return Effect.gen(function* () {
     const started = Date.now()
     let last: unknown
@@ -1691,7 +1697,7 @@ describe("workspace waitForSync", () => {
         const sessionID = SessionID.descending("ses_wait_timeout")
         expectExitContains(
           yield* Effect.exit(
-            workspace.waitForSync(WorkspaceV2.ID.ascending("wrk_wait_timeout"), { [sessionID]: 1 }, undefined, 25),
+            workspace.waitForSync(WorkspaceV2.ID.ascending("wrk_wait_timeout"), { [sessionID]: 1 }, undefined, 25 * TIMING_SCALE),
           ),
           `Timed out waiting for sync fence: {"${sessionID}":1}`,
         )

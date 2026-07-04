@@ -72,7 +72,7 @@ graph TB
 | ~~P-1~~ | **Not required for MVP** (resolved by EXP-004): marid-auth attaches as an outer wrapper around the exported `Server.Default.app.fetch` (self-contained `toWebHandler`, no `listen()` needed) — no upstream server edit. Revisit only if in-Effect-pipeline request-ID/trace correlation (deep FR-030) is later required. | n/a — wrapper composes the exported handler; auth/rate-limit/audit run at the ingress wrapper | 0 lines (was ~5) | None (no edit) |
 | P-2 | Branding surfaces the config cannot reach (TUI title, CLI name/bin, user-agent) | Product identity (§19); config-first, edit only what config can't set | Small, enumerated | Low–medium |
 | P-3 | Default config deltas (e.g. `lsp:false`, telemetry defaults) — prefer config files over code edits | Distribution defaults | Config only | None |
-| P-CI | CI test-timing/env edits for GitHub-hosted runners — enumerated in `upstream-sync-strategy.md` (P-CI-1..3); prefer fixes in `ci.yml` over upstream test edits | Free 2-core runners are slower/variable vs upstream's runners | Small, per-test | Low (re-apply on conflict) |
+| P-CI | CI test-timing/env edits for GitHub-hosted runners — enumerated in `upstream-sync-strategy.md` (P-CI-1..4); prefer fixes in `ci.yml` over upstream test edits (P-CI-4 = env-scaled timing, knob in `ci.yml`) | Free 2-core runners are slower/variable vs upstream's runners | Small, per-test | Low (re-apply on conflict) |
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 
