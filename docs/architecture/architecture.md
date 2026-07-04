@@ -72,6 +72,7 @@ graph TB
 | P-1 | Server extension seam (only if no equivalent plugin/server hook exists — verify in EXP-004) | marid-auth must wrap routes before binding | ~5 lines | Low (stable file region) |
 | P-2 | Branding surfaces the config cannot reach (TUI title, CLI name/bin, user-agent) | Product identity (§19); config-first, edit only what config can't set | Small, enumerated | Low–medium |
 | P-3 | Default config deltas (e.g. `lsp:false`, telemetry defaults) — prefer config files over code edits | Distribution defaults | Config only | None |
+| P-CI | CI test-timing/env edits for GitHub-hosted runners — enumerated in `upstream-sync-strategy.md` (P-CI-1..3); prefer fixes in `ci.yml` over upstream test edits | Free 2-core runners are slower/variable vs upstream's runners | Small, per-test | Low (re-apply on conflict) |
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 
