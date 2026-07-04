@@ -77,6 +77,22 @@ describe("TEST-CONTRACT: committed event taxonomy", () => {
     // manifest is the set of events that support ?after=<seq> replay.
     expect(EventManifest.Durable.size).toBeGreaterThan(0)
   })
+
+  test("every session-aggregated event exposes a top-level sessionID (marid-auth's isolation invariant)", () => {
+    // marid-auth/event-filter isolates a client's stream by probing
+    // properties.sessionID. That is safe only while every session-scoped event
+    // carries sessionID at the top level — which it does, because sessionID is the
+    // event-sourcing aggregate key. This pins that invariant: if an upstream sync
+    // adds a session-aggregated event that hides its sessionID, this fails BEFORE it
+    // becomes a silent cross-session leak (fail-open passes un-attributable frames).
+    const offenders: string[] = []
+    for (const def of EventManifest.Latest.values()) {
+      if (def.durable?.aggregate !== "sessionID") continue
+      const fields = (def.data as { fields?: Record<string, unknown> }).fields ?? {}
+      if (!("sessionID" in fields)) offenders.push(def.type)
+    }
+    expect(offenders).toEqual([])
+  })
 })
 
 describe("TEST-CONTRACT: live transport through marid (SSE only, DEC-002)", () => {
@@ -118,5 +134,60 @@ describe("TEST-CONTRACT: live transport through marid (SSE only, DEC-002)", () =
     expect(res.status).toBe(200)
     const body = (await res.json()) as { healthy?: unknown }
     expect(body.healthy).toBe(true)
+  })
+})
+
+describe("TEST-CONTRACT: client-scope session isolation through marid (live, real serialization)", () => {
+  let dir: string
+  let server: MaridServer | undefined
+  let adminSecret: string
+  let clientSecret: string
+
+  beforeEach(async () => {
+    dir = await fs.mkdtemp(path.join(os.tmpdir(), "marid-isolation-"))
+    const store = createTokenStore(dir)
+    adminSecret = (await store.create("root", "admin")).secret
+    clientSecret = (await store.create("c", "client")).secret
+    server = maridServe({ hostname: "127.0.0.1", port: 0, dir })
+  })
+  afterEach(async () => {
+    server?.stop()
+    server = undefined
+    await disposeAllInstances()
+    await resetDatabase()
+    await fs.rm(dir, { recursive: true, force: true })
+  })
+
+  const createSession = async (secret: string): Promise<string> => {
+    const res = await fetch(new URL("/session", server!.url), {
+      method: "POST",
+      headers: { authorization: `Bearer ${secret}` },
+    })
+    expect(res.status).toBe(200)
+    return ((await res.json()) as { id: string }).id
+  }
+  const listSessionIds = async (secret: string): Promise<string[]> => {
+    // Send a real Accept-Encoding so the isolation path exercises the wrapper's
+    // strip-then-filter against actual server serialization (would-be gzip).
+    const res = await fetch(new URL("/session", server!.url), {
+      headers: { authorization: `Bearer ${secret}`, "accept-encoding": "gzip, deflate" },
+    })
+    expect(res.status).toBe(200)
+    return ((await res.json()) as Array<{ id: string }>).map((s) => s.id)
+  }
+
+  test("a client lists only the sessions it created; admin sees all", async () => {
+    const mine = await createSession(clientSecret)
+    const other = await createSession(adminSecret) // owned by nobody the client is
+    expect(mine.startsWith("ses")).toBe(true)
+    expect(other).not.toBe(mine)
+
+    const clientIds = await listSessionIds(clientSecret)
+    expect(clientIds).toContain(mine)
+    expect(clientIds).not.toContain(other) // isolation: the other session is hidden
+
+    const adminIds = await listSessionIds(adminSecret)
+    expect(adminIds).toContain(mine)
+    expect(adminIds).toContain(other) // admin is never filtered
   })
 })

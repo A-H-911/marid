@@ -6,13 +6,19 @@ import type { Scope } from "./token"
 //   channel:<name>  — its channel's dedicated agent/policy/sessions (PH-4 wires policy)
 //
 // This runs at the HTTP-ingress wrapper (EXP-004 seam), so it enforces what a
-// method+path can express: per-session *route* ownership. It deliberately does
-// NOT body-filter the global `/event` firehose or the `GET /session` list —
-// that is stream/body rewriting inside the Effect pipeline, the same seam
-// boundary EXP-004 left as a documented limitation. Client interpretation:
-// restricted on session *data* (cannot touch sessions it doesn't own), but may
-// read config/agents/providers and subscribe to the event stream so it can
-// function. A stricter client is a follow-up, not silently assumed here.
+// method+path can express: per-session *route* ownership. Body-level isolation —
+// dropping other sessions' frames from the `/event` firehose and other sessions'
+// entries from the `GET /session` and `GET /permission` lists — is done by the
+// middleware via event-filter.ts (those routes are ALLOWed here, then filtered on
+// the way out). So a non-admin client cannot touch, observe, or enumerate the
+// sessions/permissions of sessions it doesn't own, yet may still read
+// config/agents/providers and stream its own sessions' events.
+//
+// Residual (documented): POST /permission/:requestID/reply is keyed by an opaque
+// per_ id, not a sessionID, so the wrapper cannot ownership-gate it without a
+// requestID→session map. It stays route-allowed; the filtered GET /permission no
+// longer discloses other sessions' requestIDs, so replying requires an id learned
+// out-of-band. Full reply-gating is a follow-up (needs in-pipeline knowledge).
 
 export type Authorization =
   | { allow: true; recordSession?: boolean }

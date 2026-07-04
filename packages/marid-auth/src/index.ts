@@ -8,6 +8,14 @@ export { createAuditLog } from "./audit"
 export type { AuditLog, AuditEntry, Decision } from "./audit"
 export { authorize } from "./scope"
 export type { Authorization } from "./scope"
+export {
+  owningSession,
+  keepFrame,
+  filterSseStream,
+  filterOwnedArray,
+  pickSessionId,
+  pickPermissionSessionId,
+} from "./event-filter"
 export { resolveRequestId, REQUEST_ID_HEADER } from "./request-id"
 export { createMaridAuth } from "./middleware"
 export type { MaridAuth, MaridAuthDeps, Next } from "./middleware"

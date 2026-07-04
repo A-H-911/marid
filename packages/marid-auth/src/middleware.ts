@@ -2,6 +2,7 @@ import type { AuditLog, Decision } from "./audit"
 import type { OwnershipStore } from "./ownership"
 import type { RateLimiter } from "./ratelimit"
 import { authorize, sessionFromPathname } from "./scope"
+import { filterOwnedArray, filterSseStream, pickPermissionSessionId, pickSessionId } from "./event-filter"
 import { REQUEST_ID_HEADER, resolveRequestId } from "./request-id"
 import type { TokenStore } from "./token"
 
@@ -28,6 +29,12 @@ function bearer(request: Request): string | undefined {
 
 function isStream(request: Request): boolean {
   return (request.headers.get("accept") ?? "").includes("text/event-stream")
+}
+
+function strippedHeaders(source: Headers, remove: string): Headers {
+  const headers = new Headers(source)
+  headers.delete(remove)
+  return headers
 }
 
 function withRequestId(response: Response, requestId: string): Response {
@@ -132,7 +139,29 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
         return errorResponse(403, "ForbiddenError", "token scope forbids this route", requestId)
       }
 
-      const response = await Promise.resolve(next(request)).catch((cause: unknown) => {
+      // Strict client-scope isolation (deferred PH-1 follow-up, now resolved): a
+      // non-admin token sees only its own sessions' data — on the `/event` firehose
+      // and on the `GET /session` / `GET /permission` list routes. Admin is never
+      // filtered. Each list route names its owning session differently: a session
+      // by its own `id`, a permission by its `sessionID`.
+      const isolate = token.scope !== "admin"
+      const owns = (id: string): boolean => owned.has(id)
+      const listPick =
+        request.method === "GET" && url.pathname === "/session"
+          ? pickSessionId
+          : request.method === "GET" && url.pathname === "/permission"
+            ? pickPermissionSessionId
+            : undefined
+
+      // Upstream gzips JSON >=1KB when the request allows it, and a compressed body
+      // is opaque to the filter. Strip accept-encoding on the routes we rewrite so
+      // upstream returns plain JSON. (SSE is never compressed, so /event needs none.)
+      const delegated =
+        isolate && listPick !== undefined && request.headers.has("accept-encoding")
+          ? new Request(request, { headers: strippedHeaders(request.headers, "accept-encoding") })
+          : request
+
+      const response = await Promise.resolve(next(delegated)).catch((cause: unknown) => {
         releaseStream()
         throw cause
       })
@@ -151,7 +180,30 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
       }
 
       await record(token.name, "allow")
-      if (stream) return withRequestId(trackStream(response, releaseStream, request.signal), requestId)
+
+      if (stream) {
+        const filtered =
+          isolate && url.pathname === "/event" && response.body
+            ? new Response(filterSseStream(response.body, owns), {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+              })
+            : response
+        return withRequestId(trackStream(filtered, releaseStream, request.signal), requestId)
+      }
+
+      if (isolate && listPick && response.status >= 200 && response.status < 300) {
+        const original = await response.clone().text().catch(() => undefined)
+        if (original !== undefined) {
+          const headers = new Headers(response.headers)
+          headers.delete("content-length") // body length changes; let the runtime recompute
+          headers.delete("content-encoding") // upstream was told not to compress; drop any stale marker
+          const body = await filterOwnedArray(original, listPick, owns)
+          return withRequestId(new Response(body, { status: response.status, statusText: response.statusText, headers }), requestId)
+        }
+      }
+
       return withRequestId(response, requestId)
     },
   }
