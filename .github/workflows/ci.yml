@@ -81,12 +81,14 @@ jobs:
         #      intermittently -> job-timeout flakes. 35min absorbs the variance. This costs
         #      nothing on green runs (a cap only bounds; slow runs already ran long and now
         #      FINISH instead of failing at 20min and forcing a paid re-run).
-        #   2) Exactly 2 git-heavy snapshot tests exceed bun's 5s default per-test cap.
-        #      A 20s global cap covers them with wide margin even on a slow runner while
-        #      still failing-fast on genuine hangs. (30s masked hangs and wasn't needed;
-        #      the balloon above is variance, not this cap.)
+        #   2) Several git-heavy tests exceed bun's 5s default per-test cap: snapshot
+        #      worktree/index ops AND workspace "sync history" (git init + sync polling,
+        #      measured ~24s on a cold runner). A 60s global cap clears the whole known
+        #      range (<=~24s observed) with margin even under runner variance; the 35min
+        #      job cap above is the real hang-backstop, so a generous per-test cap costs
+        #      nothing on green runs (legit tests finish on their own; a cap only bounds).
         timeout-minutes: 35
-        run: GITHUB_ACTIONS=false bun turbo test -- --timeout 20000
+        run: GITHUB_ACTIONS=false bun turbo test -- --timeout 60000
         env:
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
           # marid: put os.tmpdir() on the workspace drive (D:) at a path with NO single-letter first

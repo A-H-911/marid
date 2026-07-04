@@ -88,12 +88,15 @@ re-introduced upstream workflows are removed automatically. Must be applied to *
   unit **step** runs ~18-22min on cold 2-core runners and varies run-to-run (git/process spawn is slow);
   a 20min `timeout-minutes` crossed it intermittently → job-timeout flakes. Set **`timeout-minutes: 35`**
   to absorb the variance (cost-neutral — a cap only bounds; slow runs now finish instead of failing at
-  20min and forcing a paid re-run). Separately, exactly 2 git-heavy snapshot tests
-  (`packages/core/test/snapshot.test.ts`) exceed bun's 5s default per-test cap; a **`--timeout 20000`**
-  global cap covers them with wide margin even on a slow runner while still failing-fast on genuine hangs.
-  The 20min→35min variance is NOT caused by the per-test cap (5s-era runs already took 21-23min) — so the
-  cap value is set purely to clear the slow tests, not to control runtime. This deliberately replaces
-  editing the 2 snapshot tests: the cap lives in KEEP-listed `ci.yml`, so syncs never revert it.
+  20min and forcing a paid re-run). Separately, several git-heavy tests exceed bun's 5s default per-test
+  cap — snapshot worktree/index ops (`packages/core/test/snapshot.test.ts`) AND workspace "sync history"
+  (git init + sync polling, measured ~24s) — so a **`--timeout 60000`** global cap clears the whole known
+  range (≤~24s observed) with margin even under runner variance. The 20min→35min variance is NOT caused by
+  the per-test cap (5s-era runs already took 21-23min), so the cap value is set purely to clear the slow
+  tests, not to control runtime; the 35min job cap is the real hang-backstop, so a generous per-test cap
+  costs nothing on green runs. This deliberately replaces editing those tests: the cap lives in KEEP-listed
+  `ci.yml`, so syncs never revert it. (History: 30s worked but was tightened to 20s once, which killed the
+  24s sync test — 60s clears the full measured range.)
 
 **P-CI-3 · Upstream test edits (unavoidable — enumerated for conflict review).** Each carries a `marid:`
 comment so a sync conflict is self-explanatory. Two kinds:
