@@ -18,6 +18,16 @@ Basis: ADR-0001 (tracking fork, periodic merge, additive delta). Fulfills §13 +
 - **Cadence:** scheduled **weekly conflict check** (automation, no merge) + **monthly merge** by default;
   **security fast-path**: upstream security releases merged out-of-band within days.
 
+## Marid-owned paths (upstream never touches these)
+
+`docs/`, `CLAUDE.md`, and `.claude/` are **Marid-only additions** — verified absent from `upstream/dev`
+and the baseline tag via `git ls-tree` (2026-07-04). No upstream merge can conflict on them today. If
+upstream ever adds its own `CLAUDE.md` or docs tree, **resolve in favor of Marid** (`git checkout --ours`
+on these paths): they are Marid operating docs, not tracked upstream code. Same rule as workflow
+ownership (P-CI-1) — Marid-owned files win on sync. (Note: `CLAUDE.md` was imported with the planning
+package (commit `29038f6bc`, WBS-0.2) and describes the OpenCode codebase, but is absent from upstream's
+tree at the baseline — how it was originally authored is not otherwise verified.)
+
 ## The sync loop (automated where boring)
 
 1. Scheduled workflow fetches upstream, creates `sync/upstream-<date>` from `develop`, merges

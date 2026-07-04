@@ -52,7 +52,18 @@
     "18-repo-init": { "status": "done (execution)", "date": "2026-07-03", "note": "Gate 11 approved: repo A-H-911/marid created (PUBLIC per DEC-010), remotes wired (origin=marid, upstream=anomalyco fetch-only), baseline tag upstream-baseline/2026-07-03-eb3476660 pushed, main+develop protected via ruleset. Gate 12 approved: planning-package import = PR #1 (open, awaiting operator merge). WBS-0.3 CI skeleton GREEN (PR #2): lint/typecheck/unit(ubuntu+windows)/smoke(3-OS); 26 upstream workflows stripped; sync-durable CI adaptations documented (upstream-sync-strategy.md P-CI-1..3) + script/strip-upstream-workflows.ts. Done: PR #1 + PR #2 merged to develop; ci required checks (7 contexts) wired on main+develop; Marid pr-title check (marid-pr-title.yml) replaces upstream pr-standards; main synced to develop. WBS-0.1..0.3 complete. Next: PH-0 experiments WBS-0.4..0.7 (MS-001)." },
     "19-quality": { "status": "done", "date": "2026-07-03", "note": "all quality gates PASS (G-CLAIM with enumerated unverified items) — see handoff/execution-readiness-report.md" },
     "20-handoff": { "status": "done", "date": "2026-07-03", "note": "gate 13 ACCEPTED" },
-    "21-updates": { "status": "n/a during planning; execution updates via keystone update mode" },
+    "21-updates": {
+      "status": "active (execution)",
+      "note": "Append an entry on each MS-00N exit and each merged PR that closes a WBS item; mirror the status in planning/roadmap.md (per CLAUDE.md state-update procedure).",
+      "log": [
+        {
+          "date": "2026-07-04",
+          "phase": "PH-0",
+          "event": "MS-001 MET — PH-0 complete, PH-1 unblocked",
+          "note": "EXP-001..004 all PASS (no FAIL -> no fallbacks, no Proposed DECs). Reports in research/experiments/ + ms-001-status.md. Design outputs: (1) no marid concurrency layer — upstream per-session Runner is the authority (EXP-001); (2) marid-instance env set = XDG_DATA/CACHE/CONFIG/STATE_HOME + OPENCODE_DB + allocated port + TMPDIR/TMP/TEMP (EXP-002); (3) Telegram >=2s edit cadence, 0x429, 222ms permission round-trip (EXP-003, live); (4) P-1 DROPPED — marid-auth attaches as outer wrapper on Server.Default.app.fetch, no server edit (EXP-004). Patch surface now P-2/P-3/P-CI only. Deferred live steps (bun-dependent, bun now installed): EXP-002 two-instance tree-diff (before marid-instance freeze), EXP-004 filtered build + binary + auth-wrapper smoke (before Gate-6). CI: timing-flake class fixed at root — centralized OPENCODE_TIMING_SCALE at test-wrapper choke points (P-CI-4); develop push run green first-try. PRs: #9 (PH-0 reports + P-CI/P-1 register), #10 (P-CI-4), #11 (develop->main sync, open), #12 (roadmap + keystone-state + CLAUDE.md operating manual). Toolchain: bun 1.3.14 installed (npm global; tree-sitter-powershell native build needs MSVC, use --ignore-scripts). NEXT: PH-1 / MS-002 (WBS-1.1..1.5) — marid profile build, marid-auth (tokens/scopes/rate-limit/audit/request-ID via the EXP-004 wrapper seam), v1 contract tests, branding P-2 + config P-3. Start prompt: handoff/follow-up-prompts.md 'PH-1 -> start'."
+        }
+      ]
+    },
     "22-readiness": { "status": "done", "date": "2026-07-03", "note": "gate 14 GO — execution cleared; next act = operator pastes handoff/initial-prompt.md into an execution session (gate 11 checklist first)" }
   },
   "registers": {
