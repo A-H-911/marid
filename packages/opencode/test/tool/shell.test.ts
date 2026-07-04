@@ -1117,7 +1117,10 @@ describe("tool.shell abort", () => {
         const updates: string[] = []
         const result = yield* run(
           {
-            command: `echo first && sleep 0.1 && echo second`,
+            // marid: metadata fires per stdout chunk (no throttle). A 0.1s gap lets a
+            // starved CI reader coalesce both echoes into one read -> 1 update -> flake.
+            // 1s makes coalescing require an implausible ~1s reader-starvation window.
+            command: `echo first && sleep 1 && echo second`,
           },
           {
             ...ctx,

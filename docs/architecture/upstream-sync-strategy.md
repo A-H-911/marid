@@ -84,6 +84,16 @@ re-introduced upstream workflows are removed automatically. Must be applied to *
   (a path on the workspace drive with **no single-letter first component**) and pre-creates it, so
   `os.tmpdir()` avoids both the cross-drive mismatch and the `/a/`→`A:` misread — tests pass unmodified.
   (Do NOT use `runner.temp` here: it is `D:\a\_temp`, under `\a\`, which re-triggers the bug.)
+- Windows suite runtime + per-test caps (both tuned in `ci.yml`, no test edits). Measured: the Windows
+  unit **step** runs ~18-22min on cold 2-core runners and varies run-to-run (git/process spawn is slow);
+  a 20min `timeout-minutes` crossed it intermittently → job-timeout flakes. Set **`timeout-minutes: 35`**
+  to absorb the variance (cost-neutral — a cap only bounds; slow runs now finish instead of failing at
+  20min and forcing a paid re-run). Separately, exactly 2 git-heavy snapshot tests
+  (`packages/core/test/snapshot.test.ts`) exceed bun's 5s default per-test cap; a **`--timeout 20000`**
+  global cap covers them with wide margin even on a slow runner while still failing-fast on genuine hangs.
+  The 20min→35min variance is NOT caused by the per-test cap (5s-era runs already took 21-23min) — so the
+  cap value is set purely to clear the slow tests, not to control runtime. This deliberately replaces
+  editing the 2 snapshot tests: the cap lives in KEEP-listed `ci.yml`, so syncs never revert it.
 
 **P-CI-3 · Upstream test edits (unavoidable — enumerated for conflict review).** Each carries a `marid:`
 comment so a sync conflict is self-explanatory. Two kinds:
@@ -95,6 +105,10 @@ just-too-tight and were widened:
 - `packages/opencode/test/session/prompt.test.ts` — "loop waits while shell runs" 10s → 30s.
 - `packages/opencode/test/control-plane/workspace.test.ts` — "sync history …" test timeout → 60s (git
   init + sync polling is slow on cold Windows CI).
+- `packages/opencode/test/tool/shell.test.ts` — "streams metadata updates progressively" `sleep 0.1` → `1`
+  (ubuntu race, not a timeout): metadata fires per stdout chunk, so a starved CI reader coalesced both
+  echoes into one read → `updates.length === 1`. A 1s gap makes coalescing require ~1s of reader
+  starvation. Product streaming code is correct; only the test's timing assumption was too tight.
 
 *Drive-hardcode* — a test hardcoded drive `C:`, which only resolves on a C:-based runner:
 - `packages/opencode/test/tool/shell.test.ts` — "drive-relative PowerShell paths" now uses the temp
