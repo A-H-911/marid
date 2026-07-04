@@ -29,7 +29,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
-      - run: bun install
+      - uses: ./.github/actions/bun-install
       - run: bun lint
 
   typecheck:
@@ -42,7 +42,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
-      - run: bun install
+      - uses: ./.github/actions/bun-install
       - run: bun typecheck
 
   unit:
@@ -63,7 +63,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
-      - run: bun install
+      - uses: ./.github/actions/bun-install
       # Windows GitHub runners lack ripgrep; without it opencode falls back to
       # downloading rg + a PowerShell Expand-Archive that fails in CI. Install it
       # so `which("rg.exe")` short-circuits the download path. (Linux runners ship rg.)
@@ -74,8 +74,21 @@ jobs:
         if: runner.os == 'Windows'
         run: mkdir -p /d/opencode-tmp
       - name: Run unit tests
-        timeout-minutes: 20
-        run: GITHUB_ACTIONS=false bun turbo test
+        # marid: two independent, MEASURED Windows-runner facts, both fixed here in
+        # ci.yml (durable — never touched by upstream syncs) so no test-body edits drift:
+        #   1) The whole unit step is inherently ~18-22min on cold 2-core Windows runners
+        #      (git/process spawn is slow) and varies run-to-run; a 20min cap crossed it
+        #      intermittently -> job-timeout flakes. 35min absorbs the variance. This costs
+        #      nothing on green runs (a cap only bounds; slow runs already ran long and now
+        #      FINISH instead of failing at 20min and forcing a paid re-run).
+        #   2) Several git-heavy tests exceed bun's 5s default per-test cap: snapshot
+        #      worktree/index ops AND workspace "sync history" (git init + sync polling,
+        #      measured ~24s on a cold runner). A 60s global cap clears the whole known
+        #      range (<=~24s observed) with margin even under runner variance; the 35min
+        #      job cap above is the real hang-backstop, so a generous per-test cap costs
+        #      nothing on green runs (legit tests finish on their own; a cap only bounds).
+        timeout-minutes: 35
+        run: GITHUB_ACTIONS=false bun turbo test -- --timeout 60000
         env:
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
           # marid: put os.tmpdir() on the workspace drive (D:) at a path with NO single-letter first
@@ -107,4 +120,4 @@ jobs:
       # ponytail: skeleton smoke = workspace installs + native node-pty postinstall builds
       # on all 3 OSes (the real cross-OS risk). A CLI boot/--version smoke gets added once
       # non-interactive flags are confirmed (WBS-1.x / EXP-004). Upgrade path: add a run step here.
-      - run: bun install
+      - uses: ./.github/actions/bun-install

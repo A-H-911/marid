@@ -1,0 +1,21 @@
+name: bun install (with retry)
+description: >
+  Run `bun install`, retrying transient registry/resolver failures. GitHub-hosted
+  runners (especially windows-latest) intermittently fail to resolve a valid pinned
+  version — e.g. `No version matching "X" found for specifier "drizzle-orm" (but
+  package exists)` — even when the identical lockfile installs fine on another runner
+  in the same matrix. A bounded retry rides out the blip; a genuinely-missing package
+  still fails all attempts and reds the job. Repo-owned (no external action).
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        for attempt in 1 2 3; do
+          if bun install; then exit 0; fi
+          echo "::warning::bun install failed (attempt $attempt/3) — transient registry/resolver flake"
+          [ "$attempt" -lt 3 ] && sleep 10
+        done
+        echo "::error::bun install failed after 3 attempts"
+        exit 1

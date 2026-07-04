@@ -78,12 +78,32 @@ re-introduced upstream workflows are removed automatically. Must be applied to *
 `ci.yml`, not in upstream sources, so they are immune to upstream churn:
 - ripgrep: GitHub Windows runners lack `rg`; `ci.yml` runs `choco install ripgrep` so opencode's
   `which("rg.exe")` short-circuits the download/extract fallback that fails in CI.
+- `bun install` retry: GitHub runners (esp. `windows-latest`) intermittently fail to resolve a valid
+  pinned catalog version — e.g. `No version matching "1.0.0-rc.2" found for specifier "drizzle-orm" (but
+  package exists)` — even when the identical lockfile installs fine on another matrix runner in the same
+  run. All jobs install via the repo-owned composite action `.github/actions/bun-install` (bounded 3×
+  retry + backoff) instead of a bare `bun install`, so a transient blip rides out while a genuinely-missing
+  package still fails all attempts. The composite action lives under `.github/actions/` (NOT
+  `.github/workflows/`), so the strip script never removes it; syncs leave it intact.
 - Windows temp path: GitHub's workspace is `D:\a\...`, and `FSUtil.windowsPath` misreads a leading `/a/`
   (produced when a test strips the drive from a `D:\a\...` path) as drive **`A:`** — breaking the
   `external_directory`/read/workdir path-permission tests. `ci.yml` sets `TMP`/`TEMP` = `D:\opencode-tmp`
   (a path on the workspace drive with **no single-letter first component**) and pre-creates it, so
   `os.tmpdir()` avoids both the cross-drive mismatch and the `/a/`→`A:` misread — tests pass unmodified.
   (Do NOT use `runner.temp` here: it is `D:\a\_temp`, under `\a\`, which re-triggers the bug.)
+- Windows suite runtime + per-test caps (both tuned in `ci.yml`, no test edits). Measured: the Windows
+  unit **step** runs ~18-22min on cold 2-core runners and varies run-to-run (git/process spawn is slow);
+  a 20min `timeout-minutes` crossed it intermittently → job-timeout flakes. Set **`timeout-minutes: 35`**
+  to absorb the variance (cost-neutral — a cap only bounds; slow runs now finish instead of failing at
+  20min and forcing a paid re-run). Separately, several git-heavy tests exceed bun's 5s default per-test
+  cap — snapshot worktree/index ops (`packages/core/test/snapshot.test.ts`) AND workspace "sync history"
+  (git init + sync polling, measured ~24s) — so a **`--timeout 60000`** global cap clears the whole known
+  range (≤~24s observed) with margin even under runner variance. The 20min→35min variance is NOT caused by
+  the per-test cap (5s-era runs already took 21-23min), so the cap value is set purely to clear the slow
+  tests, not to control runtime; the 35min job cap is the real hang-backstop, so a generous per-test cap
+  costs nothing on green runs. This deliberately replaces editing those tests: the cap lives in KEEP-listed
+  `ci.yml`, so syncs never revert it. (History: 30s worked but was tightened to 20s once, which killed the
+  24s sync test — 60s clears the full measured range.)
 
 **P-CI-3 · Upstream test edits (unavoidable — enumerated for conflict review).** Each carries a `marid:`
 comment so a sync conflict is self-explanatory. Two kinds:
@@ -95,6 +115,10 @@ just-too-tight and were widened:
 - `packages/opencode/test/session/prompt.test.ts` — "loop waits while shell runs" 10s → 30s.
 - `packages/opencode/test/control-plane/workspace.test.ts` — "sync history …" test timeout → 60s (git
   init + sync polling is slow on cold Windows CI).
+- `packages/opencode/test/tool/shell.test.ts` — "streams metadata updates progressively" `sleep 0.1` → `1`
+  (ubuntu race, not a timeout): metadata fires per stdout chunk, so a starved CI reader coalesced both
+  echoes into one read → `updates.length === 1`. A 1s gap makes coalescing require ~1s of reader
+  starvation. Product streaming code is correct; only the test's timing assumption was too tight.
 
 *Drive-hardcode* — a test hardcoded drive `C:`, which only resolves on a C:-based runner:
 - `packages/opencode/test/tool/shell.test.ts` — "drive-relative PowerShell paths" now uses the temp
