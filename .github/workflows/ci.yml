@@ -91,11 +91,16 @@ jobs:
         run: GITHUB_ACTIONS=false bun turbo test -- --timeout 60000
         env:
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
-          # marid: scale short hardcoded test deadlines on the slow 2-core Windows runner.
-          # workspace-sync it.live tests (real HTTP+SSE+git) flake when their 1500ms poll /
-          # 25ms fence deadlines miss under load; read by TIMING_SCALE in workspace.test.ts.
-          # Durable lever lives here in ci.yml; the test-body reads default 1 locally. P-CI-4.
-          OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '1' }}
+          # marid: ONE knob for every timing budget (P-CI-4). All timing flakes here share
+          # one root cause: budgets calibrated for fast dev machines / upstream's warm
+          # blacksmith runners, running on slow load-variable free runners. TIMING_SCALE
+          # (test/lib/effect.ts) is read at the choke points every budget flows through —
+          # testEffect wrappers (explicit per-test budgets; bun lets those OVERRIDE the
+          # global --timeout, so the 60s cap alone can't protect them), poll/await helper
+          # ceilings, and the cli-process subprocess kill + serve-ready deadlines.
+          # Windows 4 (2-core, slowest; measured); ubuntu 2 (observed 30s subprocess kill
+          # flake under concurrent transpile stampede). Local default: 1 (unchanged).
+          OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
           # marid: put os.tmpdir() on the workspace drive (D:) at a path with NO single-letter first
           # component. GitHub windows-latest workspace is D:\a\...; temp under \a\ (e.g. runner.temp =
           # D:\a\_temp) makes drive-stripped test paths "/a/..." get misread by FSUtil.windowsPath as

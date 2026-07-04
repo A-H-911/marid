@@ -19,7 +19,7 @@ import { SessionProjector } from "@opencode-ai/core/session/projector"
 import { EventSequenceTable } from "@opencode-ai/core/event/sql"
 import { resetDatabase } from "../fixture/db"
 import { disposeAllInstances, provideTmpdirInstance, requireInstance, TestInstance } from "../fixture/fixture"
-import { testEffect } from "../lib/effect"
+import { testEffect, TIMING_SCALE } from "../lib/effect"
 import { registerAdapter } from "../../src/control-plane/adapters"
 import { WorkspaceV2 } from "@opencode-ai/core/workspace"
 import { WorkspaceTable } from "@opencode-ai/core/control-plane/workspace.sql"
@@ -151,12 +151,9 @@ function expectExitContains(exit: Exit.Exit<unknown, unknown>, ...messages: stri
   for (const message of messages) expect(String(exit.cause)).toContain(message)
 }
 
-// marid: CI timing scale. Free 2-core Windows runners are ~5-10x slower and
-// load-variable, so short hardcoded deadlines calibrated for dev machines flake
-// intermittently (the workspace-sync `it.live` tests do real HTTP+SSE+git). ci.yml
-// sets this to 4 on Windows; default 1 keeps local/fast runs unchanged. See P-CI-4.
-const TIMING_SCALE = Number(process.env.OPENCODE_TIMING_SCALE) || 1
-
+// marid: scale the poll ceiling and fence deadline by the shared CI timing
+// scale (P-CI-4, defined in ../lib/effect) — these it.live tests do real
+// HTTP+SSE+git and their dev-machine-calibrated deadlines flake on slow runners.
 function eventuallyEffect(effect: Effect.Effect<void>, timeout = 1500 * TIMING_SCALE) {
   return Effect.gen(function* () {
     const started = Date.now()
