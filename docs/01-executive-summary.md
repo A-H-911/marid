@@ -1,8 +1,8 @@
 ---
-artifact: executive-summary
 status: Final (reflects gates 1–10 approvals)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Executive Summary — Marid

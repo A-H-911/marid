@@ -1,8 +1,8 @@
 ---
-artifact: branding-readme-logo
 status: Proposed (name Approved at gate 3; plan approved with gate 13)
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Marid — Branding, README Plan, Logo Brief (FR-065)

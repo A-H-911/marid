@@ -1,10 +1,10 @@
 ---
-artifact: experiment-report
 experiment: EXP-002
 hypothesis: HYP-002
 status: PASS (audit-strength; live two-instance filesystem diff deferred — see Method)
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # EXP-002 — Two-instance isolation probe

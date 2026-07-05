@@ -1,8 +1,8 @@
 ---
-artifact: api-event-contract
 status: Approved (gate 7, 2026-07-03; amended v1.1 2026-07-05 — PH-3, additive + reconnect correction)
 version: v1.1
 updated: 2026-07-05
+owner: operator (STK-001)
 ---
 
 # Marid Public API & Event Contract (Gate 7)

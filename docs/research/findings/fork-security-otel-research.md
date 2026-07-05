@@ -1,8 +1,8 @@
 ---
-artifact: fork-security-otel-research
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Research: Fork Maintenance, AI-Agent Security, OTel GenAI

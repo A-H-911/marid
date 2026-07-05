@@ -1,8 +1,8 @@
 ---
-artifact: target-architecture
 status: Approved (gate 5, 2026-07-03)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Marid — Target Architecture (Gate 5)

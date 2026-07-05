@@ -1,8 +1,8 @@
 ---
-artifact: upstream-sync-strategy
 status: Approved (gate 9, 2026-07-03)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Upstream Synchronization Strategy + Git Workflow (Gate 9)

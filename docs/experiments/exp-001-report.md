@@ -1,10 +1,10 @@
 ---
-artifact: experiment-report
 experiment: EXP-001
 hypothesis: HYP-001
 status: PASS
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # EXP-001 — Two-client concurrency probe

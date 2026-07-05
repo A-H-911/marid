@@ -1,10 +1,10 @@
 ---
-artifact: milestone-status
 milestone: MS-001
 phase: PH-0
 status: MET (with two live steps deferred — see Deferred)
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # MS-001 status — PH-0 experiments complete

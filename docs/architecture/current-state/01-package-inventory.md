@@ -1,8 +1,8 @@
 ---
-artifact: current-state-package-inventory
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # OpenCode Package Inventory (branch dev, HEAD eb3476660)

@@ -1,8 +1,9 @@
 ---
-artifact: execution-readiness-report
 status: Final (gate 13 accepted; gate 14 GO — 2026-07-03)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
+generation: derived
 ---
 
 # Execution-Readiness Report (Stage 19 + 22)

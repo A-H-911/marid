@@ -5,6 +5,7 @@ version: v1.1
 updated: 2026-07-05
 supersedes: none
 superseded_by: none
+owner: operator (STK-001)
 ---
 
 > **PH-2 realization note (2026-07-05).** Implemented as the `@marid/instance` package

@@ -1,8 +1,8 @@
 ---
-artifact: current-state-channels-web
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # R-06: Channel Adapters (Slack) and Web/Cloud Surface Packages

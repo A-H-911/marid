@@ -1,10 +1,10 @@
 ---
-artifact: experiment-report
 experiment: EXP-003
 hypothesis: HYP-003
 status: PASS
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # EXP-003 — Telegram cadence probe

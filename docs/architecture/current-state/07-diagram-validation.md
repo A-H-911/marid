@@ -1,8 +1,8 @@
 ---
-artifact: diagram-validation
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # R-08: Validation of docs/diagrams/ (19 diagrams) against HEAD eb3476660

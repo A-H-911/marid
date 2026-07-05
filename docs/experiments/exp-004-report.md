@@ -1,10 +1,10 @@
 ---
-artifact: experiment-report
 experiment: EXP-004
 hypothesis: HYP-004
 status: PASS (analysis-strength; live build + binary deferred — see Method)
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # EXP-004 — Distribution-profile build probe (analysis half)

@@ -5,6 +5,7 @@ version: v1.0
 updated: 2026-07-03
 supersedes: none
 superseded_by: none
+owner: operator (STK-001)
 ---
 
 # ADR-0002 — Exclude by distribution profile, delete nothing
