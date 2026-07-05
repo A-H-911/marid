@@ -56,3 +56,71 @@ cloned/forked/indexed/cached regardless of later visibility flips.
 
 **Traceability:** amends `docs/00-charter.md` (Mission); resolves the blocker in
 `docs/decisions/deviation-branch-protection.md`; unblocks WBS-0.3 protection; flags WBS-5.1 for reconciliation.
+
+## DEC-011 detail — PH-1 execution decisions (marid-auth + profile build)
+
+Three operator-directed decisions made while building PH-1 (2026-07-04), recorded per the docs-as-source-of-truth rule.
+
+**(a) `client`-scope session ownership is durable, not in-memory.** The api-event-contract defines `client` as
+"sessions it created + its own events." Upstream sessions carry no creator field and the marid-auth wrapper runs
+outside the Effect pipeline (EXP-004), so marid-auth tracks token→session ownership itself. Operator chose a
+**durable 0600 sidecar** (`ownership.json`, same store pattern as `tokens.json`) over an in-memory map: a `client`
+token keeps access to sessions it created across a `marid serve` restart (mirrors upstream's event-sourced session
+durability). Ownership is recorded on the two session-*creating* ops — `POST /session` (create) and
+`POST /session/:id/fork` (branch). Impl: `packages/marid-auth/src/ownership.ts`.
+
+**(b) marid binary entry is additive (new `src/marid.ts`), not a parameterizing edit to `index.ts`.** See P-ENTRY
+in the patch-surface register. Zero upstream edits; accepts command-list drift, reconciled on sync.
+
+**(c) Branding split — CLI identity in PH-1, cosmetic in PH-5.** Resolves the CLAUDE.md-vs-roadmap conflict the way
+CLAUDE.md intends: the `marid` binary name + `serve`/`token` commands (MS-002 identity) land now; README / TUI title /
+user-agent string / logo defer to PH-5. See P-2/P-3.
+
+**Documented seam limitation (not a decision, a consequence) — now resolved:** the outer-wrapper ingress sees HTTP
+only, so `client` enforcement was initially per-session *route* ownership, with body-filtering of the global
+`/event` firehose and `GET /session` list deferred. That gap is now closed at the wrapper altitude (not the
+pipeline) by `@marid/auth/event-filter.ts` — see "Resolved (was Deferred)" below. FR-030 in-pipeline trace
+correlation remains the one item genuinely left for the pipeline.
+
+**Traceability:** implements FR-030/031/032/033 (marid-auth envelope), FR-035 (contract pinning via TEST-CONTRACT),
+FR-060 (profile build); amends `architecture.md` (patch-surface register, P-2/P-3/P-ENTRY); to be reconciled into
+`upstream-sync-strategy.md` (marid.ts + marid-build.ts reconcile checklist).
+
+## Resolved (was Deferred) — strict `client`-scope event isolation (firehose/list body filtering)
+
+**Status: Resolved via option (b) (operator-directed, 2026-07-05).** Built as a marid-owned filter in
+`@marid/auth` (`src/event-filter.ts`), wired into the middleware — **zero upstream edit, no new patch surface**.
+For any non-admin token the wrapper now body-filters on the way out: it drops other sessions' frames from the
+global SSE firehose (`GET /event`) and other sessions' entries from the `GET /session` **and `GET /permission`**
+lists (sessions keyed by `id`, permissions by their `sessionID`). Admin is never filtered. This closes the gap
+vs the contract's literal "sessions it created + **its own events**."
+
+**Compression handled:** upstream gzips JSON ≥1KB when the request allows it, and a compressed body is opaque to
+the wrapper's text-level filter. The middleware strips `accept-encoding` before delegating the filtered list
+routes so upstream returns plain JSON (SSE is never compressed, so `/event` is unaffected); non-admin loses
+response compression only on those two list routes — negligible on a private LAN. Verified live in
+`contract.test.ts` (the isolation test sends a real `accept-encoding` through `maridServe`).
+
+**Residual (documented, not silently dropped):** `POST /permission/:requestID/reply` is keyed by an opaque `per_`
+id, not a `sessionID`, so the wrapper can't ownership-gate it without a requestID→session map. It stays
+route-allowed; because `GET /permission` is now filtered, a client can't discover another session's requestID
+through the API, so replying requires an id learned out-of-band. Full reply-gating is a follow-up (in-pipeline).
+The top-level-`sessionID` invariant the filter relies on is pinned by a contract test (fails on upstream drift).
+
+**Why option (b) over (a)/(c):** the ground-truth check showed every session-bearing event — v1 (`session.created`,
+`message.part.*`) and v2 (`session.next.*`, `session.status`, `permission.v2.*`) — carries `sessionID` at the
+**top level** of its payload (the event-sourcing `durable.aggregate` key), so extracting the owning session is a
+one-field probe, not the per-taxonomy map the deferral feared. That made (b) cheap and truly correct. Option (a)
+would have reintroduced the P-1 upstream edit EXP-004 removed; option (c) had no route to lean on — the actual
+`/event` route is instance/workspace-global (`event.ts` filters only by directory/workspaceID; there is no
+per-session subscription route), so "per-session only" would have cut `client` off from streaming entirely.
+
+**Mechanism & limits:** SSE frames are parsed and re-emitted across chunk boundaries; session-less frames
+(`server.connected`/`heartbeat`/`disposed`, global/foundation events) always pass — they are infrastructure the
+client needs, not another session's data. Ownership is snapshotted at subscribe time (a session the same client
+creates mid-stream on another request appears only after reconnect — acceptable for MVP; noted in code).
+
+**Traceability:** consequence of ADR-0003 (v1 + wrapper) + EXP-004 seam; implemented in `@marid/auth`
+(`event-filter.ts` + `middleware.ts`); tested by `event-filter.test.ts` (13) + 3 middleware integration tests;
+relates to FR-024/025 (events) and the `client` scope in `api-event-contract.md`. No new `P-*` row (additive,
+Marid-owned).
