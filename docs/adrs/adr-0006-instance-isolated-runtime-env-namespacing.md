@@ -1,9 +1,18 @@
 ---
 artifact: adr
-status: Approved (gate 5; verified by EXP-002)
-version: v1.0
-updated: 2026-07-03
+status: Approved (gate 5; verified by EXP-002; realized + live-verified in PH-2)
+version: v1.1
+updated: 2026-07-05
 ---
+
+> **PH-2 realization note (2026-07-05).** Implemented as the `@marid/instance` package
+> (`composeInstanceEnv` = XDG_DATA/CACHE/CONFIG/STATE_HOME + TMPDIR/TMP/TEMP; port isolated by
+> OS-assigned `--port 0`; home not relocated). The **deferred EXP-002 live two-instance filesystem
+> diff is now CLOSED**: `instance-isolation.test.ts` launches two real authenticated servers and
+> asserts distinct ports, per-instance DB/sessions, and zero state written outside the composed XDG
+> roots. Lifecycle adds what claudectl lacked — race-free port capture, PID/port records, and a
+> platform-split tree-kill (`taskkill /T` on Windows / process-group signal on POSIX). "Graceful
+> shutdown" is POSIX-only (Windows has no catchable SIGTERM), consistent with the MVP no-daemon stance.
 
 # ADR-0006 — Instance = isolated runtime via env-composed directory namespaces
 

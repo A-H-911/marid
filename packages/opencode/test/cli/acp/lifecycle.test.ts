@@ -7,6 +7,7 @@ import type {
 } from "@agentclientprotocol/sdk"
 import { Duration, Effect } from "effect"
 import { cliIt } from "../../lib/cli-process"
+import { TIMING_SCALE } from "../../lib/effect"
 import { expectOk, selectConfigOption } from "./acp-test-client"
 import { createAcpClient, initialize, newSession, verifierConfig } from "./helpers"
 
@@ -18,7 +19,9 @@ describe("opencode acp lifecycle subprocess", () => {
         const acp = yield* opencode.acp()
         acp.close()
 
-        const code = yield* Effect.promise(() => acp.exited).pipe(Effect.timeout(Duration.seconds(5)))
+        // marid: exit-wait rides the CI timing scale (P-CI-4) — a fixed 5s is calibrated
+        // for warm dev machines; a cold 2-core Windows runner measured 5.5s (PR #17 CI).
+        const code = yield* Effect.promise(() => acp.exited).pipe(Effect.timeout(Duration.millis(5_000 * TIMING_SCALE)))
         expect(code).toBe(0)
       }),
     60_000,
