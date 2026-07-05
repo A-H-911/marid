@@ -5,9 +5,9 @@ updated: 2026-07-03
 owner: operator (STK-001)
 ---
 
-# R-08: Validation of docs/diagrams/ (19 diagrams) against HEAD eb3476660
+# R-08: Validation of docs/architecture/diagrams/ (19 diagrams) against HEAD eb3476660
 
-Method: each diagram's claims were taken from its JSON spec in `docs/diagrams/specs/`, cross-checked against the six current-state analyses in `docs/architecture/current-state/01..06` and, where those docs were silent or contradicted, against source at HEAD. Verdicts: ACCURATE / MINOR-DRIFT (cosmetic or naming) / OUTDATED (materially wrong claim) / UNVERIFIABLE.
+Method: each diagram's claims were taken from its JSON spec in `docs/architecture/diagrams/specs/`, cross-checked against the six current-state analyses in `docs/architecture/current-state/01..06` and, where those docs were silent or contradicted, against source at HEAD. Verdicts: ACCURATE / MINOR-DRIFT (cosmetic or naming) / OUTDATED (materially wrong claim) / UNVERIFIABLE.
 
 ## Verdict table
 

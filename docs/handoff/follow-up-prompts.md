@@ -15,7 +15,7 @@ continuing. Each assumes a fresh session: the agent must re-read the files it na
 > Gate 11 and 12 are approved. Execute `docs/planning/roadmap.md` WBS-0.1..0.3 exactly as approved in
 > `docs/handoff/gate-11-forking-checklist.md` (INV-003: only the approved actions). Then run the four
 > experiments WBS-0.4..0.7 per `docs/research/hypothesis-register.md`, writing each report to
-> `docs/research/experiments/exp-00N-report.md` with PASS/FAIL against the stated criteria. If any FAIL,
+> `docs/experiments/exp-00N-report.md` with PASS/FAIL against the stated criteria. If any FAIL,
 > record the pre-selected fallback as a new DEC in `docs/decisions/open-decision-register.md` (status
 > Proposed) and stop for operator review. Exit: MS-001 evidence summarized in a short status note.
 
@@ -49,7 +49,7 @@ continuing. Each assumes a fresh session: the agent must re-read the files it na
 
 > Finish per WBS-5.1..5.5: private release pipeline, gh-authenticated install path, the first real
 > upstream sync cycle (KPI-004; follow `docs/architecture/upstream-sync-strategy.md` verbatim), README +
-> logo per `docs/branding/branding.md`, then regenerate `docs/traceability-matrix.md` and assemble
+> logo per `docs/branding/branding.md`, then regenerate `docs/validation/traceability-matrix.md` and assemble
 > readiness evidence for the operator's MVP go/no-go. Exit: MS-006.
 
 ## Situational

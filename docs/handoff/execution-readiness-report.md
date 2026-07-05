@@ -12,7 +12,7 @@ generation: derived
 
 | Gate | Verdict | Evidence |
 |---|---|---|
-| G-TRACE (every MVP FR linked to decision+work+test) | **PASS** | `docs/traceability-matrix.md` — no MVP gaps; 4 deferred FRs intentionally unlinked with triggers |
+| G-TRACE (every MVP FR linked to decision+work+test) | **PASS** | `docs/validation/traceability-matrix.md` — no MVP gaps; 4 deferred FRs intentionally unlinked with triggers |
 | G-COMPLETE (all §21 deliverables present or consciously waived) | **PASS** | Manifest lists all; waived: none. Repo bootstrap deferred by `--no-repo` (forking gate) by design |
 | G-CONFLICT (no unresolved contradictions) | **PASS** | 4 tensions T-1..T-4 resolved at gates 5–9 (T-1 via keep-list, T-2 via MVP split, T-3 via ADR-0002, T-4 via ADR-0003) |
 | G-CLAIM (claims cited or marked) | **PASS with notes** | Current-state docs are file:line-cited; open `unverified` items: subagent-event taxonomy (checked in EXP-001), "always-allow" persistence (EXP-001), LSP-cache lock (EXP-002), Cursor fork strategy + distro fast-path citation (R-10, non-load-bearing) |

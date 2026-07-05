@@ -113,7 +113,7 @@ namespacing, not by in-place locking of shared files.
    boundary (R-04) — mitigations at gate 8.
 5. **Fork ⇄ upstream**: upstream code reviewed at sync; instructions in upstream content never executed (INV-004).
 
-## Open points → experiments (Stage 13) — all executed, see `../research/experiments/`
+## Open points → experiments (Stage 13) — all executed, see `../experiments/`
 
 - EXP-001 ✅ **PASS**: two-client concurrency — upstream single-writer/queue/steer path is safe; marid needs no busy-lock/queue layer (C-5 A holds).
 - EXP-002 ✅ **PASS** (audit-strength; live tree-diff deferred): env composition isolates all R-05 items; env set = XDG + `OPENCODE_DB` + allocated port + `TMPDIR/TMP/TEMP`.
