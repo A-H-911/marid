@@ -17,7 +17,7 @@ review checkpoint with the operator.
 |---|---|---|---|
 | PH-0 Foundations ✅ | Fork exists, CI skeleton green, all 4 experiments answered | **MS-001 MET (2026-07-04)**: EXP-001..004 all PASS (no FAIL → no fallbacks); reports in `../research/experiments/`. Shipped PR #9. | Gates 9, 11, 12 |
 | PH-1 Marid layer ✅ | marid-auth + distribution profile + branding | **MS-002 MET (2026-07-04)**: authenticated `marid` binary from the `marid` profile passes contract tests; 3-OS `marid-build` green. Shipped PR #13. | PH-0 |
-| PH-2 Instances ⏳ | marid-instance CLI + isolation | MS-003: KPI-003 (≥2 instances, isolation suite green, 3 OSes) — **built + local-green (Windows); pending 3-OS CI** | PH-1 |
+| PH-2 Instances ✅ | marid-instance CLI + isolation | **MS-003 MET (2026-07-05)**: KPI-003 — 3-OS `marid-isolation` green (2 consecutive all-green runs incl. announced unit-windows re-run). Shipped PR #17. | PH-1 |
 | PH-3 Cross-interface | TUI-as-client default + §7 flow verified | MS-004: KPI-001 demo repeatable; concurrency semantics documented | PH-1 (parallel with PH-2) |
 | PH-4 Telegram | marid-telegram + capability policy | MS-005: KPI-002 (round trip + policy denial paths) | PH-1; PH-3 for live-update assertions |
 | PH-5 Release & sync | Private distribution + one real upstream sync + docs | MS-006 = MVP: KPI-004, KPI-005, KPI-006 green; readiness report accepted (gate 14 of execution) | PH-2..4 |
@@ -44,12 +44,12 @@ review checkpoint with the operator.
 | WBS-1.4 | Contract tests pinning committed v1 routes/events | Suite fails on any breaking upstream change | FR-035, RISK-001 | ✅ done (TEST-CONTRACT: routes via `Server.openapi()` + events via `EventManifest` + live `/event` SSE) |
 | WBS-1.5 | Branding pass P-2 (name/TUI title/user-agent) + config defaults P-3 (`lsp:false` etc.) | Patch-surface register updated; grep-based hygiene test (Shaheen pattern) | FR-065, NFR-001 | ✅ identity done (name + `serve`/`token`); cosmetic P-2 (README/TUI title/UA/logo) + config P-3 deferred to PH-5 (DEC-011c) |
 
-### PH-2 Instances — ⏳ BUILT (local-validated; MS-003 exit pending 3-OS CI green)
+### PH-2 Instances — ✅ COMPLETE (MS-003 met, 2026-07-05, PR #17)
 | WBS | Item | DoD | Traces | Status |
 |---|---|---|---|---|
 | WBS-2.1 | marid-instance: add/list/path/start/stop/status/remove; env composition; launchers (3 OSes) | Commands work; `list --json`; 0700 dirs | FR-053, ADR-0006 | ✅ done (new `@marid/instance` pkg — `composeInstanceEnv` = EXP-002 env set; `MaridInstanceCommand` in `marid.ts`; `list --json`; 0700 trees; launcher via `process.execPath`) |
 | WBS-2.2 | Port allocation + PID files + graceful shutdown | No orphan processes; port collisions impossible | FR-053 | ✅ done (race-free port via `--port 0` + logfile readiness; PID/port record; **idempotent start guard** — a second `start` returns the live record, never spawns a second server; platform-split tree-kill — `taskkill /T` on Windows, POSIX signals the process group *and* bare pid SIGTERM→SIGKILL; spiked on Windows) |
-| WBS-2.3 | Multi-instance isolation test suite (from R-05 inventory + EXP-002) | KPI-003 green in CI | NFR-008 | ⏳ built + local-green (Windows): fast unit tier (every R-05 row) + live 2-instance diff (`instance-isolation.test.ts`, `MARID_ISOLATION=1`) in new 3-OS `marid-isolation` CI job. MS-003 MET when that job is green on all 3 OSes. |
+| WBS-2.3 | Multi-instance isolation test suite (from R-05 inventory + EXP-002) | KPI-003 green in CI | NFR-008 | ✅ done — MS-003 MET: fast unit tier (every R-05 row) + live 2-instance diff (`instance-isolation.test.ts`, `MARID_ISOLATION=1`) green in the 3-OS `marid-isolation` job (ubuntu 39s / macOS 53s / windows), on every PR-#17 run incl. the final all-green ×2 |
 
 ### PH-3 Cross-interface
 | WBS | Item | DoD | Traces |

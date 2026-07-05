@@ -186,6 +186,11 @@ could not protect them (first hit: core's flock test). Fixed by adding `OPENCODE
 `globalPassThroughEnv` in `turbo.json` (one line, upstream config file — re-apply on sync conflict;
 `passThroughEnv` does not affect task hashes, so caching is unchanged).
 
+**Watch-list (known-thin budgets, deliberately NOT pre-widened):** flock's single-worker boot waits
+(`wait(ready, 5_000)`) and crash-recovery `staleMs: 500`; acp helpers' handshake waits. Per the doctrine
+below, route each through the scale only when it actually flakes — pre-emptive widening accumulates
+upstream-edit surface for hypothetical failures.
+
 All read-sites carry `marid:` comments. On sync, re-apply on conflict; the `ci.yml` env survives
 untouched. Any **new** timing flake should be fixed by routing its budget through this scale (or, if it
 already flows through a wrapper above, it is covered automatically) — not by another one-off widening.
