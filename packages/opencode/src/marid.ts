@@ -40,6 +40,7 @@ import { errorMessage } from "./util/error"
 import { PluginCommand } from "./cli/cmd/plug"
 import { Heap } from "./cli/heap"
 import { MaridServeCommand, MaridTokenCommand } from "./cli/cmd/marid"
+import { MaridInstanceCommand } from "./cli/cmd/marid-instance"
 
 const args = hideBin(process.argv)
 
@@ -103,6 +104,7 @@ const cli = yargs(args)
   .command(UninstallCommand)
   .command(MaridServeCommand) // authenticated; replaces upstream ServeCommand
   .command(MaridTokenCommand) // marid-only: bearer token management
+  .command(MaridInstanceCommand) // marid-only: isolated multi-instance lifecycle
   .command(WebCommand)
   .command(ModelsCommand)
   .command(StatsCommand)

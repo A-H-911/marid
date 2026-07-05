@@ -113,6 +113,12 @@ jobs:
       # assertions self-skip on Windows), so no extra env needed.
       - name: Run marid-auth tests
         run: bun --cwd packages/marid-auth test
+      # marid (WBS-2.1/2.2): TEST-INST fast unit tier — env composition (every
+      # R-05 row), registry, and lifecycle via a tiny fake server (no opencode
+      # boot). Dependency-free, cross-OS. The heavy live 2-instance proof runs in
+      # the dedicated 3-OS marid-isolation job below (KPI-003).
+      - name: Run marid-instance unit tests
+        run: bun --cwd packages/marid-instance test
 
   smoke:
     name: smoke (${{ matrix.os }})
@@ -164,3 +170,46 @@ jobs:
       - name: Build marid binary + smoke (--version)
         run: bun run script/marid-build.ts --single --skip-install
         working-directory: packages/opencode
+
+  # marid (WBS-2.3 / MS-003 / KPI-003): the multi-instance isolation proof on 3
+  # OSes. Launches two REAL authenticated `marid serve` instances with fully
+  # composed per-instance env and asserts zero cross-instance interference across
+  # the R-05 conflict inventory (distinct ports, per-instance DB/sessions, no
+  # state written outside the composed XDG roots — the deferred EXP-002 live
+  # diff). Gated by MARID_ISOLATION=1 so it stays out of the 2-OS unit job.
+  # Inherits the unit job's Windows-runner workarounds because it boots a full
+  # opencode server; timing rides OPENCODE_TIMING_SCALE (P-CI-4), not a new knob.
+  marid-isolation:
+    name: marid-isolation (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: ./.github/actions/bun-install
+      - name: Install ripgrep (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ripgrep -y
+      - name: Prepare temp dir on workspace drive (Windows)
+        if: runner.os == 'Windows'
+        run: mkdir -p /d/opencode-tmp
+      - name: Run multi-instance isolation suite (2 real instances)
+        run: bun test test/marid/instance-isolation.test.ts --timeout 300000
+        working-directory: packages/opencode
+        env:
+          MARID_ISOLATION: "1"
+          OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
+          OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
+          TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+          TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
