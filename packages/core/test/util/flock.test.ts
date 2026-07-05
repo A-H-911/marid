@@ -22,6 +22,13 @@ type Msg = {
 const root = path.join(import.meta.dir, "../..")
 const worker = path.join(import.meta.dir, "../fixture/flock-worker.ts")
 
+// marid: CI timing scale (P-CI-4; ci.yml sets it per-OS, local default 1 = unchanged).
+// The 16-worker contention stampede on a 2-core GitHub runner can starve the lock
+// HOLDER of CPU past a fixed staleMs, so a contender "stale-breaks" a healthy lock and
+// trips the worker's exclusive-create (wx) guard -> exit 1 -> toEqual mismatch. Scale
+// the tolerance budgets instead of widening them for everyone.
+const SCALE = Number(process.env.OPENCODE_TIMING_SCALE) || 1
+
 async function tmpdir() {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "flock-test-"))
   return {
@@ -130,8 +137,8 @@ describe("util.flock", () => {
           done,
           active,
           holdMs: 30,
-          staleMs: 1_000,
-          timeoutMs: 15_000,
+          staleMs: 1_000 * SCALE, // marid: heartbeat tolerance must cover CI scheduling starvation (P-CI-4)
+          timeoutMs: 15_000 * SCALE,
         }),
       ),
     )
@@ -144,7 +151,7 @@ describe("util.flock", () => {
       .map((x) => x.trim())
       .filter(Boolean)
     expect(lines.length).toBe(n)
-  }, 20_000)
+  }, 20_000 * SCALE) // marid: outer cap scales with the budgets above (P-CI-4)
 
   test("times out while waiting when lock is still healthy", async () => {
     await using tmp = await tmpdir()

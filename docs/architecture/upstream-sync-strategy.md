@@ -48,7 +48,7 @@ have gone stale — they must be reconciled by hand on each sync (added PH-1, DE
 
 - **`packages/opencode/src/marid.ts`** mirrors `src/index.ts`'s top-level command list. On sync, diff
   `src/index.ts`'s `.command(...)` calls against `src/marid.ts`; add any new upstream command (marid keeps its
-  authenticated `serve` swap + `token` addition).
+  authenticated `serve` swap + `token` + `instance` additions).
 - **`packages/opencode/script/marid-build.ts`** mirrors `script/build.ts`'s `Bun.build` config (defines, worker
   paths, compile target). On sync, diff the two build scripts' `define`/`entrypoints`/`compile` blocks and port any
   change (marid keeps its `src/marid.ts` entrypoint + `marid` binary name).
@@ -171,6 +171,25 @@ every budget flows through:
   `waitForSync` fence (`25 × SCALE`); imports the shared constant.
 - `test/cli/run/run-process.test.ts` — the two `durationMs` hang-detection bounds scale with the (now
   scaled) kill deadlines they pair with, preserving fail-fast-vs-hang semantics at any scale.
+- `test/cli/acp/lifecycle.test.ts` — the stdin-EOF exit-wait (`5s × TIMING_SCALE`): an inline
+  `Effect.timeout` bypassed every wrapper above; measured 5.5s on a cold 2-core Windows runner (PR #17).
+- `packages/core/test/util/flock.test.ts` — the 16-worker contention test's tolerance budgets
+  (`staleMs 1s`, acquire `timeoutMs 15s`, outer cap `20s`, all `× SCALE` via a file-local const): under
+  the 2-core spawn stampede the lock HOLDER is CPU-starved past 1s, so a contender legally stale-breaks a
+  healthy lock and trips the worker's exclusive-create guard → exit 1 → `toEqual` mismatch (PR #17).
+  Production staleness is 60s; only the test's tightened calibration was wrong, not the flock mechanism.
+
+**Knob transport (turbo strict env — found via PR #17):** turbo 2.x runs tasks in **strict env mode**:
+only allowlisted vars reach a task's runtime. `opencode#test` passes everything (`passThroughEnv: ["*"]`),
+but every other package's test task silently **dropped `OPENCODE_TIMING_SCALE`** — the knob physically
+could not protect them (first hit: core's flock test). Fixed by adding `OPENCODE_TIMING_SCALE` to
+`globalPassThroughEnv` in `turbo.json` (one line, upstream config file — re-apply on sync conflict;
+`passThroughEnv` does not affect task hashes, so caching is unchanged).
+
+**Watch-list (known-thin budgets, deliberately NOT pre-widened):** flock's single-worker boot waits
+(`wait(ready, 5_000)`) and crash-recovery `staleMs: 500`; acp helpers' handshake waits. Per the doctrine
+below, route each through the scale only when it actually flakes — pre-emptive widening accumulates
+upstream-edit surface for hypothetical failures.
 
 All read-sites carry `marid:` comments. On sync, re-apply on conflict; the `ci.yml` env survives
 untouched. Any **new** timing flake should be fixed by routing its budget through this scale (or, if it

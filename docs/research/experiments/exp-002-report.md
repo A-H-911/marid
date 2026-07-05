@@ -121,11 +121,13 @@ Home reads split cleanly, and none write cross-instance state to real HOME:
 
 ## Residual (what the audit cannot fully close)
 
-- **The live two-instance filesystem diff was not run** (no `bun`). The audit substantiates "every
-  known write routes through an overridable path"; only a real diff can catch a genuinely *unknown*
-  stray write (e.g. from a transitive dependency writing to `$HOME` directly). Recommend running the
-  actual EXP-002 (two `serve` instances + `diff` of trees + HOME snapshot before/after) on a
-  bun-capable machine before the marid-instance design freeze. Low expected risk given the audit.
+- **~~The live two-instance filesystem diff was not run~~ — CLOSED in PH-2 (2026-07-05).** The deferred
+  live diff is now the `instance-isolation.test.ts` suite (`MARID_ISOLATION=1`): two real authenticated
+  `marid serve` instances launched with the composed env, asserting distinct ports, per-instance DB and
+  session state, and — the negative claim this residual was about — **no opencode state written outside
+  the composed XDG roots** (a shared fake HOME is snapshotted; a stray raw-`$HOME`/un-relocated write
+  would land there and fail the test). Green locally on Windows; runs on all 3 OSes in the
+  `marid-isolation` CI job (MS-003 gate). The audit's low-risk prediction held: no stray write surfaced.
 - `{cache}/bin` concurrent LSP downloads to identical paths are not obviously locked
   (`05-config-...:100`, unverified) — but with per-instance `XDG_CACHE_HOME` each instance has its own
   `{cache}/bin`, so cross-instance torn installs do not arise under the isolation model (intra-instance
