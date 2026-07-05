@@ -1,89 +1,102 @@
 ---
-artifact: traceability-matrix
-status: Derived (regenerated, never hand-edited)
-version: v0.1
-updated: 2026-07-03
+status: Approved
+version: 1.0.0
+updated: 2026-07-05
+owner: operator (STK-001)
+generation: derived
 ---
 
-# Traceability Matrix (requirement → decision → work → test → risk)
+# Traceability Matrix (Req → Decision → Work → Test → Risk → Acceptance)
 
-Derived from the approved registers; regenerate on any change. AC column only where user-visible
-behavior is asserted. Test families are defined in `validation/test-strategy.md`.
+**Derived — regenerated from the registers, not hand-maintained.** Each MVP requirement links to ≥1
+decision, ≥1 work item, and ≥1 test (gate G-TRACE); behaviour-bearing ones also link an `AC-`. `Scope`
+`Full` rows are post-MVP and intentionally deferred (coverage `gap`). Requirement text lives in
+[functional](../requirements/functional.md) / [non-functional](../requirements/non-functional.md); work
+items in [work-breakdown](../planning/work-breakdown.md); tests (TEST- families) in
+[test-strategy](test-strategy.md); acceptance in [acceptance-criteria](acceptance-criteria.md).
 
-## Functional requirements
+## Requirements
 
-| FR | Decision(s) | Work | Test | AC | Risk |
-|---|---|---|---|---|---|
-| FR-001..007, 009..011, 015..017 (runtime core preserved) | Gate-4 reuse-as-is; DEC-009 | (upstream; no work) | TEST-UP | — | RISK-001 |
-| FR-008 plugins | Gate-8 trust policy | WBS-1.5 defaults | TEST-UP, TEST-SEC | — | RISK-004 |
-| FR-012 caching | ADR-0006 (namespacing) | WBS-2.1 | TEST-INST | — | RISK-002 |
-| FR-013 MCP | Gate-4 reuse; gate-8 pinning | WBS-1.5 defaults | TEST-UP | — | RISK-004 |
-| FR-014 LSP optional | Keep-matrix: `lsp:false` default | WBS-1.5 | TEST-BUILD | AC-013 | — |
-| FR-018 config/secrets | Keep-matrix: extend | WBS-1.5, WBS-2.1 | TEST-AUTH, TEST-SEC | AC-016 | RISK-007 |
-| FR-019 SDK | ADR-0003 | WBS-1.4 | TEST-CONTRACT | — | RISK-001 |
-| FR-020 observability hooks | Keep-matrix: extend | WBS-1.3 | TEST-AUTH | — | — |
-| FR-021 controlled access | Gate-8 B4 | (upstream) + WBS-4.4 | TEST-SEC | AC-012 | RISK-003 |
-| FR-022 session create/discover | ADR-0003 | WBS-1.4 | TEST-CONTRACT | AC-006 | RISK-001 |
-| FR-023 sync+async prompt | ADR-0003 | WBS-1.4 | TEST-CONTRACT | AC-006 | RISK-001 |
-| FR-024 event streaming | ADR-0003, DEC-002 | WBS-1.4 | TEST-CONTRACT, TEST-SYNC | AC-006 | RISK-006 |
-| FR-025 SSE primary | DEC-002/ADR-0003 | WBS-1.4 | TEST-CONTRACT | — | — |
-| FR-026 history | ADR-0003 | WBS-1.4 | TEST-CONTRACT | AC-008 | — |
-| FR-027 cancel/resume | ADR-0003 | WBS-1.4 | TEST-CONTRACT | AC-008 | — |
-| FR-028 permissions over API | ADR-0003 | WBS-1.4, WBS-4.3 | TEST-CONTRACT, TEST-TG | AC-012 | RISK-003 |
-| FR-029 tool/subagent events | ADR-0003 (subagent events: confirm in EXP-001) | WBS-0.4, WBS-1.4 | TEST-CONTRACT | — | — |
-| FR-030 errors/correlation/idempotency | Gate-7 envelope | WBS-1.3 | TEST-AUTH | — | — |
-| FR-031 authn/z | Gate-7 envelope | WBS-1.2 | TEST-AUTH | AC-003/004 | — |
-| FR-032 rate limiting | Gate-7 envelope | WBS-1.3 | TEST-AUTH | AC-005 | — |
-| FR-033 audit log | Gate-7 envelope | WBS-1.3 | TEST-AUTH | AC-003 | — |
-| FR-034 health/version | Gate-7 (extend if absent) | WBS-1.2 | TEST-CONTRACT | AC-001 | — |
-| FR-035 versioning | Gate-7 policy | WBS-1.4 | TEST-CONTRACT | AC-015 | RISK-001 |
-| FR-036 reconnect/ordering/dedup | Gate-7 event contract | WBS-3.2 | TEST-SYNC | AC-007 | RISK-006 |
-| FR-037 durable global replay | Deferred (Full) | — | — | — | — |
-| FR-038 cross-interface consistency | ADR-0004 | WBS-3.1 | TEST-SYNC | AC-006 | — |
-| FR-039 authoritative store/identity | ADR-0004; OQ-003 answer | WBS-3.1 | TEST-SYNC | AC-006 | — |
-| FR-040 concurrency/queueing | ADR-0004 + EXP-001 | WBS-0.4, WBS-3.3 | TEST-SYNC | AC-009 | RISK-010 |
-| FR-041 ownership/locking/conflict | ADR-0004 + EXP-001 | WBS-3.3 | TEST-SYNC | AC-009 | RISK-010 |
-| FR-042 TUI live updates | ADR-0004 | WBS-3.1 | TEST-SYNC | AC-006 | — |
-| FR-043 restart recovery | ADR-0004; R-03 gap | WBS-3.2 | TEST-SYNC | AC-008 | — |
-| FR-044 retention/export | Deferred (Full) | — | — | — | — |
-| FR-045 channel contract | ADR-0005 | WBS-4.1..4.5 | TEST-TG | — | — |
-| FR-046 Telegram adapter | ADR-0005; R-09 | WBS-4.1/4.2 | TEST-TG | AC-011 | — |
-| FR-047 WhatsApp | Deferred (Full; contract-compatible) | — | — | — | — |
-| FR-048 streaming simulation | R-09 cadence; EXP-003 | WBS-4.2 | TEST-TG | AC-011 | — |
-| FR-049 media/replies/commands | R-09 caps | WBS-4.5 | TEST-TG | — | — |
-| FR-050 identity linking/allowlist | Gate-8 B1 | WBS-4.1 | TEST-TG | AC-010 | RISK-003 |
-| FR-051 webhook/replay protection | R-09: long polling + update_id dedup | WBS-4.1 | TEST-TG | AC-010 | — |
-| FR-052 capability policy | Gate-8 B2; INV-001 | WBS-4.4 | TEST-TG, TEST-SEC | AC-012 | RISK-003 |
-| FR-053 multi-instance | ADR-0006 + EXP-002 | WBS-2.1..2.3 | TEST-INST | AC-001/002 | RISK-002 |
-| FR-054 config layering | Keep-matrix extend | WBS-2.1 (env composition) | TEST-INST | AC-001 | — |
-| FR-055 secret handling/redaction | Gate-8 B7 | WBS-1.3 | TEST-SEC | AC-016 | RISK-007 |
-| FR-056 OTLP signals | Keep-matrix; R-10 pin | WBS-1.3 (attrs) | TEST-AUTH | — | — |
-| FR-057 correlation chain | Gate-7 request-ID | WBS-1.3 | TEST-AUTH | — | — |
-| FR-058 metrics catalog | Deferred (Full) | — | — | — | — |
-| FR-059 audit vs ops separation | Gate-7/8 | WBS-1.3 | TEST-AUTH | AC-016 | — |
-| FR-060 distribution | C-6/gate-10 | WBS-1.1, WBS-5.1/5.2 | TEST-BUILD | AC-013/014 | RISK-009 |
-| FR-061 upstream sync | ADR-0001/gate-9 | WBS-5.3 | TEST-SYNCUP | AC-015 | RISK-005 |
-| FR-062 Git Flow | Gate-9 | WBS-0.3 | (process; CI enforced) | — | — |
-| FR-063 test strategy | Gate-13 package | validation/test-strategy.md | all families | — | — |
-| FR-064 CI/CD | Gate-9/10 | WBS-0.3, WBS-5.1 | TEST-BUILD | AC-014 | RISK-004 |
-| FR-065 naming/branding | DEC-008/gate-3 | WBS-1.5, WBS-5.4 | TEST-BUILD (hygiene) | AC-013 | — |
+| Req | Scope | Decisions | Work items | Tests | Risks | Acceptance | Coverage |
+|---|---|---|---|---|---|---|---|
+| FR-001 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-002 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-003 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-004 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-005 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-006 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-007 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-008 | MVP | Gate-8 trust policy | WBS-1.5 defaults | TEST-UP, TEST-SEC | RISK-004 | — | full |
+| FR-009 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-010 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-011 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-012 | MVP | ADR-0006 (namespacing) | WBS-2.1 | TEST-INST | RISK-002 | — | full |
+| FR-013 | MVP | Gate-4 reuse; gate-8 pinning | WBS-1.5 defaults | TEST-UP | RISK-004 | — | full |
+| FR-014 | MVP | Keep-matrix `lsp:false` default | WBS-1.5 | TEST-BUILD | — | AC-013 | full |
+| FR-015 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-016 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-017 | MVP | Gate-4 reuse-as-is; DEC-009 | upstream (reuse-as-is) | TEST-UP | RISK-001 | — | full |
+| FR-018 | MVP | Keep-matrix extend | WBS-1.5, WBS-2.1 | TEST-AUTH, TEST-SEC | RISK-007 | AC-016 | full |
+| FR-019 | MVP | ADR-0003 | WBS-1.4 | TEST-CONTRACT | RISK-001 | — | full |
+| FR-020 | MVP | Keep-matrix extend | WBS-1.3 | TEST-AUTH | — | — | full |
+| FR-021 | MVP | Gate-8 B4 | WBS-4.4 (upstream base) | TEST-SEC | RISK-003 | AC-012 | full |
+| FR-022 | MVP | ADR-0003 | WBS-1.4 | TEST-CONTRACT | RISK-001 | AC-006 | full |
+| FR-023 | MVP | ADR-0003 | WBS-1.4 | TEST-CONTRACT | RISK-001 | AC-006 | full |
+| FR-024 | MVP | ADR-0003, DEC-002 | WBS-1.4 | TEST-CONTRACT, TEST-SYNC | RISK-006 | AC-006 | full |
+| FR-025 | MVP | DEC-002, ADR-0003 | WBS-1.4 | TEST-CONTRACT | — | — | full |
+| FR-026 | MVP | ADR-0003 | WBS-1.4 | TEST-CONTRACT | — | AC-008 | full |
+| FR-027 | MVP | ADR-0003 | WBS-1.4 | TEST-CONTRACT | — | AC-008 | full |
+| FR-028 | MVP | ADR-0003 | WBS-1.4, WBS-4.3 | TEST-CONTRACT, TEST-TG | RISK-003 | AC-012 | full |
+| FR-029 | MVP | ADR-0003 (subagent events confirmed via EXP-001) | WBS-0.4, WBS-1.4 | TEST-CONTRACT | — | — | partial |
+| FR-030 | MVP | Gate-7 envelope | WBS-1.3 | TEST-AUTH | — | — | full |
+| FR-031 | MVP | Gate-7 envelope | WBS-1.2 | TEST-AUTH | — | AC-003, AC-004 | full |
+| FR-032 | MVP | Gate-7 envelope | WBS-1.3 | TEST-AUTH | — | AC-005 | full |
+| FR-033 | MVP | Gate-7 envelope | WBS-1.3 | TEST-AUTH | — | AC-003 | full |
+| FR-034 | MVP | Gate-7 (extend if absent) | WBS-1.2 | TEST-CONTRACT | — | AC-001 | full |
+| FR-035 | MVP | Gate-7 policy | WBS-1.4 | TEST-CONTRACT | RISK-001 | AC-015 | full |
+| FR-036 | MVP | Gate-7 event contract | WBS-3.2 | TEST-SYNC | RISK-006 | AC-007 | full |
+| FR-037 | Full | Deferred (Full) | — | — | — | — | gap |
+| FR-038 | MVP | ADR-0004 | WBS-3.1 | TEST-SYNC | — | AC-006 | full |
+| FR-039 | MVP | ADR-0004; OQ-003 answer | WBS-3.1 | TEST-SYNC | — | AC-006 | full |
+| FR-040 | MVP | ADR-0004 + EXP-001 | WBS-0.4, WBS-3.3 | TEST-SYNC | RISK-010 | AC-009 | full |
+| FR-041 | MVP | ADR-0004 + EXP-001 | WBS-3.3 | TEST-SYNC | RISK-010 | AC-009 | full |
+| FR-042 | MVP | ADR-0004 | WBS-3.1 | TEST-SYNC | — | AC-006 | full |
+| FR-043 | MVP | ADR-0004; R-03 gap | WBS-3.2 | TEST-SYNC | — | AC-008 | full |
+| FR-044 | Full | Deferred (Full) | — | — | — | — | gap |
+| FR-045 | MVP | ADR-0005 | WBS-4.1, WBS-4.5 | TEST-TG | — | — | full |
+| FR-046 | MVP | ADR-0005; R-09 | WBS-4.1, WBS-4.2 | TEST-TG | — | AC-011 | full |
+| FR-047 | Full | Deferred (Full; contract-compatible) | — | — | — | — | gap |
+| FR-048 | MVP | R-09 cadence; EXP-003 | WBS-4.2 | TEST-TG | — | AC-011 | full |
+| FR-049 | MVP | R-09 caps | WBS-4.5 | TEST-TG | — | — | full |
+| FR-050 | MVP | Gate-8 B1 | WBS-4.1 | TEST-TG | RISK-003 | AC-010 | full |
+| FR-051 | MVP | R-09 long-polling + update_id dedup | WBS-4.1 | TEST-TG | — | AC-010 | full |
+| FR-052 | MVP | Gate-8 B2; INV-001 | WBS-4.4 | TEST-TG, TEST-SEC | RISK-003 | AC-012 | full |
+| FR-053 | MVP | ADR-0006 + EXP-002 | WBS-2.1, WBS-2.2, WBS-2.3 | TEST-INST | RISK-002 | AC-001, AC-002 | full |
+| FR-054 | MVP | Keep-matrix extend | WBS-2.1 | TEST-INST | — | AC-001 | full |
+| FR-055 | MVP | Gate-8 B7 | WBS-1.3 | TEST-SEC | RISK-007 | AC-016 | full |
+| FR-056 | MVP | Keep-matrix; R-10 pin | WBS-1.3 | TEST-AUTH | — | — | full |
+| FR-057 | MVP | Gate-7 request-ID | WBS-1.3 | TEST-AUTH | — | — | full |
+| FR-058 | Full | Deferred (Full) | — | — | — | — | gap |
+| FR-059 | MVP | Gate-7, Gate-8 | WBS-1.3 | TEST-AUTH | — | AC-016 | full |
+| FR-060 | MVP | C-6; gate-10 | WBS-1.1, WBS-5.1, WBS-5.2 | TEST-BUILD | RISK-009 | AC-013, AC-014 | partial |
+| FR-061 | MVP | ADR-0001; gate-9 | WBS-5.3 | TEST-SYNCUP | RISK-005 | AC-015 | partial |
+| FR-062 | MVP | Gate-9 | WBS-0.3 | TEST-BUILD (CI-enforced) | — | — | full |
+| FR-063 | MVP | Gate-13 package | WBS-0.3 (test strategy) | TEST-BUILD | — | — | full |
+| FR-064 | MVP | Gate-9, Gate-10 | WBS-0.3, WBS-5.1 | TEST-BUILD | RISK-004 | AC-014 | full |
+| FR-065 | MVP | DEC-008; gate-3 | WBS-1.5, WBS-5.4 | TEST-BUILD (hygiene) | — | AC-013 | partial |
+| NFR-001 | MVP | ADR-0001, ADR-0002; P-* register | WBS-5.3 (delta report) | TEST-SYNCUP, KPI-004 | RISK-005 | — | full |
+| NFR-002 | MVP | DEC-009 | architecture principles | Gate-5 review + phase reviews | — | — | full |
+| NFR-003 | MVP | Gates 7–10 artifacts | WBS-5.5 | KPI-006, readiness report | — | — | partial |
+| NFR-004 | MVP | CON-011 | WBS-0.3 (3-OS CI matrix) | TEST-BUILD | RISK-004 | AC-014 | full |
+| NFR-005 | MVP | Gate-8 threat model | WBS-1.3 | TEST-SEC | RISK-003 | — | full |
+| NFR-006 | MVP | ADR-0003, ADR-0004 | WBS-3.1, WBS-3.3 | TEST-SYNC | — | — | partial |
+| NFR-007 | MVP | ADR-0004 | WBS-3.1, WBS-3.2 | TEST-SYNC | RISK-006 | AC-006, AC-007 | full |
+| NFR-008 | MVP | ADR-0006 | WBS-2.3 | TEST-INST, KPI-003 | RISK-002 | AC-002 | full |
+| NFR-009 | MVP | Keep-matrix; R-10 pin | WBS-1.3 | TEST-AUTH | — | — | partial |
+| NFR-010 | MVP | Branding/README plan | WBS-5.4 | TEST-BUILD (docs CI) | — | — | partial |
+| NFR-011 | MVP | Gate-13 test strategy | WBS-0.3 | TEST-BUILD (coverage) | — | — | partial |
+| NFR-012 | MVP | DEC-009; governance | all artifacts | Gate reviews (ongoing) | — | — | full |
 
-## Non-functional requirements
-
-| NFR | Realized by | Verified by |
-|---|---|---|
-| NFR-001 patch surface | ADR-0001/0002; P-* register | Delta report on every sync PR; KPI-004 |
-| NFR-002 simplicity | DEC-009; architecture principles | Gate-5 review (done); phase reviews |
-| NFR-003 independent product ops | Gates 7–10 artifacts | KPI-006; readiness report |
-| NFR-004 cross-platform | CON-011 | 3-OS CI matrix (TEST-BUILD) |
-| NFR-005 security | Gate-8 threat model | TEST-SEC; scanning jobs |
-| NFR-006 streaming latency (⊕) | ADR-0003/0004 | TEST-SYNC timing assertions (tune at PH-3) |
-| NFR-007 sync convergence (⊕) | ADR-0004 | TEST-SYNC (AC-006/007) |
-| NFR-008 isolation | ADR-0006 | TEST-INST (AC-002, KPI-003) |
-| NFR-009 OTel standards | R-10 pinning | TEST-AUTH attr checks |
-| NFR-010 docs quality | Branding/README plan | Docs-validation CI job |
-| NFR-011 test rigor | Test strategy | Coverage report vs measured baseline |
-| NFR-012 plain English | All artifacts | Gate reviews (ongoing) |
-
-**Gaps:** none for MVP-priority FRs (KPI-005 precondition). Deferred items (FR-037/044/047/058) are
-intentionally unlinked and live in the registers with triggers.
+**Gaps:** none for MVP-priority requirements (KPI-005 precondition). The four `Scope: Full` rows
+(FR-037, FR-044, FR-047, FR-058) are intentionally deferred post-MVP and live in
+[functional](../requirements/functional.md) with triggers.

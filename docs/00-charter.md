@@ -5,7 +5,7 @@ version: v1.0
 updated: 2026-07-03
 ---
 
-# Project Charter — Private Agent Platform on OpenCode (working name: TBD at gate 3)
+# Project Charter — Marid (private agent platform on OpenCode)
 
 ## Problem
 

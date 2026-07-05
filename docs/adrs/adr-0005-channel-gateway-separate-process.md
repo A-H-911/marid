@@ -1,13 +1,15 @@
 ---
-artifact: adr
-status: Approved (gate 5; policy details confirmed at gate 8)
+id: ADR-0005
+status: Approved
 version: v1.0
 updated: 2026-07-03
+supersedes: none
+superseded_by: none
 ---
 
 # ADR-0005 — Channel gateways are separate processes speaking only the public API
 
-**Status:** Approved (2026-07-03) · realizes CON-006/FR-045 · derives from C-7
+**Status:** Approved (2026-07-03; gate 5, policy confirmed gate 8) · realizes CON-006/FR-045 · derives from C-7
 
 **Context.** In-process plugins have zero isolation (R-04) — the wrong place for untrusted ingress.
 The pattern "external process → public HTTP+SSE" is proven by upstream's slack prototype (R-06) and

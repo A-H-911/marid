@@ -11,18 +11,21 @@ Decision points detected at intake — including solution choices the brief itse
 the underlying need stays a requirement) and tensions that need a recorded resolution. Statuses follow
 governance: Proposed / Approved / Rejected / Superseded / Deferred. Nothing here is Approved yet.
 
-| ID | Decision point | Options on the table | Brief's stated lean | Gate | Status |
-|---|---|---|---|---|---|
-| DEC-001 | Component reduction strategy per package: delete vs build-time exclusion vs feature flag vs package boundary vs distribution profile | All five, compared per candidate (§2, §5) | "Do not assume stripping requires deleting"; prefer small patch surface | 6 | Proposed (open) |
-| DEC-002 | Primary streaming protocol for the remote API | SSE-first; WebSocket only where SSE+HTTP insufficient | SSE-first (§6) — treated as a proposal from the brief, to be confirmed against upstream's existing mechanism | 7 | Proposed |
-| DEC-003 | Upstream synchronization model | downstream fork w/ upstream remote · periodic merge · periodic rebase · patch-stack · minimal-diff distribution · flags/exclusion · cherry-pick · external adapter layer (§13) | Prefer small isolated patch surface | 9 | Proposed (open) |
-| DEC-004 | Reuse vs extend vs wrap vs replace for each existing capability: server, SDK, SSE/streaming, session sync, event bus, `packages/slack` channel pattern | Per-capability verdict with evidence (§3) | Reuse-first (INV-007) | 4→6 | Proposed (open) |
-| DEC-005 | Authoritative session store + concurrency model (optimistic vs pessimistic, queueing/steering semantics) | To be derived from upstream's actual session storage + sync design | None — §7 requires definition, forbids silently assuming distributed coordination | 7 | Proposed (open) |
-| DEC-006 | MVP distribution method | standalone binary · npm/Bun install · Docker/Compose · native packages (§12) | One MVP method + expansion path; no format explosion | 10 | Proposed (open) |
-| DEC-007 | Branching model details (Git Flow adaptation for solo downstream fork) | Git Flow as mandated, adapted (§14) | Git Flow is a constraint (CON-007); the *adaptation* is the decision | 9 | Proposed (open) |
-| DEC-008 | Product/repo/CLI naming | wakil / sanad / rafiq / marid (see naming-proposal.md) | None | 3 | **Approved: Marid** (2026-07-03) |
-| DEC-009 | Reuse-first principle: always reuse upstream capability rather than build new, unless a justified reason is recorded | (stated by owner at gate 4) | — | 4 | **Approved** (2026-07-03) — strengthens INV-007 |
-| DEC-010 | Source repository visibility (`A-H-911/marid`) | private (charter default) · public (unlocks free branch protection/rulesets) | Charter: "private downstream distribution" | 11 (execution) | **Approved: Public** (operator-directed, 2026-07-03) — amends charter Mission |
+| ID | Decision point | Options on the table | Brief's stated lean | Gate | Status | Decided / note |
+|---|---|---|---|---|---|---|
+| DEC-001 | Component reduction strategy per package: delete vs build-time exclusion vs feature flag vs package boundary vs distribution profile | All five, compared per candidate (§2, §5) | "Do not assume stripping requires deleting"; prefer small patch surface | 6 | Proposed | open |
+| DEC-002 | Primary streaming protocol for the remote API | SSE-first; WebSocket only where SSE+HTTP insufficient | SSE-first (§6) — treated as a proposal from the brief, to be confirmed against upstream's existing mechanism | 7 | Proposed | to confirm vs upstream |
+| DEC-003 | Upstream synchronization model | downstream fork w/ upstream remote · periodic merge · periodic rebase · patch-stack · minimal-diff distribution · flags/exclusion · cherry-pick · external adapter layer (§13) | Prefer small isolated patch surface | 9 | Proposed | open |
+| DEC-004 | Reuse vs extend vs wrap vs replace for each existing capability: server, SDK, SSE/streaming, session sync, event bus, `packages/slack` channel pattern | Per-capability verdict with evidence (§3) | Reuse-first (INV-007) | 4→6 | Proposed | open |
+| DEC-005 | Authoritative session store + concurrency model (optimistic vs pessimistic, queueing/steering semantics) | To be derived from upstream's actual session storage + sync design | None — §7 requires definition, forbids silently assuming distributed coordination | 7 | Proposed | open |
+| DEC-006 | MVP distribution method | standalone binary · npm/Bun install · Docker/Compose · native packages (§12) | One MVP method + expansion path; no format explosion | 10 | Proposed | open |
+| DEC-007 | Branching model details (Git Flow adaptation for solo downstream fork) | Git Flow as mandated, adapted (§14) | Git Flow is a constraint (CON-007); the *adaptation* is the decision | 9 | Proposed | open |
+| DEC-008 | Product/repo/CLI naming | wakil / sanad / rafiq / marid (see naming-proposal.md) | None | 3 | Approved | Marid (2026-07-03) |
+| DEC-009 | Reuse-first principle: always reuse upstream capability rather than build new, unless a justified reason is recorded | (stated by owner at gate 4) | — | 4 | Approved | 2026-07-03; strengthens INV-007 |
+| DEC-010 | Source repository visibility (`A-H-911/marid`) | private (charter default) · public (unlocks free branch protection/rulesets) | Charter: "private downstream distribution" | 11 (execution) | Approved | Public; operator-directed 2026-07-03; amends charter Mission (detail below) |
+| DEC-011 | `client`-scope session ownership: durable store vs in-memory map | durable 0600 sidecar (`ownership.json`) · in-memory map | — | PH-1 (execution) | Approved | 2026-07-04; durable sidecar chosen; detail below |
+| DEC-012 | marid binary entry: additive new `src/marid.ts` vs parameterizing edit to upstream `index.ts` | additive entry (P-ENTRY) · edit index.ts | — | PH-1 (execution) | Approved | 2026-07-04; additive entry chosen; detail below |
+| DEC-013 | Branding split: land CLI identity in PH-1, defer cosmetic (README/TUI/UA/logo) to PH-5 vs all-at-once | identity-now + cosmetic-later · all-at-once | — | PH-1 (execution) | Approved | 2026-07-04; split chosen; detail below |
 
 ## Tensions logged at Stage 6 (contradiction/dependency detection)
 
@@ -57,11 +60,11 @@ cloned/forked/indexed/cached regardless of later visibility flips.
 **Traceability:** amends `docs/00-charter.md` (Mission); resolves the blocker in
 `docs/decisions/deviation-branch-protection.md`; unblocks WBS-0.3 protection; flags WBS-5.1 for reconciliation.
 
-## DEC-011 detail — PH-1 execution decisions (marid-auth + profile build)
+## DEC-011 · DEC-012 · DEC-013 detail — PH-1 execution decisions (marid-auth + profile build)
 
 Three operator-directed decisions made while building PH-1 (2026-07-04), recorded per the docs-as-source-of-truth rule.
 
-**(a) `client`-scope session ownership is durable, not in-memory.** The api-event-contract defines `client` as
+**DEC-011 — `client`-scope session ownership is durable, not in-memory.** The api-event-contract defines `client` as
 "sessions it created + its own events." Upstream sessions carry no creator field and the marid-auth wrapper runs
 outside the Effect pipeline (EXP-004), so marid-auth tracks token→session ownership itself. Operator chose a
 **durable 0600 sidecar** (`ownership.json`, same store pattern as `tokens.json`) over an in-memory map: a `client`
@@ -69,10 +72,10 @@ token keeps access to sessions it created across a `marid serve` restart (mirror
 durability). Ownership is recorded on the two session-*creating* ops — `POST /session` (create) and
 `POST /session/:id/fork` (branch). Impl: `packages/marid-auth/src/ownership.ts`.
 
-**(b) marid binary entry is additive (new `src/marid.ts`), not a parameterizing edit to `index.ts`.** See P-ENTRY
+**DEC-012 — marid binary entry is additive (new `src/marid.ts`), not a parameterizing edit to `index.ts`.** See P-ENTRY
 in the patch-surface register. Zero upstream edits; accepts command-list drift, reconciled on sync.
 
-**(c) Branding split — CLI identity in PH-1, cosmetic in PH-5.** Resolves the CLAUDE.md-vs-roadmap conflict the way
+**DEC-013 — Branding split: CLI identity in PH-1, cosmetic in PH-5.** Resolves the CLAUDE.md-vs-roadmap conflict the way
 CLAUDE.md intends: the `marid` binary name + `serve`/`token` commands (MS-002 identity) land now; README / TUI title /
 user-agent string / logo defer to PH-5. See P-2/P-3.
 

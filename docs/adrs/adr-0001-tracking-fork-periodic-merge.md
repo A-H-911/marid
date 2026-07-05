@@ -1,13 +1,15 @@
 ---
-artifact: adr
-status: Approved (gate 5/9 basis; comparison C-1)
+id: ADR-0001
+status: Approved
 version: v1.0
 updated: 2026-07-03
+supersedes: none
+superseded_by: none
 ---
 
 # ADR-0001 — Tracking fork with periodic upstream merge and a minimal additive patch surface
 
-**Status:** Approved (2026-07-03) · promotes DEC-003 · derives from C-1 in `../architecture/technology-comparison.md`
+**Status:** Approved (2026-07-03; gates 5/9 basis) · promotes DEC-003 · derives from C-1 in `../architecture/technology-comparison.md`
 
 **Context.** Marid must reuse OpenCode's runtime while staying synchronizable (NFR-001). Shaheen's
 vendored freeze fails the sync goal; rebase rewrites long-lived branches; a patch-stack is built for

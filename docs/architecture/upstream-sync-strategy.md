@@ -44,7 +44,7 @@ tree at the baseline — how it was originally authored is not otherwise verifie
 ### Additive-file reconcile checklist (P-ENTRY drift — no conflict marker fires)
 
 These Marid files DUPLICATE upstream structure additively, so a git merge shows **no conflict** even when they
-have gone stale — they must be reconciled by hand on each sync (added PH-1, DEC-011):
+have gone stale — they must be reconciled by hand on each sync (added PH-1, DEC-012):
 
 - **`packages/opencode/src/marid.ts`** mirrors `src/index.ts`'s top-level command list. On sync, diff
   `src/index.ts`'s `.command(...)` calls against `src/marid.ts`; add any new upstream command (marid keeps its
