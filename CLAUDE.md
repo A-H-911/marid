@@ -109,10 +109,9 @@ last-resort upstream-file edit**. Current surface:
   release branch. Local `main` may lag; use `develop` / `origin/develop` for diffs and PR bases.
 - Feature branch → **PR into `develop`, squash-merge**. `develop → main` via a **sync PR, merge-commit**
   (this leaves benign merge nodes on `main` that `develop` lacks — the "ahead/behind 2" is normal).
-- **Branch protection** (main + develop): 11 required checks — `lint`, `typecheck`, `unit` (ubuntu +
+- **Branch protection** (main + develop): 14 required checks — `lint`, `typecheck`, `unit` (ubuntu +
   windows), `smoke` (ubuntu/macos/windows), `pr-title`, `marid-isolation` (ubuntu/macos/windows, added
-  PH-2). You cannot self-merge. (PH-3 adds a `marid-sync` 3-OS job → will be 14 once the operator adds it
-  to the ruleset; until then it runs but does not gate.)
+  PH-2), `marid-sync` (ubuntu/macos/windows, added PH-3). You cannot self-merge.
 - CI is `.github/workflows/ci.yml` (**Marid-owned**; upstream workflows are stripped by
   `script/strip-upstream-workflows.ts` with a KEEP allowlist). Marid's `marid-pr-title.yml` replaces
   upstream's PR-standards check.
