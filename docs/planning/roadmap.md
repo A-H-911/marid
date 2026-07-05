@@ -18,7 +18,7 @@ review checkpoint with the operator.
 | PH-0 Foundations ✅ | Fork exists, CI skeleton green, all 4 experiments answered | **MS-001 MET (2026-07-04)**: EXP-001..004 all PASS (no FAIL → no fallbacks); reports in `../research/experiments/`. Shipped PR #9. | Gates 9, 11, 12 |
 | PH-1 Marid layer ✅ | marid-auth + distribution profile + branding | **MS-002 MET (2026-07-04)**: authenticated `marid` binary from the `marid` profile passes contract tests; 3-OS `marid-build` green. Shipped PR #13. | PH-0 |
 | PH-2 Instances ✅ | marid-instance CLI + isolation | **MS-003 MET (2026-07-05)**: KPI-003 — 3-OS `marid-isolation` green (2 consecutive all-green runs incl. announced unit-windows re-run). Shipped PR #17. | PH-1 |
-| PH-3 Cross-interface | TUI-as-client default + §7 flow verified | MS-004: KPI-001 demo repeatable; concurrency semantics documented | PH-1 (parallel with PH-2) |
+| PH-3 Cross-interface ⏳ | TUI-as-client default + §7 flow verified | MS-004: KPI-001 demo repeatable; concurrency semantics documented — **built + local-green (Windows); pending 3-OS `marid-sync` CI** | PH-1 (parallel with PH-2) |
 | PH-4 Telegram | marid-telegram + capability policy | MS-005: KPI-002 (round trip + policy denial paths) | PH-1; PH-3 for live-update assertions |
 | PH-5 Release & sync | Private distribution + one real upstream sync + docs | MS-006 = MVP: KPI-004, KPI-005, KPI-006 green; readiness report accepted (gate 14 of execution) | PH-2..4 |
 
@@ -51,12 +51,12 @@ review checkpoint with the operator.
 | WBS-2.2 | Port allocation + PID files + graceful shutdown | No orphan processes; port collisions impossible | FR-053 | ✅ done (race-free port via `--port 0` + logfile readiness; PID/port record; **idempotent start guard** — a second `start` returns the live record, never spawns a second server; platform-split tree-kill — `taskkill /T` on Windows, POSIX signals the process group *and* bare pid SIGTERM→SIGKILL; spiked on Windows) |
 | WBS-2.3 | Multi-instance isolation test suite (from R-05 inventory + EXP-002) | KPI-003 green in CI | NFR-008 | ✅ done — MS-003 MET: fast unit tier (every R-05 row) + live 2-instance diff (`instance-isolation.test.ts`, `MARID_ISOLATION=1`) green in the 3-OS `marid-isolation` job (ubuntu 39s / macOS 53s / windows), on every PR-#17 run incl. the final all-green ×2 |
 
-### PH-3 Cross-interface
-| WBS | Item | DoD | Traces |
-|---|---|---|---|
-| WBS-3.1 | Instance-default launch mode: TUI attaches to instance server | §7 flow works locally | FR-038/042, ADR-0004 |
-| WBS-3.2 | Reconnect/replay client behavior (SDK guidance + gateway lib) | No event loss across restart in test | FR-036/043, RISK-006 |
-| WBS-3.3 | Concurrency semantics doc + tests (from EXP-001 result) | Documented queue/steer behavior; tests assert it | FR-040/041 |
+### PH-3 Cross-interface — ⏳ BUILT (local-validated Windows; MS-004 exit pending 3-OS CI green)
+| WBS | Item | DoD | Traces | Status |
+|---|---|---|---|---|
+| WBS-3.1 | Instance-default launch mode: TUI attaches to instance server | §7 flow works locally | FR-038/042, ADR-0004 | ✅ done — `marid instance attach <name>` (resolves running instance URL + bearer token → the upstream TUI attach path; headers flow to HTTP **and** SSE via the SDK, zero upstream edit). TUI-as-client wire behavior proven by the §7 E2E; interactive-renderer driving is out of automated scope (no repo precedent, 3-OS flake) |
+| WBS-3.2 | Reconnect/replay client behavior (SDK guidance + gateway lib) | No event loss across restart in test | FR-036/043, RISK-006 | ✅ done — kill+restart E2E: reconnecting client re-fetches authoritative history written before the restart (no state loss). Firehose is live-only (no `?after=` — contract v1.1 correction); recovery = authoritative-store re-fetch. Speculative gateway package deferred to PH-4 (its consumer, YAGNI); reconnect pattern documented as SDK guidance in the contract |
+| WBS-3.3 | Concurrency semantics doc + tests (from EXP-001 result) | Documented queue/steer behavior; tests assert it | FR-040/041 | ✅ done — api-event-contract v1.1 *Concurrency* section (join/steer, BusyError, abort, ordering); concurrency E2E asserts it through the authenticated marid wrapper (two clients, one session, no corruption) |
 
 ### PH-4 Telegram
 | WBS | Item | DoD | Traces |

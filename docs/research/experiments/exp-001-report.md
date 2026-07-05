@@ -56,6 +56,13 @@ on all three OSes. Every cited test uses `it.instance` / `noLLMServer.instance` 
 | **2. Second prompt queued OR steers per documented v2 semantics** | `ensureRunning`: Idle → start; **Running → join the same `Deferred`** (does *not* spawn a second run); `runLoop` re-reads the full DB message list at the top of **every step** (`session/prompt.ts:1088–1098`), so an already-persisted second prompt is absorbed by the in-flight run = the **steer**. Exclusive ops reject via `assertNotBusy` / `startShell` → `BusyError`. | `session/prompt.test.ts:1365` "prompt submitted during an active run is included in the next LLM input" (last LLM input == the 2nd message; both fibers succeed; 2 assistants with correct `parentID`); `:1431` `assertNotBusy` → `BusyError` while running; `:1471` shell → `BusyError` while running. `effect/runner.test.ts:89` "second ensureRunning ignores new work if already running." |
 | **3. SSE events ordered per aggregate** | Single instance event bus (`EventV2Bridge`) → **per-subscriber unbounded FIFO `Queue`** → ordered SSE encode (`handlers/event.ts:31–73`). Because the 2nd concurrent prompt *joins* rather than spawning a parallel producer, a run has exactly **one event producer** → no cross-run interleaving; FIFO preserves per-aggregate order. | `server/httpapi-event.test.ts:80` "delivers instance events after the initial event" — ordered delivery over the **real SSE transport** (`server.connected` → `session.created`, read off an ordered queue). |
 
+> **PH-3 correction (2026-07-05).** The "client resumes with `?after=<lastSeq>` per session" phrasing in
+> the *Setup* / *Evidence* notes below overstated the v1 surface: the `/event` firehose is **live-only**
+> (no `?after=` cursor, no `Last-Event-ID`). The concurrency findings in this report stand unchanged
+> (join/steer/BusyError/abort, all verified). Only the *reconnect* mechanism was mis-stated — recovery is
+> authoritative-state re-fetch, not event replay. Authoritative wording: `api-event-contract.md` v1.1
+> (*Ordering & recovery*); ADR-0004 carries the same note.
+
 ## Abort / steer / cancel behavior (bonus, all green)
 
 - `abort` = `SessionRunState.cancel` → interrupts the run fiber, resolves **all** joined awaiters via

@@ -20,7 +20,16 @@ queue/steering design, verified by EXP-001; fallback if EXP-001 fails: busy-lock
 layer (C-5 option C).
 
 **Consequences.** No distributed coordination in the MVP (charter non-goal honored); restart recovery =
-server restart + client reconnect with `?after=<seq>`; the TUI must run in client mode against the
-instance server (not in-process) — a config/launch default, not a code fork.
+server restart + client reconnect **and re-read of authoritative session state** (see the correction
+below); the TUI must run in client mode against the instance server (not in-process) — a config/launch
+default, not a code fork.
+
+> **PH-3 correction (2026-07-05).** This ADR (and EXP-001) originally described reconnect as
+> `?after=<seq>`. The v1 `/event` firehose is live-only — no `?after=` cursor, no SSE `Last-Event-ID`
+> resumption — so recovery is by **re-fetching authoritative session state** on reconnect, not event
+> replay (the store is event-sourced/durable, so no state is lost). The event-sourced `sync` subsystem is
+> the only replay path and is out of the MVP contract. Authoritative wording:
+> `architecture/api-event-contract.md` v1.1 (*Ordering & recovery*). The rest of this ADR stands: one
+> server per instance, HTTP+SSE clients, concurrency via the upstream per-session Runner (EXP-001).
 
 **Rejected.** Multi-process shared-SQLite event propagation (B); global pessimistic lock (C — kept as fallback).

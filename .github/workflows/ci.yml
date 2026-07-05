@@ -213,3 +213,45 @@ jobs:
           OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
           TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
           TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+
+  # marid (WBS-3.1/3.2/3.3 / MS-004 / KPI-001): the §7 cross-interface flow on 3
+  # OSes. Boots a REAL authenticated `marid serve` subprocess driven by a
+  # TestLLMServer and asserts the acceptance demo (API-started session discovered +
+  # continued by a second client, subscriber sees both), the EXP-001 concurrency
+  # authority through the wrapper, and no state loss across a server restart. Gated
+  # by MARID_SYNC=1 so it stays out of the 2-OS unit job; same Windows workarounds +
+  # OPENCODE_TIMING_SCALE (P-CI-4) as the isolation job.
+  marid-sync:
+    name: marid-sync (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: ./.github/actions/bun-install
+      - name: Install ripgrep (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ripgrep -y
+      - name: Prepare temp dir on workspace drive (Windows)
+        if: runner.os == 'Windows'
+        run: mkdir -p /d/opencode-tmp
+      - name: Run cross-interface sync suite (§7 flow, concurrency, restart)
+        run: bun test test/marid/cross-interface.test.ts --timeout 300000
+        working-directory: packages/opencode
+        env:
+          MARID_SYNC: "1"
+          OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
+          OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
+          TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+          TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
