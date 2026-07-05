@@ -1,0 +1,557 @@
+{
+  "project": "Marid",
+  "package_version": "2.0.0",
+  "generation": {
+    "generated_at": "2026-07-06T00:00:00Z",
+    "skill_version": "1.0.0",
+    "schema_version": "1.0.0",
+    "profile": "ai-agentic",
+    "mode": "update"
+  },
+  "artifacts": [
+    {
+      "path": "00-charter.md",
+      "title": "Project Charter",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "01-executive-summary.md",
+      "title": "Executive Summary",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "adrs/adr-0001-tracking-fork-periodic-merge.md",
+      "title": "ADR-0001",
+      "kind": "adr",
+      "status": "Approved"
+    },
+    {
+      "path": "adrs/adr-0002-distribution-profile-exclusion.md",
+      "title": "ADR-0002",
+      "kind": "adr",
+      "status": "Approved"
+    },
+    {
+      "path": "adrs/adr-0003-v1-api-sse-marid-auth-facade.md",
+      "title": "ADR-0003",
+      "kind": "adr",
+      "status": "Approved"
+    },
+    {
+      "path": "adrs/adr-0004-one-server-per-instance.md",
+      "title": "ADR-0004",
+      "kind": "adr",
+      "status": "Approved"
+    },
+    {
+      "path": "adrs/adr-0005-channel-gateway-separate-process.md",
+      "title": "ADR-0005",
+      "kind": "adr",
+      "status": "Approved"
+    },
+    {
+      "path": "adrs/adr-0006-instance-isolated-runtime-env-namespacing.md",
+      "title": "ADR-0006",
+      "kind": "adr",
+      "status": "Approved"
+    },
+    {
+      "path": "AGENTS.md",
+      "title": "AGENTS.md",
+      "kind": "derived",
+      "status": "Approved"
+    },
+    {
+      "path": "architecture/api-event-contract.md",
+      "title": "Marid Public API & Event Contract",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "architecture/architecture.md",
+      "title": "Marid",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "architecture/current-state/00-assessment.md",
+      "title": "Current-State OpenCode Assessment",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "architecture/current-state/01-package-inventory.md",
+      "title": "OpenCode Package Inventory",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "architecture/current-state/02-server-api-sse-sdk.md",
+      "title": "Current State: HTTP Server, SSE, and SDKs",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "architecture/current-state/03-sessions-storage-sync.md",
+      "title": "R-03: Sessions, Storage, and Cross-Client Sync",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "architecture/current-state/04-runtime-tools-permissions-plugins.md",
+      "title": "04",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "architecture/current-state/05-config-observability-lifecycle-packaging.md",
+      "title": "OpenCode Current State: Config, Secrets, Caching, Lifecycle, Observability, Pack",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "architecture/current-state/06-channels-web-surfaces.md",
+      "title": "R-06: Channel Adapters",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "architecture/current-state/07-diagram-validation.md",
+      "title": "R-08: Validation of docs/diagrams/",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "architecture/diagrams/README.md",
+      "title": "opencode",
+      "kind": "diagram",
+      "status": "Approved"
+    },
+    {
+      "path": "architecture/diagrams/specs/01-architecture-overview.json",
+      "title": "01-architecture-overview",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/02-package-dependencies.json",
+      "title": "02-package-dependencies",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/03-tech-stack.json",
+      "title": "03-tech-stack",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/04-modules-map.json",
+      "title": "04-modules-map",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/05-data-flow.json",
+      "title": "05-data-flow",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/06-session-sequence.json",
+      "title": "06-session-sequence",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/07-database-er.json",
+      "title": "07-database-er",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/08-tui-seam.json",
+      "title": "08-tui-seam",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/09-tui-blast-radius.json",
+      "title": "09-tui-blast-radius",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/10-streaming-pipeline.json",
+      "title": "10-streaming-pipeline",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/11-streaming-sequence.json",
+      "title": "11-streaming-sequence",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/12-boot-layers.json",
+      "title": "12-boot-layers",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/13-deployment.json",
+      "title": "13-deployment",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/14-capability-registry.json",
+      "title": "14-capability-registry",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/15-session-lifecycle.json",
+      "title": "15-session-lifecycle",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/16-message-domain-model.json",
+      "title": "16-message-domain-model",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/17-permission-flow.json",
+      "title": "17-permission-flow",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/18-contributor-workflow.json",
+      "title": "18-contributor-workflow",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/diagrams/specs/19-codegen-pipeline.json",
+      "title": "19-codegen-pipeline",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "architecture/keep-remove-matrix.md",
+      "title": "Keep / Change / Exclude / Remove Matrix",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "architecture/security-threat-model.md",
+      "title": "Security & Permission Model + Threat Model",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "architecture/technology-comparison.md",
+      "title": "Option Comparisons",
+      "kind": "narrative",
+      "status": "Proposed"
+    },
+    {
+      "path": "architecture/upstream-sync-strategy.md",
+      "title": "Upstream Synchronization Strategy + Git Workflow",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "branding/branding.md",
+      "title": "Marid",
+      "kind": "narrative",
+      "status": "Proposed"
+    },
+    {
+      "path": "decisions/assumption-register.md",
+      "title": "Assumption Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "decisions/deviation-branch-protection.md",
+      "title": "Deviation: branch protection not enforceable on the current GitHub plan",
+      "kind": "narrative",
+      "status": "Proposed"
+    },
+    {
+      "path": "decisions/naming-proposal.md",
+      "title": "Naming Proposal",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "decisions/open-decision-register.md",
+      "title": "Open-Decision Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "decisions/open-question-register.md",
+      "title": "Open-Question Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "execution/checkpoints.md",
+      "title": "Checkpoints",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "execution/deferred-work-register.md",
+      "title": "Deferred-Work / Tech-Debt Register",
+      "kind": "register",
+      "status": "Approved"
+    },
+    {
+      "path": "execution/definition-of-done.md",
+      "title": "Definition of Done",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "execution/definition-of-ready.md",
+      "title": "Definition of Ready",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "experiments/exp-001-report.md",
+      "title": "EXP-001",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "experiments/exp-002-report.md",
+      "title": "EXP-002",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "experiments/exp-003-report.md",
+      "title": "EXP-003",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "experiments/exp-004-report.md",
+      "title": "EXP-004",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "governance/contributing.md",
+      "title": "Contributing to this package",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "governance/governance.md",
+      "title": "Governance",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "governance/naming-conventions.md",
+      "title": "Naming Conventions",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "handoff/execution-readiness-report.md",
+      "title": "Execution-Readiness Report",
+      "kind": "derived",
+      "status": "Approved"
+    },
+    {
+      "path": "handoff/follow-up-prompts.md",
+      "title": "Follow-up Prompts",
+      "kind": "prompt",
+      "status": "Approved"
+    },
+    {
+      "path": "handoff/gate-11-forking-checklist.md",
+      "title": "Forking-Gate Checklist",
+      "kind": "prompt",
+      "status": "Proposed"
+    },
+    {
+      "path": "handoff/handoff-manifest.json",
+      "title": "handoff-manifest",
+      "kind": "schema-instance"
+    },
+    {
+      "path": "handoff/initial-prompt.md",
+      "title": "Initial Execution Prompt",
+      "kind": "prompt",
+      "status": "Approved"
+    },
+    {
+      "path": "handoff/review-prompts.md",
+      "title": "Review Prompts",
+      "kind": "prompt",
+      "status": "Approved"
+    },
+    {
+      "path": "planning/milestones.md",
+      "title": "Milestones",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "planning/roadmap.md",
+      "title": "Roadmap",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "planning/work-breakdown.md",
+      "title": "Work Breakdown",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "progress/ms-001-status.md",
+      "title": "MS-001 status",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "progress/progress-log.md",
+      "title": "Progress Log",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "progress/status-report.md",
+      "title": "Status Report",
+      "kind": "derived",
+      "status": "Approved"
+    },
+    {
+      "path": "README.md",
+      "title": "Marid",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "requirements/constraint-register.md",
+      "title": "Constraint Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "requirements/dependency-register.md",
+      "title": "Dependency Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "requirements/functional.md",
+      "title": "Functional Requirements",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "requirements/invariant-register.md",
+      "title": "Invariant Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "requirements/non-functional.md",
+      "title": "Non-Functional Requirements",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "research/findings/claudectl-analysis.md",
+      "title": "claudectl Reference Analysis",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "research/findings/fork-security-otel-research.md",
+      "title": "Research: Fork Maintenance, AI-Agent Security, OTel GenAI",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "research/findings/shaheen-analysis.md",
+      "title": "R-07: Reference Analysis",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "research/findings/telegram-channel-research.md",
+      "title": "Telegram Bot API",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "research/hypothesis-register.md",
+      "title": "Hypothesis Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "research/research-plan.md",
+      "title": "Research Plan",
+      "kind": "narrative",
+      "status": "Approved"
+    },
+    {
+      "path": "research/rnd-backlog.md",
+      "title": "R&D Backlog",
+      "kind": "narrative",
+      "status": "Draft"
+    },
+    {
+      "path": "risks/risk-register.md",
+      "title": "Risk Register",
+      "kind": "register",
+      "status": "Draft"
+    },
+    {
+      "path": "validation/acceptance-audit.md",
+      "title": "Acceptance Audit",
+      "kind": "derived",
+      "status": "Draft"
+    },
+    {
+      "path": "validation/acceptance-criteria.md",
+      "title": "Acceptance Criteria",
+      "kind": "narrative",
+      "status": "Proposed"
+    },
+    {
+      "path": "validation/test-strategy.md",
+      "title": "Test & Validation Strategy",
+      "kind": "narrative",
+      "status": "Proposed"
+    },
+    {
+      "path": "validation/traceability-matrix.md",
+      "title": "Traceability Matrix",
+      "kind": "derived",
+      "status": "Approved"
+    },
+    {
+      "path": "keystone-state.json",
+      "title": "Keystone normalized state",
+      "kind": "schema-instance",
+      "status": "Approved"
+    }
+  ],
+  "omitted_artifacts": [
+    {
+      "path": "pocs/",
+      "reason": "No proof-of-concept plans; PH-0 experiments (EXP-001..004) covered the decision-blocking hypotheses instead."
+    },
+    {
+      "path": "stakeholder-register.md",
+      "reason": "Single-operator project; the 3 stakeholders (STK-001..003) live in 00-charter.md \u2014 a standalone register would only restate them."
+    },
+    {
+      "path": "scripts/init_repo.sh",
+      "reason": "Target repo already exists (A-H-911/marid); repository was bootstrapped at gate 11 (PH-0), so no bootstrap script is emitted."
+    },
+    {
+      "path": "execution/backlog.md",
+      "reason": "Forward work is the roadmap + work-breakdown; a separate flat backlog would duplicate them."
+    }
+  ]
+}
