@@ -48,7 +48,7 @@ have gone stale — they must be reconciled by hand on each sync (added PH-1, DE
 
 - **`packages/opencode/src/marid.ts`** mirrors `src/index.ts`'s top-level command list. On sync, diff
   `src/index.ts`'s `.command(...)` calls against `src/marid.ts`; add any new upstream command (marid keeps its
-  authenticated `serve` swap + `token` addition).
+  authenticated `serve` swap + `token` + `instance` additions).
 - **`packages/opencode/script/marid-build.ts`** mirrors `script/build.ts`'s `Bun.build` config (defines, worker
   paths, compile target). On sync, diff the two build scripts' `define`/`entrypoints`/`compile` blocks and port any
   change (marid keeps its `src/marid.ts` entrypoint + `marid` binary name).
