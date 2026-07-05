@@ -1,7 +1,8 @@
 import path from "node:path"
 import fs from "node:fs/promises"
-import { add, list, pathOf, remove, start, status, stop, type LaunchResolver } from "@marid/instance"
+import { add, isAlive, list, pathOf, readRecord, remove, start, status, stop, type LaunchResolver } from "@marid/instance"
 import { cmd } from "./cmd"
+import { validateSession } from "../tui/validate-session"
 
 // Resolve how to (re-)launch `marid serve` for the current runtime:
 //   - compiled `marid` binary: process.execPath IS the binary → [binary, serve, ...]
@@ -107,6 +108,52 @@ const StatusCommand = cmd({
   },
 })
 
+// WBS-3.1 (ADR-0004): the TUI as a client of the instance's server. Resolves the
+// running instance's URL from its record and launches the SAME upstream TUI attach
+// path (validateSession + tui/layer `run`) with a Marid bearer token — the SDK
+// applies these headers to both HTTP calls AND the /event SSE stream, so no upstream
+// edit is needed. This is the "config/launch default, not a code fork" ADR-0004 asks for.
+const AttachCommand = cmd({
+  command: "attach <name>",
+  describe: "open the TUI attached to a running instance's authenticated server",
+  builder: (yargs) =>
+    yargs
+      .positional("name", { type: "string", demandOption: true, describe: "instance name" })
+      .option("token", {
+        type: "string",
+        demandOption: true,
+        describe: "bearer token for this instance (from `marid token create`)",
+      })
+      .option("continue", { alias: ["c"], type: "boolean", describe: "continue the last session" })
+      .option("session", { alias: ["s"], type: "string", describe: "session id to continue" }),
+  handler: async (args) => {
+    const dir = await requireExists(args.name)
+    const record = await readRecord(dir)
+    if (!record || !isAlive(record.pid)) {
+      throw new Error(`instance "${args.name}" is not running; start it with \`marid instance start ${args.name}\``)
+    }
+    const url = `http://127.0.0.1:${record.port}`
+    const headers = { authorization: `Bearer ${args.token}` }
+
+    const { TuiConfig } = await import("@/config/tui")
+    const config = await TuiConfig.get()
+    await validateSession({ url, sessionID: args.session, headers })
+
+    const { Effect } = await import("effect")
+    const { run } = await import("../tui/layer")
+    const { createLegacyTuiPluginHost } = await import("@/plugin/tui/runtime")
+    await Effect.runPromise(
+      run({
+        url,
+        config,
+        pluginHost: createLegacyTuiPluginHost(),
+        headers,
+        args: { continue: args.continue, sessionID: args.session },
+      }),
+    )
+  },
+})
+
 const RemoveCommand = cmd({
   command: "remove <name>",
   aliases: ["rm"],
@@ -129,6 +176,7 @@ export const MaridInstanceCommand = cmd({
       .command(StartCommand)
       .command(StopCommand)
       .command(StatusCommand)
+      .command(AttachCommand)
       .command(RemoveCommand)
       .demandCommand(),
   handler: () => {},
