@@ -12,6 +12,12 @@ export interface TokenInfo {
   name: string
   scope: Scope
   created: number
+  // PH-4 (WBS-4.4): a channel token is bound to exactly one restricted agent. The
+  // middleware rejects a prompt whose body.agent is not this value, so a channel
+  // token physically cannot run any other agent (INV-001, by construction). Unset
+  // for admin/client tokens (and for a channel token created without --agent, which
+  // then cannot prompt at all — fail-closed).
+  agent?: string
 }
 
 export interface TokenRecord extends TokenInfo {
@@ -29,6 +35,7 @@ function isRecord(value: unknown): value is TokenRecord {
     typeof r.scope === "string" &&
     typeof r.hash === "string" &&
     typeof r.created === "number" &&
+    (r.agent === undefined || typeof r.agent === "string") &&
     isValidScope(r.scope)
   )
 }
@@ -56,7 +63,7 @@ function hashesEqual(a: string, b: string): boolean {
 }
 
 export interface TokenStore {
-  create(name: string, scope: Scope): Promise<{ secret: string; info: TokenInfo }>
+  create(name: string, scope: Scope, agent?: string): Promise<{ secret: string; info: TokenInfo }>
   list(): Promise<TokenInfo[]>
   revoke(name: string): Promise<boolean>
   verify(secret: string): Promise<TokenRecord | undefined>
@@ -78,16 +85,16 @@ export function createTokenStore(dir: string): TokenStore {
   }
 
   return {
-    async create(name, scope) {
+    async create(name, scope, agent) {
       const records = await read()
       if (records.some((r) => r.name === name)) throw new Error(`token "${name}" already exists`)
       const secret = generateSecret()
-      const info: TokenInfo = { name, scope, created: Date.now() }
+      const info: TokenInfo = { name, scope, created: Date.now(), ...(agent ? { agent } : {}) }
       await write([...records, { ...info, hash: hashSecret(secret) }])
       return { secret, info }
     },
     async list() {
-      return (await read()).map(({ name, scope, created }) => ({ name, scope, created }))
+      return (await read()).map(({ name, scope, created, agent }) => ({ name, scope, created, ...(agent ? { agent } : {}) }))
     },
     async revoke(name) {
       const records = await read()
