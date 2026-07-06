@@ -21,7 +21,7 @@ import type { TgCallbackQuery, TgMessage } from "./telegram"
 // of type strings and reads fields defensively. Confirmed against a real run by the
 // live E2E.
 
-const TEXT_EVENTS = new Set(["message.part.updated", "message.updated", "session.next.text.delta"])
+const TEXT_EVENTS = new Set(["message.part.updated", "session.next.text.delta"])
 const DONE_EVENTS = new Set(["session.idle", "session.next.step.ended"])
 const ASK_EVENTS = new Set(["permission.asked", "permission.updated"])
 
@@ -42,11 +42,16 @@ export interface RunGatewayDeps {
 }
 
 // A session's live per-turn state: the chat it belongs to, its current streamer,
-// and the accumulated text parts (keyed by partID, insertion-ordered) for this turn.
+// the accumulated assistant text parts (keyed by partID, insertion-ordered), and the
+// set of USER message ids. We stream any text part whose message is NOT a user
+// message — excluding user messages (rather than including assistant ones) avoids an
+// ordering race: the user's message.updated reliably precedes the user's text part,
+// whereas an assistant text part can arrive before its message.updated.
 interface SessionState {
   chatId: number
   streamer: Streamer
   textByPart: Map<string, string>
+  userMessages: Set<string>
 }
 
 export async function runGateway(deps: RunGatewayDeps): Promise<void> {
@@ -82,19 +87,43 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
     if (!sessionID) return
     const state = sessions.get(sessionID)
     if (!state) return // not one of our sessions
+
+    // Track user message ids (to exclude the operator's own echoed text), and treat a
+    // completed assistant message as a done signal (some generations emit no
+    // session.idle).
+    if (payload.type === "message.updated") {
+      const info = props.info as { id?: string; role?: string; time?: { completed?: number } } | undefined
+      if (info?.role === "user" && typeof info.id === "string") state.userMessages.add(info.id)
+      if (info?.role === "assistant" && info.time?.completed) {
+        const text = currentText(state)
+        if (text) void state.streamer.finish(text)
+      }
+      return
+    }
+
     if (TEXT_EVENTS.has(payload.type)) {
-      const part = props.part as { id?: string; type?: string; text?: string } | undefined
-      if (part && part.type === "text" && typeof part.text === "string" && typeof part.id === "string") {
+      const part = props.part as { id?: string; type?: string; text?: string; messageID?: string } | undefined
+      if (
+        part &&
+        part.type === "text" &&
+        typeof part.text === "string" &&
+        typeof part.id === "string" &&
+        typeof part.messageID === "string" &&
+        !state.userMessages.has(part.messageID) // never stream the operator's own text back
+      ) {
         state.textByPart.set(part.id, part.text)
       } else if (typeof props.delta === "string") {
-        // delta-style event (session.next.text.delta): append under a stable key
+        // delta-style event (session.next.text.delta): inherently assistant text
         const key = typeof props.textID === "string" ? props.textID : "delta"
         state.textByPart.set(key, (state.textByPart.get(key) ?? "") + props.delta)
+      } else {
+        return
       }
       const text = currentText(state)
       if (text) void state.streamer.push(text)
       return
     }
+
     if (DONE_EVENTS.has(payload.type)) {
       const text = currentText(state)
       if (text) void state.streamer.finish(text)
@@ -121,23 +150,25 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
       sleep: deps.sleep,
       cadenceMs: deps.cadenceMs,
     })
-    sessions.set(sessionID, { chatId, streamer, textByPart: new Map() })
-    await deps.sdk.session.promptAsync(
-      restrictedPrompt({ sessionID, updateId: message.message_id, text, agent: deps.agent }),
-      { throwOnError: true },
-    )
+    sessions.set(sessionID, { chatId, streamer, textByPart: new Map(), userMessages: new Set() })
+    await deps.sdk.session.promptAsync(restrictedPrompt({ sessionID, text, agent: deps.agent }), { throwOnError: true })
   }
 
   const onCallback = (query: TgCallbackQuery): Promise<void> => permissions.onCallback({ id: query.id, data: query.data })
 
   // Subscribe to the firehose BEFORE polling so no early events are missed.
+  // Frames are routing-wrapped on /global/event ({ payload: {type,properties} }) but
+  // raw on /event; tolerate both by unwrapping payload when present.
   const events = await deps.sdk.global.event({ signal: deps.signal })
-  const stream = events.stream as AsyncIterator<{ payload?: { type: string; properties?: Record<string, unknown> } }>
+  type Frame = { type?: string; properties?: Record<string, unknown>; payload?: { type: string; properties?: Record<string, unknown> } }
+  const stream = events.stream as AsyncIterator<Frame>
   const pump = (async () => {
     while (!deps.signal.aborted) {
-      const next = await stream.next().catch(() => ({ done: true, value: undefined }) as IteratorResult<never>)
+      const next = await stream.next().catch(() => ({ done: true, value: undefined }) as IteratorResult<Frame>)
       if (next.done) break
-      if (next.value?.payload) onEvent(next.value.payload)
+      const frame = next.value
+      const evt = frame?.payload ?? frame
+      if (evt && typeof evt.type === "string") onEvent({ type: evt.type, properties: evt.properties })
     }
   })()
 
