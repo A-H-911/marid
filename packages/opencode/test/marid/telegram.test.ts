@@ -191,22 +191,14 @@ suite("TEST-TG: Telegram round trip + policy denial (live)", () => {
     300_000,
   )
 
-  // AC-012 (policy-gated tool → inline keyboard; Deny/timeout blocks; Approve allows
-  // exactly once) is NOT driven live here, because this harness cannot produce a real
-  // permission. EVIDENCE (diagnosed, not assumed): the fake LLM IS called (calls=1,
-  // misses=0), but the request the server sends carries NO `tools` field — the
-  // `@ai-sdk/openai-compatible` test provider does not forward tools to the model
-  // (verified across the build agent and a custom agent with `tools:{bash:true}`;
-  // `GET /permission` stays empty). No existing repo test drives tools through this
-  // HTTP provider. So no tool call can fire → no permission.asked → nothing to render.
-  // This is a harness limit, not a gateway defect.
-  //
-  // AC-012 is covered instead by:
-  //   - test/gateway.test.ts (parseAskEvent) — the ask-event field extraction, locked
-  //     against the committed PermissionRequest schema (id/sessionID/permission);
-  //   - packages/marid-telegram/test/permission.test.ts — keyboard/claim/reply/timeout/
-  //     exactly-once/double-tap/late-callback/restart-recover;
-  //   - packages/marid-auth/test/{channel-binding,scope}.test.ts — INV-001 server
-  //     enforcement (a channel token cannot reach /shell or /command, cannot select
-  //     another agent, cannot widen tools/permission).
+  // AC-012's permission ROUND TRIP is proven end-to-end (event → keyboard → Deny →
+  // server reply) in packages/marid-telegram/test/gateway-integration.test.ts, which
+  // drives the real runGateway with a fully faked SDK that emits a schema-shaped
+  // permission.asked. It is NOT driven here as a real LLM tool call: EVIDENCE
+  // (diagnosed, not assumed) — the served run resolves ZERO tools (the fake LLM is
+  // called, calls=1/misses=0, but the request carries no `tools` field, verified with
+  // the build agent AND a custom tools:{bash:true} agent; GET /permission stays empty).
+  // This is an opencode HTTP-run tool-resolution limit (internal prompt.loop() has
+  // tools; served promptAsync does not), not a provider issue and not a gateway bug.
+  // Server-side INV-001 policy denial is proven in marid-auth channel-binding/scope.
 })
