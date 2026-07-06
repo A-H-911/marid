@@ -11,9 +11,9 @@ owner: operator (STK-001)
 
 **Verdict: PASS (audit-strength). HYP-002 confirmed, with two refinements to the env set.**
 
-Validates [HYP-002](../hypothesis-register.md): *env-var composition (XDG overrides + `OPENCODE_DB` +
+Validates [HYP-002](../research/hypothesis-register.md): *env-var composition (XDG overrides + `OPENCODE_DB` +
 port) yields complete instance isolation for every item in the R-05 conflict inventory.* Blocks the
-marid-instance design freeze; verifies [ADR-0006](../../adrs/adr-0006-instance-isolated-runtime-env-namespacing.md).
+marid-instance design freeze; verifies [ADR-0006](../adrs/adr-0006-instance-isolated-runtime-env-namespacing.md).
 
 ## Result in one line
 

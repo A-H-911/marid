@@ -11,7 +11,7 @@ owner: operator (STK-001)
 
 **Verdict: PASS. HYP-001 confirmed.**
 
-Validates [HYP-001](../hypothesis-register.md): *the upstream v2 single-writer / queue / steering
+Validates [HYP-001](../research/hypothesis-register.md): *the upstream v2 single-writer / queue / steering
 path already gives safe behavior for two simultaneous clients of one session (no corruption;
 deterministic queue/steer semantics).* Blocks DEC-005 final wording and the C-5 fallback choice.
 

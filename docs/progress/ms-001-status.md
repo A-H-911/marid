@@ -17,10 +17,10 @@ PH-1 (Marid layer) is unblocked.
 
 | Exp | Hypothesis | Verdict | Strength | Report |
 |---|---|---|---|---|
-| EXP-001 | HYP-001 two-client concurrency | ✅ PASS | full (green tests + code) | [exp-001-report.md](exp-001-report.md) |
-| EXP-002 | HYP-002 two-instance isolation | ✅ PASS | audit-strength (live tree-diff deferred) | [exp-002-report.md](exp-002-report.md) |
-| EXP-003 | HYP-003 Telegram cadence | ✅ PASS | full (live, real bot) | [exp-003-report.md](exp-003-report.md) |
-| EXP-004 | HYP-004 distribution profile | ✅ PASS | analysis-strength (live build deferred) | [exp-004-report.md](exp-004-report.md) |
+| EXP-001 | HYP-001 two-client concurrency | ✅ PASS | full (green tests + code) | [exp-001-report.md](../experiments/exp-001-report.md) |
+| EXP-002 | HYP-002 two-instance isolation | ✅ PASS | audit-strength (live tree-diff deferred) | [exp-002-report.md](../experiments/exp-002-report.md) |
+| EXP-003 | HYP-003 Telegram cadence | ✅ PASS | full (live, real bot) | [exp-003-report.md](../experiments/exp-003-report.md) |
+| EXP-004 | HYP-004 distribution profile | ✅ PASS | analysis-strength (live build deferred) | [exp-004-report.md](../experiments/exp-004-report.md) |
 
 ## Design outputs (what these change downstream)
 

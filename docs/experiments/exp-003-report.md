@@ -11,7 +11,7 @@ owner: operator (STK-001)
 
 **Verdict: PASS (live). HYP-003 confirmed.**
 
-Validates [HYP-003](../hypothesis-register.md): *Telegram edit-coalesced streaming at 1 edit / 2–3 s
+Validates [HYP-003](../research/hypothesis-register.md): *Telegram edit-coalesced streaming at 1 edit / 2–3 s
 gives acceptable UX without hitting 429s in normal use.* Blocks the marid-telegram UX contract; validates
 the R-09 cadence numbers under a real bot token.
 
