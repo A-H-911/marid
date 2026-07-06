@@ -16,7 +16,8 @@ lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
   governance/, planning split, validation/traceability, architecture/diagrams); rebuilt `keystone-state.json`
   to the new schema; frontmatter → `status/version/updated/owner`; added agent-control surface
   (`AGENTS.md` + `CLAUDE.md` import); mechanical validator green.
-- **Decisions:** DEC-011a/b/c promoted to real rows DEC-011/012/013. No content lost.
+- **Decisions:** the three PH-1 sub-decisions (formerly labeled 11a/b/c) promoted to real register rows
+  DEC-011 / DEC-012 / DEC-013. No content lost.
 - **Deviations:** none. **Blockers:** none.
 - **Next:** PH-4 (Telegram, MS-005) remains the next execution phase.
 

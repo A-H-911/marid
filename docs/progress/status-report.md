@@ -48,7 +48,7 @@ No active blockers. Watch: upstream v1→v2 migration (RISK-001, contract tests)
 (INV-001 capability policy, RISK-003) — both addressed as PH-4 lands.
 
 ## Decisions since last report
-DEC-011a/b/c promoted to DEC-011/012/013 (migration housekeeping; no semantic change).
+the three PH-1 sub-decisions (formerly 11a/b/c) promoted to DEC-011 / DEC-012 / DEC-013 (migration housekeeping; no semantic change).
 
 ## Upcoming
 PH-4 (WBS-4.1..4.5, MS-005) → PH-5 (WBS-5.1..5.5, MS-006 = MVP).
