@@ -31,6 +31,34 @@ function isStream(request: Request): boolean {
   return (request.headers.get("accept") ?? "").includes("text/event-stream")
 }
 
+// The two run-triggering routes a channel token is allowed to POST (scope.ts denies
+// /shell, /command, etc. for channel). These are where an agent can be selected, so
+// they are the ones the bound-agent guard inspects.
+function isChannelRunRoute(method: string, pathname: string): boolean {
+  if (method.toUpperCase() !== "POST") return false
+  const segments = pathname.split("/").filter(Boolean)
+  return segments[0] === "session" && segments.length === 3 && (segments[2] === "message" || segments[2] === "prompt_async")
+}
+
+// PH-4 (WBS-4.4, INV-001) by-construction backstop. `scope.ts` cannot see the
+// request body; this does. A channel token may run ONLY its bound agent, and may
+// not smuggle a wider tool/permission set past the restricted agent's config
+// ruleset. Reading a clone leaves the original body intact for `next`. Returns a
+// 403 to send (and audit as a deny), or undefined to proceed.
+async function channelAgentDenial(request: Request, agent: string | undefined, requestId: string): Promise<Response | undefined> {
+  const body = (await request
+    .clone()
+    .json()
+    .catch(() => undefined)) as Record<string, unknown> | undefined
+  if (!agent || body?.agent !== agent) {
+    return errorResponse(403, "ForbiddenError", "channel token must prompt with its bound agent", requestId)
+  }
+  if (body && ("tools" in body || "permission" in body)) {
+    return errorResponse(403, "ForbiddenError", "channel token may not override tools or permission", requestId)
+  }
+  return undefined
+}
+
 function strippedHeaders(source: Headers, remove: string): Headers {
   const headers = new Headers(source)
   headers.delete(remove)
@@ -137,6 +165,17 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
         releaseStream()
         await record(token.name, "deny")
         return errorResponse(403, "ForbiddenError", "token scope forbids this route", requestId)
+      }
+
+      // Channel tokens: even on an allowed prompt route, enforce the bound agent and
+      // block tool/permission widening (WBS-4.4, INV-001). Run routes are POST, so no
+      // stream was opened here.
+      if (token.scope.startsWith("channel:") && isChannelRunRoute(request.method, url.pathname)) {
+        const denial = await channelAgentDenial(request, token.agent, requestId)
+        if (denial) {
+          await record(token.name, "deny")
+          return denial
+        }
       }
 
       // Strict client-scope isolation (deferred PH-1 follow-up, now resolved): a

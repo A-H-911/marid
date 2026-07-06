@@ -3355,6 +3355,18 @@
       "date": "2026-07-05",
       "author": "keystone-migration",
       "summary": "PH-3 / MS-004 MET — KPI-001 green on three OSes; PH-3 complete and synced to main. The 3-OS marid-sync job passed on PR #19's first run (macOS and Linux exercised for the first time). PR #19 squash-merged to develop (82a92d8943); sync PR #20 merge-commit to main, which now holds PH-0 through PH-3. Branch protection at 14 required checks. Next: PH-4 (Telegram, MS-005) is unblocked, then PH-5 (Release & sync, MS-006 = MVP)."
+    },
+    {
+      "date": "2026-07-06",
+      "author": "execution-agent",
+      "summary": "PH-4 — Telegram gateway BUILT (WBS-4.1..4.5; ADR-0005; KPI-002); local-validated on Windows, MS-005 exit pending 3-OS CI. New additive @marid/telegram package (zero runtime deps, type-only SDK): long-poll ingress + operator-id allowlist + update_id dedup (AC-010), HTML/4096-split streaming with the EXP-003 cadence and 429 handling (AC-011), a race-safe permission inline-keyboard flow, capability policy, full media, and the `marid telegram start` CLI. WBS-4.4 landed the INV-001 by-construction backstop in @marid/auth: channel scope is now deny-by-default on owned-session sub-routes (closing a verified hole where channel==client could reach /session/:id/shell), plus a token-bound-agent body guard rejecting any channel prompt that selects a different agent or widens tools. 169 unit tests (auth 72, instance 40, telegram 58) plus a live TEST-TG (AC-010/011) against a real marid serve with a fake LLM and a local fake Telegram server; new 3-OS marid-telegram CI job. AC-012's LLM-tool→permission link is not driven live (the HTTP-served run resolves zero tools — an opencode limitation, not a provider or gateway issue); the gateway's permission round trip (event→keyboard→Deny→permission.respond) is proven end-to-end via a faked-SDK integration test emitting a schema-shaped permission.asked. Operator decisions this session: INV-001 by-construction backstop; hand-rolled Bot API client (no telegram-library dep); full media send+receive. Operator action: add the three marid-telegram jobs to branch protection (14 to 17 checks).",
+      "items_completed": [
+        "WBS-4.1",
+        "WBS-4.2",
+        "WBS-4.3",
+        "WBS-4.4",
+        "WBS-4.5"
+      ]
     }
   ],
   "change_log": [
@@ -3363,6 +3375,12 @@
       "actor": "keystone-migration",
       "action": "Migrated the planning package state to the Keystone v1.0.0 structure and rebuilt keystone-state.json against keystone-state.schema.json (fully tool-managed registers).",
       "target": "keystone-state.json"
+    },
+    {
+      "timestamp": "2026-07-06T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-4 Telegram gateway built (WBS-4.1..4.5) with the @marid/auth INV-001 by-construction backstop; recorded the BUILT progress entry (MS-005 exit pending 3-OS CI + merge).",
+      "target": "progress[]"
     }
   ]
 }

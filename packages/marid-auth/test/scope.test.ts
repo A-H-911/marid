@@ -42,13 +42,51 @@ describe("scope authorization (pure)", () => {
     })
   })
 
-  test("channel scope behaves like client in PH-1 (policy binding deferred to PH-4)", () => {
-    expect(
-      authorize({ scope: "channel:telegram", method: "GET", pathname: "/session/ses_x/message", owns: owns(["ses_x"]) }),
-    ).toEqual({ allow: true })
-    expect(
-      authorize({ scope: "channel:telegram", method: "GET", pathname: "/session/ses_y/message", owns: owns(["ses_x"]) }),
-    ).toEqual({ allow: false })
+  describe("channel scope (PH-4, WBS-4.4): stricter than client — deny-by-default on owned sessions", () => {
+    const ch = "channel:telegram" as const
+    const mine = owns(["ses_x"])
+
+    test("still requires ownership (no cross-session access)", () => {
+      expect(authorize({ scope: ch, method: "GET", pathname: "/session/ses_y/message", owns: mine })).toEqual({
+        allow: false,
+      })
+    })
+
+    test("may create/list sessions and reach read-only meta + the event stream", () => {
+      expect(authorize({ scope: ch, method: "POST", pathname: "/session", owns: () => false })).toEqual({
+        allow: true,
+        recordSession: true,
+      })
+      for (const pathname of ["/session", "/config", "/agent", "/provider", "/event", "/permission"]) {
+        expect(authorize({ scope: ch, method: "GET", pathname, owns: () => false })).toEqual({ allow: true })
+      }
+    })
+
+    test("may read its own session, history, prompt (sync + async), abort, and reply to a permission", () => {
+      const allow = { allow: true }
+      expect(authorize({ scope: ch, method: "GET", pathname: "/session/ses_x", owns: mine })).toEqual(allow)
+      expect(authorize({ scope: ch, method: "GET", pathname: "/session/ses_x/message", owns: mine })).toEqual(allow)
+      expect(authorize({ scope: ch, method: "GET", pathname: "/session/ses_x/message/msg_1", owns: mine })).toEqual(allow)
+      expect(authorize({ scope: ch, method: "POST", pathname: "/session/ses_x/message", owns: mine })).toEqual(allow)
+      expect(authorize({ scope: ch, method: "POST", pathname: "/session/ses_x/prompt_async", owns: mine })).toEqual(allow)
+      expect(authorize({ scope: ch, method: "POST", pathname: "/session/ses_x/abort", owns: mine })).toEqual(allow)
+      expect(
+        authorize({ scope: ch, method: "POST", pathname: "/session/ses_x/permissions/per_9", owns: mine }),
+      ).toEqual(allow)
+    })
+
+    test("is DENIED direct-execution and mutation routes even on a session it owns (the INV-001 fix)", () => {
+      const denied = { allow: false }
+      for (const sub of ["shell", "command", "revert", "unrevert", "init", "share", "summarize", "fork", "children", "todo", "diff"]) {
+        expect(authorize({ scope: ch, method: "POST", pathname: `/session/ses_x/${sub}`, owns: mine })).toEqual(denied)
+      }
+      // message-part mutation is denied (deeper than a single message read)
+      expect(
+        authorize({ scope: ch, method: "POST", pathname: "/session/ses_x/message/msg_1/part/prt_1", owns: mine }),
+      ).toEqual(denied)
+      // a channel never forks, so a fork it "owns" records nothing and is denied
+      expect(authorize({ scope: ch, method: "POST", pathname: "/session/ses_x/fork", owns: mine })).toEqual(denied)
+    })
   })
 
   test("client forking a session it owns records the new (child) session", () => {
