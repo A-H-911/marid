@@ -1,8 +1,8 @@
 ---
-artifact: handoff-review-prompts
 status: Accepted (gate 13, 2026-07-03)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Review Prompts

@@ -1,8 +1,8 @@
 ---
-artifact: security-threat-model
 status: Approved (gate 8, 2026-07-03)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Security & Permission Model + Threat Model (Gate 8)

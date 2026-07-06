@@ -1,8 +1,8 @@
 ---
-artifact: gate-11-forking-checklist
 status: Proposed (gate 11) — awaiting operator approval
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Forking-Gate Checklist (Gate 11)

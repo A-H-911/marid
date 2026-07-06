@@ -1,8 +1,8 @@
 ---
-artifact: deviation-branch-protection
 status: Proposed
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Deviation: branch protection not enforceable on the current GitHub plan

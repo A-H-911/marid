@@ -1,8 +1,8 @@
 ---
-artifact: test-strategy
 status: Proposed (approved with gate 13 handoff)
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Test & Validation Strategy (§17, risk-based)

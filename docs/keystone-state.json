@@ -1,121 +1,3368 @@
 {
-  "keystone_version": "0.1.0",
-  "package_dir": "docs/",
-  "mode": "full",
-  "flags": { "no_repo": true, "profile": "ai-agentic" },
+  "schema_version": "1.0.0",
+  "skill_version": "1.0.0",
   "project_profile": {
-    "type": "ai-agentic",
-    "subtype": "downstream-fork platform / R&D-heavy",
-    "size": "large",
-    "risk_profile": "high (fork maintenance, security surface, streaming/sync concurrency)",
-    "justification": "Brief is a research+architecture+handoff mission over an existing large TypeScript/Bun monorepo (OpenCode), adding remote API, channel adapters, multi-instance isolation."
+    "name": "ai-agentic-downstream-fork",
+    "summary": "Private agent platform as a tracking fork of OpenCode; R&D-heavy, high-risk (fork maintenance, security surface, streaming/sync concurrency).",
+    "characteristics": [
+      "Tracking fork of OpenCode (TypeScript/Bun monorepo); reuse-first, additive-only patch surface (new packages speak existing interfaces)",
+      "Research-heavy: four timeboxed experiments gate the build before dependent work",
+      "High-risk: fork maintenance, security surface, and streaming/sync concurrency",
+      "Single operator, private network only (localhost/LAN/VPN)",
+      "One runtime serving TUI, HTTP+SSE API, web UI, and a Telegram bot; runnable as isolated multi-instances"
+    ],
+    "mode": "update"
   },
-  "input": {
-    "source": "docs/brief.md",
-    "format": "long-form structured prose (23 sections)",
-    "captured": "2026-07-03",
-    "sha_note": "brief.md as present in working tree at intake; untracked in git"
-  },
-  "verified_facts": [
-    { "id": "FACT-001", "fact": "Local clone origin = https://github.com/anomalyco/opencode.git; default branch dev; HEAD eb3476660 (2026-07-03)", "method": "git remote -v; git log", "date": "2026-07-03" },
-    { "id": "FACT-002", "fact": "github.com/ahmadabusa3/shaheen is PRIVATE but accessible to the authenticated gh account (metadata retrieved; updated 2026-07-02)", "method": "gh repo view", "date": "2026-07-03" },
-    { "id": "FACT-003", "fact": "github.com/A-H-911/keystone is PUBLIC and accessible", "method": "gh repo view", "date": "2026-07-03" },
-    { "id": "FACT-004", "fact": "Upstream packages/ contains: app, cli, client, codemode, console, containers, core, desktop, docs, effect-drizzle-sqlite, effect-sqlite-node, enterprise, function, httpapi-codegen, http-recorder, identity, llm, opencode, plugin, protocol, schema, script, sdk, sdk-next, server, session-ui, slack, stats, storybook, tui, ui, web", "method": "ls packages/", "date": "2026-07-03" },
-    { "id": "FACT-005", "fact": "docs/diagrams contains 19 diagrams (SVG+PNG) with JSON specs and a README; brief requires validating them against source in current-state analysis", "method": "find docs/", "date": "2026-07-03" }
-  ],
-  "stages": {
-    "1-intake": { "status": "done", "date": "2026-07-03" },
-    "2-classify": { "status": "done", "date": "2026-07-03" },
-    "3-extract": { "status": "done", "date": "2026-07-03" },
-    "4-normalize": { "status": "done", "date": "2026-07-03", "note": "registers Draft; priorities provisional pending OQ-002" },
-    "5-ambiguity": { "status": "done", "date": "2026-07-03" },
-    "6-contradiction": { "status": "done", "date": "2026-07-03" },
-    "7-clarify": {
-      "status": "done", "date": "2026-07-03",
-      "answers": {
-        "OQ-001": "instance = isolated runtime (own config/storage/cache/ports/secrets/logs; may serve multiple projects)",
-        "OQ-002": "MVP = remote API+SSE, cross-interface sync, Telegram adapter, multi-instance; WhatsApp post-MVP",
-        "OQ-003": "single operator; apps/channels use operator-issued API keys/tokens",
-        "OQ-004": "private network only (localhost/LAN/VPN); channels via outbound or webhook relay"
-      }
+  "raw_input": {
+    "meta": {
+      "title": "Marid",
+      "mode": "update",
+      "profile": "ai-agentic"
     },
-    "8-scope": { "status": "done", "date": "2026-07-03", "note": "charter Approved at gate 2" },
-    "9-research-plan": { "status": "done", "date": "2026-07-03", "note": "tracks R-01..R-10; R-01..07,09,10 launched as parallel agents; R-08 (diagram validation) queued behind R-01..06" },
-    "10-arch-explore": { "status": "done", "date": "2026-07-03", "note": "all tracks R-01..R-11 complete (R-11 = user-supplied claudectl); gate 4 APPROVED with principle 'reuse over new unless justified' (DEC-009); gate 3 APPROVED: name = Marid (DEC-008); OQ-007 moot, OQ-008 closed (MIT)" },
-    "11-option-compare": { "status": "done", "date": "2026-07-03", "note": "C-1..C-7 in technology-comparison.md" },
-    "12-hypotheses": { "status": "done", "date": "2026-07-03", "note": "HYP-001..004" },
-    "13-experiments": { "status": "done", "date": "2026-07-03", "note": "EXP-001..004 planned as execution phase 0" },
-    "14-decisions": { "status": "done", "date": "2026-07-03", "note": "gates 5,6,7,8,9 ALL APPROVED; ADRs 0001..0006 recorded; api-event-contract, security-threat-model, upstream-sync-strategy all Approved v1.0. RULE: never proceed past an unanswered gate (user instruction)" },
-    "15-risk": { "status": "done", "date": "2026-07-03", "note": "RISK-001..012" },
-    "16-exec-plan": { "status": "done", "date": "2026-07-03", "note": "roadmap APPROVED (gate 10): PH-0..5, MS-001..006, WBS with DoD" },
-    "17-artifacts": { "status": "done", "date": "2026-07-03", "note": "validation (AC-001..016, test strategy), branding, traceability matrix, exec summary, handoff package (initial/follow-up/review prompts, manifest, readiness report)" },
-    "18-repo-init": { "status": "done (execution)", "date": "2026-07-03", "note": "Gate 11 approved: repo A-H-911/marid created (PUBLIC per DEC-010), remotes wired (origin=marid, upstream=anomalyco fetch-only), baseline tag upstream-baseline/2026-07-03-eb3476660 pushed, main+develop protected via ruleset. Gate 12 approved: planning-package import = PR #1 (open, awaiting operator merge). WBS-0.3 CI skeleton GREEN (PR #2): lint/typecheck/unit(ubuntu+windows)/smoke(3-OS); 26 upstream workflows stripped; sync-durable CI adaptations documented (upstream-sync-strategy.md P-CI-1..3) + script/strip-upstream-workflows.ts. Done: PR #1 + PR #2 merged to develop; ci required checks (7 contexts) wired on main+develop; Marid pr-title check (marid-pr-title.yml) replaces upstream pr-standards; main synced to develop. WBS-0.1..0.3 complete. Next: PH-0 experiments WBS-0.4..0.7 (MS-001)." },
-    "19-quality": { "status": "done", "date": "2026-07-03", "note": "all quality gates PASS (G-CLAIM with enumerated unverified items) — see handoff/execution-readiness-report.md" },
-    "20-handoff": { "status": "done", "date": "2026-07-03", "note": "gate 13 ACCEPTED" },
-    "21-updates": {
-      "status": "active (execution)",
-      "note": "Append an entry on each MS-00N exit and each merged PR that closes a WBS item; mirror the status in planning/roadmap.md (per CLAUDE.md state-update procedure).",
-      "log": [
-        {
-          "date": "2026-07-04",
-          "phase": "PH-0",
-          "event": "MS-001 MET — PH-0 complete, PH-1 unblocked",
-          "note": "EXP-001..004 all PASS (no FAIL -> no fallbacks, no Proposed DECs). Reports in research/experiments/ + ms-001-status.md. Design outputs: (1) no marid concurrency layer — upstream per-session Runner is the authority (EXP-001); (2) marid-instance env set = XDG_DATA/CACHE/CONFIG/STATE_HOME + OPENCODE_DB + allocated port + TMPDIR/TMP/TEMP (EXP-002); (3) Telegram >=2s edit cadence, 0x429, 222ms permission round-trip (EXP-003, live); (4) P-1 DROPPED — marid-auth attaches as outer wrapper on Server.Default.app.fetch, no server edit (EXP-004). Patch surface now P-2/P-3/P-CI only. Deferred live steps (bun-dependent, bun now installed): EXP-002 two-instance tree-diff (before marid-instance freeze), EXP-004 filtered build + binary + auth-wrapper smoke (before Gate-6). CI: timing-flake class fixed at root — centralized OPENCODE_TIMING_SCALE at test-wrapper choke points (P-CI-4); develop push run green first-try. PRs: #9 (PH-0 reports + P-CI/P-1 register), #10 (P-CI-4), #11 (develop->main sync, open), #12 (roadmap + keystone-state + CLAUDE.md operating manual). Toolchain: bun 1.3.14 installed (npm global; tree-sitter-powershell native build needs MSVC, use --ignore-scripts). NEXT: PH-1 / MS-002 (WBS-1.1..1.5) — marid profile build, marid-auth (tokens/scopes/rate-limit/audit/request-ID via the EXP-004 wrapper seam), v1 contract tests, branding P-2 + config P-3. Start prompt: handoff/follow-up-prompts.md 'PH-1 -> start'."
-        },
-        {
-          "date": "2026-07-04",
-          "phase": "PH-1",
-          "event": "MS-002 MET — PH-1 complete, PH-2/PH-3 unblocked",
-          "note": "PR #13 merged to develop (squash, all 11 CI checks green incl. 3-OS marid-build). MS-002: authenticated marid binary from the profile build passes contract tests. Built: (1) @marid/auth NEW dependency-free pkg — tokens (mar_ secrets, sha256-only, constant-time), scopes admin/client/channel-stub, token-bucket rate-limit (10/s burst30, SSE cap4, 429+retry-after), audit JSONL (+session), x-request-id echo; (2) marid serve wrapper on the EXP-004 seam (Server.Default.app.fetch, zero server edit) + disables upstream Basic auth so marid-auth is the single gate; marid token CLI; (3) TEST-CONTRACT pins v1 routes (Server.openapi()) + event taxonomy (EventManifest) + live /event SSE; (4) additive src/marid.ts entry + script/marid-build.ts profile build (binary compiled+smoked 3-OS) + hygiene grep. 92 new tests. Closes EXP-004 deferred live-build residuals. DECISIONS (DEC-011): (a) client-scope ownership DURABLE sidecar (survives serve restart), recorded on create+fork; (b) additive marid.ts entry over index.ts edit = P-ENTRY (sync-reconcile checklist added to upstream-sync-strategy.md); (c) branding split — identity (name+commands) in PH-1, cosmetic P-2 (README/TUI/UA/logo) + config P-3 (lsp:false) DEFERRED to PH-5. Patch surface now P-2(partial)/P-3(deferred)/P-CI/P-ENTRY. FOLLOW-UP flagged: firehose/list altitude limitation — wrapper can't body-filter global /event or GET /session, so client scope enforces session ACTIONS not OBSERVATION (deferred, options+trigger in open-decision-register.md). NEXT: PH-2 (marid-instance, MS-003) and/or PH-3 (cross-interface, MS-004) — both unblocked; PH-4 needs WBS-1.2 tokens (done). Start prompts: handoff/follow-up-prompts.md 'PH-2 -> start' / 'PH-3 -> start'."
-        },
-        {
-          "date": "2026-07-05",
-          "phase": "PH-1 (follow-up)",
-          "event": "Deferred firehose/list isolation RESOLVED (operator-directed) — not an MS/WBS, closes a registered deferred decision",
-          "note": "Strict client-scope event/list isolation, built via option (b): a marid-owned filter in @marid/auth (src/event-filter.ts) wired into the middleware. ZERO upstream edit, no new P-* surface (all additive in the Marid-owned pkg). For any non-admin token the wrapper body-filters on the way out: drops non-owned SSE frames from GET /event (frame-parsed, buffered across chunk boundaries; session-less infra frames pass), and drops non-owned entries from GET /session (by id) + GET /permission (by sessionID). Admin never filtered. Key finding: every session event (v1 + v2) carries top-level sessionID (the event-sourcing aggregate key), so isolation is a one-field probe — pinned by a contract test that fails on upstream drift. Advisor-caught + fixed before ship: (1) invariant verified across ALL session families + pinned; (2) GET /permission was same leak class — now filtered; POST /permission/:id/reply residual (opaque per_ id) documented, not hidden; (3) upstream gzips JSON >=1KB — strip accept-encoding before delegating filtered list routes so the text-level filter isn't fed compressed bytes (verified live). Tests: marid-auth 42->62 (+20), opencode marid 50->52 (+manifest pin + live client-vs-admin isolation); typecheck + lint(0 err) clean. Register flipped Deferred -> Resolved. Residual reply-gating = future in-pipeline follow-up. PR #15 (merged to develop, squash a3524a6f9; synced to main via sync PR #16, merge-commit e14c232e1)."
-        },
-        {
-          "date": "2026-07-05",
-          "phase": "PH-2",
-          "event": "marid-instance BUILT (WBS-2.1..2.3) — local-validated on Windows; MS-003 exit pending 3-OS CI green",
-          "note": "PH-2 started on operator's explicit `PH-2 -> start`. New dependency-free pkg @marid/instance (additive, DEC-009 — NO new patch surface): paths.ts (composeInstanceEnv = the EXP-002-verified isolation env set: XDG_DATA/CACHE/CONFIG/STATE_HOME + TMPDIR/TMP/TEMP; port isolated by --port 0; home intentionally NOT relocated; OPENCODE_DB omitted — XDG_DATA_HOME isolates the DB and hardcoding drifts vs opencode's channel-suffix logic), lifecycle.ts (detached launch via process.execPath + stdio->server.log; race-free port from the logfile readiness line; PID/port record; platform-split tree-kill: taskkill /T /F on Windows [no catchable SIGTERM], process.kill(-pid) SIGTERM->SIGKILL on POSIX; readiness rides OPENCODE_TIMING_SCALE P-CI-4; orphan-reaped on failed start; idempotent start guard — a second start on a live instance returns the existing record instead of spawning a second, un-tracked server [advisor-caught, WBS-2.2 'no orphan' DoD]; POSIX kill signals the group AND the bare pid so the server dies even if Bun's detached did not establish a group leader on linux/macos), registry.ts (add/list/remove + name-validation trust-boundary guard blocking path traversal; 0700 trees; registry = dir listing per ADR-0006). CLI: MaridInstanceCommand (add/list --json/path/start/stop/status/remove) added to marid.ts (Marid-owned entry — no new P-*). RISK-FIRST spikes (advisor-directed) BEFORE building: Windows detached-survival (verified cross-process) + taskkill /T tree-reap (0 strays) + logfile readiness — the two milestone-gating unknowns, cleared. Tests: @marid/instance 39 unit (every R-05 row table-driven; lifecycle via a real fake :0 server; registry+traversal) + live 2-instance diff instance-isolation.test.ts (MARID_ISOLATION=1) proving distinct ports, per-instance DB/sessions, cross-token 401, and the DEFERRED EXP-002 negative claim (no opencode state escapes the composed XDG roots into a shared fake home). Full CLI start/status/health(401 gated)/stop/remove validated end-to-end on Windows (post-stop = connection refused, no orphan). CI: new 3-OS marid-isolation job (ubuntu+macos+windows, MARID_ISOLATION=1, inherits unit-job Windows workarounds) + marid-instance unit step in the 2-OS unit job. opencode typecheck exit 0; lint 0 errors; marid-auth 62 pass + opencode marid 52 pass/1 skip unchanged. ADR-0006 now verified live (EXP-002 residual live-diff CLOSED). OPERATOR ACTION: the new `marid-isolation` required check must be added to the main+develop branch-protection rulesets (was 8 checks; becomes 9) — a ruleset edit only the operator can make; until then the job runs but does not gate. RIDER (same PR, 2026-07-05): two unit-windows flakes during #17 CI root-caused as P-CI-4 class, NOT PH-2 (different test each attempt; both pre-existing hardcoded budgets) — (a) acp stdin-EOF exit-wait 5s inline Effect.timeout -> x TIMING_SCALE; (b) core flock contention staleMs 1s crossed by CPU-starved holder under the 16-worker 2-core spawn stampede -> tolerance budgets x SCALE; (c) SYSTEMIC: turbo 2.x strict env mode was stripping OPENCODE_TIMING_SCALE from every test task except opencode#test — added to turbo.json globalPassThroughEnv (knob transport). Registers updated: upstream-sync-strategy P-CI-4 (+2 read-sites, +transport note), architecture.md P-CI row + P-ENTRY commands + ingress-altitude paragraph flipped to RESOLVED(PR #15), reconcile-checklist marid.ts bullet += instance. NEXT: open PR into develop; on 3-OS CI green, flip MS-003 MET here + in roadmap.md. PH-3 (cross-interface) also unblocked."
-        },
-        {
-          "date": "2026-07-05",
-          "phase": "PH-2",
-          "event": "MS-003 MET — KPI-003 green on 3 OSes; PH-2 complete (merge of PR #17 pending operator instruction)",
-          "note": "Exit evidence: 3-OS marid-isolation job (ubuntu 39s / macos 53s / windows) green on every PR #17 run — including the final all-14-green run 28740707282 on f7286921f AND green #2, an ANNOUNCED unit-windows job re-run (2 consecutive post-fix passes = the operator-approved validation bar; never silent retry-until-green). Devil's-advocate review (operator-directed) retro-gated the P-CI-4 flake fix and closed its residuals with two runtime probes: P1 — OPENCODE_TIMING_SCALE=0.01 through turbo made the core flock contention test die at the scaled 200ms cap, PROVING globalPassThroughEnv delivers the knob to core's task runtime (config-level dry-run evidence upgraded to runtime proof); P2 — TMP/TEMP marker dir received flock tmpdirs through turbo strict mode, so the D:\\opencode-tmp environmental fix already reaches non-opencode packages via turbo's built-in allowlist (NO turbo.json TMP addition needed; U3 closed). Review deltas recorded: transport claim honesty (config vs runtime), bun file-order argument retracted (passed-at-least-once evidence carries the not-PH-2 conclusion), squash-history cost accepted (fix subject survives in squash body list), watch-list documented in upstream-sync-strategy P-CI-4 (no GH issue — solo-operator register suffices). Trackers flipped in this commit: roadmap PH-2 header + phase row + WBS-2.3 -> MS-003 MET. NEXT (operator): (1) merge PR #17 into develop — INV-005, explicit instruction only; (2) add marid-isolation to main+develop required checks (8->9); (3) PH-3 (cross-interface, MS-004) and PH-4 (Telegram, MS-005) both unblocked — start prompts in handoff/follow-up-prompts.md. DONE (2026-07-05): PR #17 merged develop@6e013b45e; sync #18 main@06b36e4cb; ruleset at 11 required checks."
-        },
-        {
-          "date": "2026-07-05",
-          "phase": "PH-3",
-          "event": "Cross-interface BUILT (WBS-3.1..3.3, ADR-0004, KPI-001) — local-validated on Windows; MS-004 exit pending 3-OS CI green",
-          "note": "PH-3 started on operator's explicit `PH-3 -> start`. ADR-0004 reading: TUI-as-client is a launch default, not a code fork; cross-interface sync IS the existing bus + per-session state. Key trace: the SDK applies bearer headers to BOTH HTTP calls and the /event SSE stream (context/sdk.tsx), so a Marid bearer token attaches the existing TUI path to a marid-auth server with ZERO upstream edit. Built: (WBS-3.1) `marid instance attach <name>` in cmd/marid-instance.ts — resolves the running instance URL from its record + a --token bearer, launches the upstream validateSession + tui/layer run with Authorization headers (additive; marid.ts already ours). (WBS-3.3 doc) api-event-contract v1.0->v1.1: NEW Concurrency section (EXP-001 join/steer/BusyError/abort/ordering, additive) + CORRECTION of the `?after=<seq>` per-session replay claim — the v1 /event firehose is live-only (no cursor, no SSE id: line / Last-Event-ID; verified handlers/event.ts id:undefined + the event httpapi group). Operator-approved (AskUserQuestion): correct contract + reconcile ADR-0004 + EXP-001 (both carry pointing notes); WBS-3.2 DoD met by authoritative-store re-fetch (no state loss), not event replay. TEST-SYNC (test/marid/cross-interface.test.ts, MARID_SYNC=1, gated): 3 live tests vs a REAL authed marid serve subprocess driven by TestLLMServer via OPENCODE_CONFIG_CONTENT overlay (same launch seam as PH-2) — (1) §7 KPI-001: API-started session discovered+continued by a 2nd client, subscriber sees updates from BOTH; (2) concurrency: two clients prompt one session concurrently, serialized without corruption; (3) restart: stop+restart marid serve on the same tree, reconnecting client re-fetches history written before the restart (no state loss) + new work accepted. 15 asserts, 3 pass local (Windows ~105s). NOTE: interactive SolidTUI not driven headlessly (no repo precedent, 3-OS flake) — the TUI's on-the-wire client role is exercised as `marid instance attach` drives it; stated in the test. CI: new 3-OS marid-sync job (MARID_SYNC=1, unit-job Windows workarounds + OPENCODE_TIMING_SCALE P-CI-4). typecheck exit 0, lint 0 errors. Patch surface unchanged (marid.ts + additive tests/docs; no new P-*). OPERATOR ACTION: add marid-sync (x3 OS) to main+develop required checks (11->14). NEXT: open PR into develop; on 3-OS marid-sync green flip MS-004 MET here + roadmap. PH-4 (Telegram, MS-005) unblocked."
-        },
-        {
-          "date": "2026-07-05",
-          "phase": "PH-3",
-          "event": "MS-004 MET — KPI-001 green on 3 OSes; PH-3 complete and synced to main",
-          "note": "Exit evidence: 3-OS marid-sync job (ubuntu/macos/windows) green on PR #19's first run (macos+linux exercised for the first time — the cross-interface path had only run on Windows locally). PR #19 squash-merged develop@82a92d8943; sync PR #20 merge-commit main@862c7bd6fc (main now holds PH-0..PH-3). Ruleset updated to 14 required checks (11 + marid-sync x3); CLAUDE.md corrected 11->14. Trackers flipped in this docs PR: roadmap PH-3 header + phase row + WBS-3.3 status -> MS-004 MET. Deferred-flip debt from the PH-3 build cleared. NEXT (operator): PH-4 (Telegram, MS-005) unblocked (needs WBS-1.2 tokens, done) — start prompt handoff/follow-up-prompts.md 'PH-4 -> start'; then PH-5 (Release & sync, MS-006 = MVP)."
+    "description": "See docs/brief.md — the archived raw brief (23 sections). Untracked in git; retained locally as the provenance source for this planning package."
+  },
+  "provenance": [],
+  "registers": {
+    "requirements": [
+      {
+        "id": "FR-001",
+        "kind": "functional",
+        "statement": "Preserve the agent execution loop",
+        "status": "Draft",
+        "source": "§4 \"Agent execution loop\"",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-002",
+        "kind": "functional",
+        "statement": "Durable sessions and conversation history",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-003",
+        "kind": "functional",
+        "statement": "Interactive use through a TUI",
+        "status": "Draft",
+        "source": "§1, §4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-004",
+        "kind": "functional",
+        "statement": "Agent and subagent management",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-005",
+        "kind": "functional",
+        "statement": "Skills and slash commands",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-006",
+        "kind": "functional",
+        "statement": "Rules and project instructions",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-007",
+        "kind": "functional",
+        "statement": "Permission management and approval workflows",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-008",
+        "kind": "functional",
+        "statement": "Plugin system",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-009",
+        "kind": "functional",
+        "statement": "Tool registration and tool calling",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-010",
+        "kind": "functional",
+        "statement": "Multiple LLM providers and model selection",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-011",
+        "kind": "functional",
+        "statement": "Storage and schema migrations",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-012",
+        "kind": "functional",
+        "statement": "Caching where justified",
+        "status": "Draft",
+        "source": "§4 \"where justified\""
+      },
+      {
+        "id": "FR-013",
+        "kind": "functional",
+        "statement": "MCP clients and servers",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-014",
+        "kind": "functional",
+        "statement": "LSP capabilities where useful outside IDE integration",
+        "status": "Draft",
+        "source": "§4 \"where useful\""
+      },
+      {
+        "id": "FR-015",
+        "kind": "functional",
+        "statement": "Event publication and subscription",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-016",
+        "kind": "functional",
+        "statement": "Streaming model output and tool events",
+        "status": "Draft",
+        "source": "§1, §4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-017",
+        "kind": "functional",
+        "statement": "Session branching, cancellation, resumption, and recovery",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-018",
+        "kind": "functional",
+        "statement": "Configuration and secret management",
+        "status": "Draft",
+        "source": "§4, §10",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-019",
+        "kind": "functional",
+        "statement": "Generated or supported SDKs",
+        "status": "Draft",
+        "source": "§4, §6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-020",
+        "kind": "functional",
+        "statement": "Observability hooks",
+        "status": "Draft",
+        "source": "§4, §11",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-021",
+        "kind": "functional",
+        "statement": "Controlled shell, file, network, and process access",
+        "status": "Draft",
+        "source": "§4",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-022",
+        "kind": "functional",
+        "statement": "Session creation and discovery via remote API",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-023",
+        "kind": "functional",
+        "statement": "Send prompts synchronously and asynchronously",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-024",
+        "kind": "functional",
+        "statement": "Stream token, message, tool, permission, status, and lifecycle events to remote clients",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-025",
+        "kind": "functional",
+        "statement": "SSE as the primary simple streaming option; evaluate bidirectional protocols only where SSE+HTTP is insufficient",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-026",
+        "kind": "functional",
+        "statement": "Session history retrieval via API",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-027",
+        "kind": "functional",
+        "statement": "Session cancellation and resumption via API",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-028",
+        "kind": "functional",
+        "statement": "Permission requests and responses over the remote interface",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-029",
+        "kind": "functional",
+        "statement": "Tool progress and subagent events exposed remotely",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-030",
+        "kind": "functional",
+        "statement": "Structured errors, request correlation, and idempotency on the API",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-031",
+        "kind": "functional",
+        "statement": "Authentication and authorization on the remote interface (single-operator model per OQ-003; private network per OQ-004)",
+        "status": "Draft",
+        "source": "§6, §20",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-032",
+        "kind": "functional",
+        "statement": "Rate limiting and quotas",
+        "status": "Draft",
+        "source": "§6, §20",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-033",
+        "kind": "functional",
+        "statement": "Audit logging of remote operations",
+        "status": "Draft",
+        "source": "§6, §11, §20",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-034",
+        "kind": "functional",
+        "statement": "Health, readiness, and version endpoints",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-035",
+        "kind": "functional",
+        "statement": "API and event versioning; SDK-friendly contracts",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-036",
+        "kind": "functional",
+        "statement": "Defined backpressure, disconnect, retry, reconnection, event ordering, and duplicate-event behavior",
+        "status": "Draft",
+        "source": "§6",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-037",
+        "kind": "functional",
+        "statement": "Optional durable event replay where justified",
+        "status": "Draft",
+        "source": "§6 \"where justified\"",
+        "priority": "Full"
+      },
+      {
+        "id": "FR-038",
+        "kind": "functional",
+        "statement": "A session remains consistent when the same user interacts through different interfaces (API-started session visible and continuable in TUI; subscribers on other channels receive updates)",
+        "status": "Draft",
+        "source": "§7 example flow",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-039",
+        "kind": "functional",
+        "statement": "Defined authoritative session store, session identity, and user/channel identity mapping",
+        "status": "Draft",
+        "source": "§7",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-040",
+        "kind": "functional",
+        "statement": "Defined concurrency behavior: simultaneous prompt handling, prompt queueing and steering, event ordering",
+        "status": "Draft",
+        "source": "§7",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-041",
+        "kind": "functional",
+        "statement": "Session ownership, access control, locking where required, and conflict resolution",
+        "status": "Draft",
+        "source": "§7",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-042",
+        "kind": "functional",
+        "statement": "TUI refresh/subscription behavior for externally-driven updates",
+        "status": "Draft",
+        "source": "§7",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-043",
+        "kind": "functional",
+        "statement": "Session recovery after process restart; defined behavior when one interface disconnects",
+        "status": "Draft",
+        "source": "§7",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-044",
+        "kind": "functional",
+        "statement": "Session retention, archival, export, and deletion",
+        "status": "Draft",
+        "source": "§7",
+        "priority": "Full"
+      },
+      {
+        "id": "FR-045",
+        "kind": "functional",
+        "statement": "Channel-adapter mechanism outside the agent core with stable ingress, egress, identity, attachment, and event contracts",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-046",
+        "kind": "functional",
+        "statement": "Telegram adapter (Bot API)",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-047",
+        "kind": "functional",
+        "statement": "WhatsApp adapter (official Business/Cloud APIs)",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "Full"
+      },
+      {
+        "id": "FR-048",
+        "kind": "functional",
+        "statement": "Streaming simulation for platforms without token streaming; message formatting within platform limits",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-049",
+        "kind": "functional",
+        "statement": "Attachments/media, replies/threads/conversation mapping, and commands on channels",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-050",
+        "kind": "functional",
+        "statement": "User identity linking, channel allowlists, and administrative approval",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-051",
+        "kind": "functional",
+        "statement": "Webhook signature validation, replay protection, retry and dead-letter handling, rate limits",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-052",
+        "kind": "functional",
+        "statement": "Channel capability policy restricting available agents, tools, projects/workspaces, filesystem boundaries, models/providers, token and cost limits, session retention, and admin operations",
+        "status": "Draft",
+        "source": "§8",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-053",
+        "kind": "functional",
+        "statement": "Multiple independent instances on the same machine without conflicts, covering instance IDs, port allocation, storage/db/cache namespaces, temp dirs, PID/lock files, sockets, log and telemetry attributes, config dirs, credentials, MCP/LSP processes, working dirs, plugin state, update/migration locks, process discovery and shutdown, and resource limits",
+        "status": "Draft",
+        "source": "§9",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-054",
+        "kind": "functional",
+        "statement": "Layered configuration (built-in defaults, system, user, project, instance, env vars, CLI overrides) with clearly defined precedence and merge rules",
+        "status": "Draft",
+        "source": "§10",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-055",
+        "kind": "functional",
+        "statement": "Secret references; runtime API updates where safe; validation and diagnostics; schema versioning and migrations; redaction in logs and errors",
+        "status": "Draft",
+        "source": "§10",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-056",
+        "kind": "functional",
+        "statement": "Structured logs, metrics, and distributed traces with OpenTelemetry/OTLP export",
+        "status": "Draft",
+        "source": "§11",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-057",
+        "kind": "functional",
+        "statement": "Correlation across API request, session, prompt, provider call, subagent, tool call, and external-channel message",
+        "status": "Draft",
+        "source": "§11",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-058",
+        "kind": "functional",
+        "statement": "Model latency/token usage, tool latency/failure, queue and streaming metrics, permission decisions, session lifecycle, and process/resource metrics",
+        "status": "Draft",
+        "source": "§11",
+        "priority": "Full"
+      },
+      {
+        "id": "FR-059",
+        "kind": "functional",
+        "statement": "Operational telemetry separated from security audit records; sensitive-data redaction; local dev output plus production exporters",
+        "status": "Draft",
+        "source": "§11",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-060",
+        "kind": "functional",
+        "statement": "An MVP distribution method plus a later expansion path (binaries, npm/Bun, Docker, Compose, native packages, private releases/registries, signing, checksums, SBOM, manifests, update channels, migrations, rollback, release notes)",
+        "status": "Draft",
+        "source": "§12",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-061",
+        "kind": "functional",
+        "statement": "Upstream synchronization workflow: remote config, baseline tracking, update frequency, automated update branches, CI validation, conflict ownership, migration review, security-patch priority, dependency updates, rollback, documentation, and an upstream-delta report of all downstream modifications",
+        "status": "Draft",
+        "source": "§13",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-062",
+        "kind": "functional",
+        "statement": "Adapted Git Flow: protected main, develop, feature/release/hotfix/upstream-sync branches, naming, PR rules, required checks, reviews, commit conventions, tagging, release process, and changelog automation where useful",
+        "status": "Draft",
+        "source": "§14",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-063",
+        "kind": "functional",
+        "statement": "Risk-based testing strategy per §17 (unit to cross-platform smoke; boundaries, fixtures, provider mocks, deterministic modes, coverage thresholds, flaky policy, per-gate evidence; Linux/macOS/Windows CI; PR/nightly/release/post-sync tiers)",
+        "status": "Draft",
+        "source": "§17",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-064",
+        "kind": "functional",
+        "statement": "GitHub Actions CI/CD covering the §18 workflow list (format, lint, typecheck, tests, matrix, compat, migrations, security/dependency/secret/license scans, SBOM, container and binary builds, install smoke, docs, RCs, signed releases, sync validation, scheduled runs, retention, publishing)",
+        "status": "Draft",
+        "source": "§18",
+        "priority": "MVP"
+      },
+      {
+        "id": "FR-065",
+        "kind": "functional",
+        "statement": "Naming and branding package: candidate names, availability findings, README plan with attribution and non-affiliation notice, and a logo brief in editable vector format",
+        "status": "Draft",
+        "source": "§19",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-001",
+        "kind": "non_functional",
+        "statement": "Upstream synchronizability: the fork remains reasonably easy to synchronize with upstream OpenCode; prefer a small, isolated downstream patch surface",
+        "status": "Draft",
+        "source": "§2.4, §13",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-002",
+        "kind": "non_functional",
+        "statement": "Simplicity: avoid unnecessary complexity and premature platform engineering; the smallest architecture that safely satisfies the approved MVP",
+        "status": "Draft",
+        "source": "§2.5, §23",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-003",
+        "kind": "non_functional",
+        "statement": "Operability as an independent product: distributable, configurable, operable, observable, testable, upgradeable, securable",
+        "status": "Draft",
+        "source": "§2.6",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-004",
+        "kind": "non_functional",
+        "statement": "Cross-platform: Linux, macOS, Windows (x64 baseline, ARM64 only where justified)",
+        "status": "Draft",
+        "source": "§12",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-005",
+        "kind": "non_functional",
+        "statement": "Security as a core architectural concern: least privilege, safe defaults, sandboxing, prompt-injection and supply-chain defenses per §20",
+        "status": "Draft",
+        "source": "§20",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-006",
+        "kind": "non_functional",
+        "statement": "Streaming responsiveness: full response and event streaming across TUI, API, and external channels",
+        "status": "Draft",
+        "source": "§1, §6",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-007",
+        "kind": "non_functional",
+        "statement": "Session consistency: cross-interface convergence with no lost or duplicated messages after reconnect",
+        "status": "Draft",
+        "source": "§7",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-008",
+        "kind": "non_functional",
+        "statement": "Multi-instance isolation: no cross-instance interference",
+        "status": "Draft",
+        "source": "§9",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-009",
+        "kind": "non_functional",
+        "statement": "Observability on open standards where practical (OpenTelemetry/OTLP)",
+        "status": "Draft",
+        "source": "§11",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-010",
+        "kind": "non_functional",
+        "statement": "Documentation quality: README plan per §19; docs validated in CI",
+        "status": "Draft",
+        "source": "§18, §19",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-011",
+        "kind": "non_functional",
+        "statement": "Test rigor: risk-based coverage with explicit thresholds and per-gate evidence",
+        "status": "Draft",
+        "source": "§17",
+        "priority": "MVP"
+      },
+      {
+        "id": "NFR-012",
+        "kind": "non_functional",
+        "statement": "Language and tone of all deliverables: simple, clear English suitable for non-native speakers",
+        "status": "Draft",
+        "source": "§23",
+        "priority": "MVP"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "CON-001",
+        "statement": "Base the product on a private fork of OpenCode (github.com/anomalyco/opencode); reuse its agent runtime and terminal experience",
+        "status": "Draft",
+        "source": "§1"
+      },
+      {
+        "id": "CON-002",
+        "statement": "This mission is research/architecture/planning/handoff; no product implementation before the analysis, decisions, and approval gates are complete",
+        "status": "Draft",
+        "source": "§1, §22"
+      },
+      {
+        "id": "CON-003",
+        "statement": "Inherited stack: TypeScript + Bun monorepo (Turbo workspaces), SQLite + Drizzle, SolidJS TUI/web, Hono server; changing stack fundamentals would break CON-001 and NFR-001",
+        "status": "Draft",
+        "source": "repo CLAUDE.md; verified facts"
+      },
+      {
+        "id": "CON-004",
+        "statement": "Do not maintain desktop apps, IDE-specific integrations, editor-specific interfaces, unrelated cloud/enterprise components, or duplicate clients",
+        "status": "Draft",
+        "source": "§5"
+      },
+      {
+        "id": "CON-005",
+        "statement": "Keep and maintain the Web user interfaces as part of the target product",
+        "status": "Draft",
+        "source": "§5"
+      },
+      {
+        "id": "CON-006",
+        "statement": "Channel mechanism lives outside the agent core, behind stable contracts",
+        "status": "Draft",
+        "source": "§8"
+      },
+      {
+        "id": "CON-007",
+        "statement": "Use Git Flow, adapted for a private downstream fork",
+        "status": "Draft",
+        "source": "§14"
+      },
+      {
+        "id": "CON-008",
+        "statement": "Forking gate: no private repo creation/modification until the name is approved, the upstream baseline is recorded, the strategy is approved, and the local working tree is inspected",
+        "status": "Draft",
+        "source": "§14"
+      },
+      {
+        "id": "CON-009",
+        "statement": "CI/CD on GitHub Actions is mandatory",
+        "status": "Draft",
+        "source": "§18"
+      },
+      {
+        "id": "CON-010",
+        "statement": "Research via Firecrawl MCP or deep-research; if unavailable, use the best available mechanism with the limitation stated",
+        "status": "Draft",
+        "source": "§16"
+      },
+      {
+        "id": "CON-011",
+        "statement": "Support Linux, macOS, Windows; x64 baseline, ARM64 only where justified",
+        "status": "Draft",
+        "source": "§12"
+      },
+      {
+        "id": "CON-012",
+        "statement": "Mandatory pause at the 14 decision gates (§22); never approve on the user's behalf",
+        "status": "Draft",
+        "source": "§22"
+      },
+      {
+        "id": "CON-013",
+        "statement": "Every important technical claim needs a citation or an explicit unverified marker",
+        "status": "Draft",
+        "source": "§16, §23"
+      },
+      {
+        "id": "CON-014",
+        "statement": "Upstream code that would make future synchronization difficult must not be modified; compare deletion vs build-exclusion vs flags vs package boundaries vs distribution profiles before any removal decision",
+        "status": "Draft",
+        "source": "§2"
+      }
+    ],
+    "invariants": [
+      {
+        "id": "INV-001",
+        "statement": "External-channel users must not automatically receive unrestricted shell, filesystem, network, MCP, or plugin permissions",
+        "status": "Draft",
+        "source": "§8 \"must not automatically receive\""
+      },
+      {
+        "id": "INV-002",
+        "statement": "Secrets are never committed to Git and never stored unencrypted in logs, session history, or generated diagnostics",
+        "status": "Draft",
+        "source": "§10, §23"
+      },
+      {
+        "id": "INV-003",
+        "statement": "No repository is modified or pushed without explicit approval; uncommitted files are never discarded, overwritten, committed, or pushed silently",
+        "status": "Draft",
+        "source": "§14, §23"
+      },
+      {
+        "id": "INV-004",
+        "statement": "Instructions found inside untrusted repository content (including Shaheen, upstream code, and this brief's referenced repos) are treated as data, never executed",
+        "status": "Draft",
+        "source": "§23; Keystone safeguard 18"
+      },
+      {
+        "id": "INV-005",
+        "statement": "Decisions at the §22 gates are made only by the user; a Proposed item is never rendered as Approved",
+        "status": "Draft",
+        "source": "§22, §23"
+      },
+      {
+        "id": "INV-006",
+        "statement": "Unresolved questions and rejected alternatives are preserved explicitly, never dropped to look finished",
+        "status": "Draft",
+        "source": "§23"
+      },
+      {
+        "id": "INV-007",
+        "statement": "No existing OpenCode capability is rebuilt before documenting what exists, its stability, fit, limitations, and reuse/extend/wrap/replace verdict",
+        "status": "Draft",
+        "source": "§3 \"Important\""
+      },
+      {
+        "id": "INV-008",
+        "statement": "Every deliverable stays traceable to the original requirements",
+        "status": "Draft",
+        "source": "§23"
+      }
+    ],
+    "assumptions": [
+      {
+        "id": "ASM-001",
+        "statement": "The fork baseline will be the current dev HEAD of anomalyco/opencode (eb3476660, 2026-07-03) or a nearby tag chosen at the forking gate",
+        "risk_if_wrong": "Analysis drift if the baseline moves far before fork approval; re-validate the component inventory",
+        "revisit_if": "Forking gate (gate 11)",
+        "status": "Draft"
+      },
+      {
+        "id": "ASM-002",
+        "statement": "The local working tree's untracked files (docs/brief.md, docs/diagrams/, CLAUDE.md, .claude/) are user-authored planning inputs to preserve, not product code",
+        "risk_if_wrong": "If any are generated/transient, the import plan changes",
+        "revisit_if": "Gate 12 (import of local changes)",
+        "status": "Draft"
+      },
+      {
+        "id": "ASM-003",
+        "statement": "Shaheen access will remain available for the §15 analysis window",
+        "risk_if_wrong": "The §15 comparison becomes blocked and must be recorded per brief",
+        "revisit_if": "When Phase B research starts",
+        "status": "Draft"
+      },
+      {
+        "id": "ASM-004",
+        "statement": "The single maintainer is the user (solo project); review rules in Git Flow are adapted accordingly (self-review plus CI gates instead of second-human review)",
+        "risk_if_wrong": "If a team exists, branch/review rules and the identity model change",
+        "revisit_if": "Clarified at scope gate or later",
+        "status": "Draft"
+      },
+      {
+        "id": "ASM-005",
+        "statement": "No hard deadline or budget cap; research depth is sized by risk and the roadmap is phased by dependency order rather than dates",
+        "risk_if_wrong": "Over-invested research; roadmap re-cut needed",
+        "revisit_if": "OQ-006 answered",
+        "status": "Draft"
+      },
+      {
+        "id": "ASM-006",
+        "statement": "Proposed NFR thresholds marked in non-functional.md are placeholders to be tuned at gate 5, not commitments",
+        "risk_if_wrong": "Thresholds treated as binding too early lead to wrong architecture trade-offs",
+        "revisit_if": "Gate 5 (architecture)",
+        "status": "Draft"
+      },
+      {
+        "id": "ASM-007",
+        "statement": "The 19 docs/diagrams reflect a recent but possibly stale view of the codebase; each will be validated against source before being cited as evidence",
+        "risk_if_wrong": "Decisions based on stale diagrams",
+        "revisit_if": "Current-state analysis (gate 4)",
+        "status": "Draft"
+      }
+    ],
+    "dependencies": [
+      {
+        "id": "DEP-001",
+        "name": "github.com/anomalyco/opencode (upstream)",
+        "description": "Fork base; ongoing sync source",
+        "availability": "Verified public; local clone current (HEAD eb3476660, branch dev)",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-002",
+        "name": "github.com/ahmadabusa3/shaheen",
+        "description": "Reference analysis (§15)",
+        "availability": "Verified private but accessible to the authenticated gh account",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-003",
+        "name": "github.com/A-H-911/keystone",
+        "description": "Methodology source (this skill)",
+        "availability": "Verified public",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-004",
+        "name": "Bun runtime + Turbo monorepo toolchain",
+        "description": "Build/run substrate inherited from upstream",
+        "availability": "Present in repo",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-005",
+        "name": "LLM provider APIs (15+ via Vercel AI SDK)",
+        "description": "Model execution",
+        "availability": "Inherited",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-006",
+        "name": "Telegram Bot API",
+        "description": "Channel adapter (FR-046)",
+        "availability": "Not yet researched",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-007",
+        "name": "WhatsApp Business/Cloud API",
+        "description": "Channel adapter (FR-047)",
+        "availability": "Not yet researched",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-008",
+        "name": "GitHub (private repo, Actions, releases)",
+        "description": "Hosting + CI/CD + distribution",
+        "availability": "Account verified working (gh authenticated)",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-009",
+        "name": "docs/diagrams (19 diagrams + JSON specs)",
+        "description": "Current-state analysis input; must be validated against source",
+        "availability": "Present in working tree (untracked)",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-010",
+        "name": "Firecrawl MCP / deep-research tooling",
+        "description": "External research (§16)",
+        "availability": "Firecrawl MCP connected in this session",
+        "status": "Draft"
+      },
+      {
+        "id": "DEP-011",
+        "name": "github.com/A-H-911/claudectl",
+        "description": "Reference for instance-manager design (user-supplied)",
+        "availability": "Verified public, MIT, v0.2.0",
+        "status": "Draft"
+      }
+    ],
+    "open_questions": [
+      {
+        "id": "OQ-001",
+        "question": "What does an instance mean (§9)?",
+        "status": "Answered",
+        "resolution": "Isolated runtime: one self-contained runtime with its own config, storage/DB, cache, ports, secrets, and logs; may serve one or more projects/workspaces internally"
+      },
+      {
+        "id": "OQ-002",
+        "question": "Which capability blocks are MVP?",
+        "status": "Answered",
+        "resolution": "All four in MVP: remote API + SSE, cross-interface sync, Telegram adapter, multi-instance operation. WhatsApp deferred to post-MVP. Web UI keep remains CON-005"
+      },
+      {
+        "id": "OQ-003",
+        "question": "Single-operator or multi-user MVP?",
+        "status": "Answered",
+        "resolution": "Single operator: one human; apps/channels authenticate with operator-issued API keys/tokens; channel identities map to the operator"
+      },
+      {
+        "id": "OQ-004",
+        "question": "MVP network exposure of the API?",
+        "status": "Answered",
+        "resolution": "Private network only: localhost/LAN/private overlay (VPN/Tailscale); channels reach the agent via outbound connections or a webhook relay"
+      },
+      {
+        "id": "OQ-005",
+        "question": "Exact keep-list of upstream web surfaces (app, web, console, session-ui, storybook)?",
+        "status": "Open"
+      },
+      {
+        "id": "OQ-006",
+        "question": "Time/budget constraints and MVP target date?",
+        "status": "Open"
+      },
+      {
+        "id": "OQ-007",
+        "question": "Naming preferences (language roots, tone, must-avoid words)?",
+        "status": "Open"
+      },
+      {
+        "id": "OQ-008",
+        "question": "Upstream license/attribution obligations at fork baseline?",
+        "status": "Open"
+      },
+      {
+        "id": "OQ-009",
+        "question": "Does upstream packages/slack set the channel-adapter pattern, and is it in use?",
+        "status": "Open"
+      }
+    ],
+    "decisions": [
+      {
+        "id": "DEC-001",
+        "title": "Component reduction strategy per package (delete vs build-time exclusion vs feature flag vs package boundary vs distribution profile)",
+        "status": "Proposed"
+      },
+      {
+        "id": "DEC-002",
+        "title": "Primary streaming protocol for the remote API (SSE-first)",
+        "status": "Proposed"
+      },
+      {
+        "id": "DEC-003",
+        "title": "Upstream synchronization model",
+        "status": "Proposed"
+      },
+      {
+        "id": "DEC-004",
+        "title": "Reuse vs extend vs wrap vs replace for each existing capability",
+        "status": "Proposed"
+      },
+      {
+        "id": "DEC-005",
+        "title": "Authoritative session store and concurrency model",
+        "status": "Proposed"
+      },
+      {
+        "id": "DEC-006",
+        "title": "MVP distribution method",
+        "status": "Proposed"
+      },
+      {
+        "id": "DEC-007",
+        "title": "Branching model details (Git Flow adaptation for a solo downstream fork)",
+        "status": "Proposed"
+      },
+      {
+        "id": "DEC-008",
+        "title": "Product/repo/CLI naming",
+        "status": "Approved",
+        "decided_on": "2026-07-03"
+      },
+      {
+        "id": "DEC-009",
+        "title": "Reuse-first principle: reuse upstream capability rather than build new unless a justified reason is recorded",
+        "status": "Approved",
+        "decided_on": "2026-07-03"
+      },
+      {
+        "id": "DEC-010",
+        "title": "Source repository visibility (A-H-911/marid)",
+        "status": "Approved",
+        "decided_on": "2026-07-03"
+      },
+      {
+        "id": "DEC-011",
+        "title": "client-scope session ownership: durable sidecar vs in-memory map",
+        "status": "Approved",
+        "decided_on": "2026-07-04"
+      },
+      {
+        "id": "DEC-012",
+        "title": "marid binary entry: additive src/marid.ts vs a parameterizing edit to upstream index.ts",
+        "status": "Approved",
+        "decided_on": "2026-07-04"
+      },
+      {
+        "id": "DEC-013",
+        "title": "Branding split: CLI identity in PH-1, cosmetic surfaces in PH-5",
+        "status": "Approved",
+        "decided_on": "2026-07-04"
+      }
+    ],
+    "adrs": [
+      {
+        "id": "ADR-0001",
+        "title": "Tracking fork with periodic upstream merge and a minimal additive patch surface",
+        "status": "Approved",
+        "date": "2026-07-03",
+        "context": "Marid must reuse OpenCode's runtime while staying synchronizable (NFR-001). Shaheen's vendored freeze fails the sync goal; rebase rewrites long-lived branches; a patch-stack is built for edited upstream files, which we mostly avoid.",
+        "decision": "Private repo preserving full upstream history; the upstream remote points at anomalyco/opencode; a scheduled weekly-to-monthly merge of upstream dev flows through an automated sync branch that CI validates before a PR into develop, with security patches fast-pathed out of cadence. All Marid code is additive (new packages); any direct upstream-file edit is enumerated in the patch-surface register. Every sync produces an upstream-delta report.",
+        "consequences": "Merge conflicts are rare and owned; history stays auditable; the fork can always be diffed against its baseline. Cost: merge commits in history and the discipline to keep the delta additive. Rejected: rebase, patch-stack, vendored freeze (Shaheen), and an external adapter layer (kept as a documented fallback, RISK-011)."
+      },
+      {
+        "id": "ADR-0002",
+        "title": "Exclude by distribution profile, delete nothing",
+        "status": "Approved",
+        "date": "2026-07-03",
+        "context": "The brief requires dropping desktop/IDE/cloud surfaces but warns that stripping is not deleting; physical deletion creates recurring merge conflicts against an active upstream (RISK-005).",
+        "decision": "The marid distribution profile builds, tests, and ships only the keep-list. Excluded packages stay in the repo untouched: not built, not published, not in the binary. Feature-level trimming uses config defaults (for example lsp:false), not code edits. Physical deletion requires a future justified decision.",
+        "consequences": "Zero merge-conflict surface from exclusions; rollback is adding the package back to the build filter; repo size stays larger than strictly needed (accepted). Rejected: physical deletion; pervasive runtime feature flags."
+      },
+      {
+        "id": "ADR-0003",
+        "title": "Build on the v1 API + SSE behind a marid-auth layer; watch v2",
+        "status": "Approved",
+        "date": "2026-07-03",
+        "context": "The v1 HTTP surface plus the published @opencode-ai/sdk already satisfy most remote-API requirements as-is; every v2 API group is annotated Experimental; SSE exists with per-session durable replay; rate limiting and audit logging are absent; auth is one optional Basic credential.",
+        "decision": "Marid's public interface is the upstream v1 API plus SSE, fronted by marid-auth (a new package on the single server extension seam): bearer tokens with per-token scopes, rate limiting, audit logging, and request-ID correlation. SSE stays the only streaming transport (WebSocket only if a concrete FR-036 gap survives EXP-001). The v2/sdk-next migration is a standing item in every upstream-sync review.",
+        "consequences": "Stability now with one facade to re-point at v2 later; Marid exposes no internal types beyond what the upstream SDK already exposes. Cost: two API generations live in-repo (RISK-001 watch). Rejected: adopting v2 now (experimental churn); a brand-new Marid API (violates DEC-009 and INV-007)."
+      },
+      {
+        "id": "ADR-0004",
+        "title": "One server process per instance; all clients attach over HTTP+SSE",
+        "status": "Approved",
+        "date": "2026-07-03",
+        "context": "Live events reach every client of one server process; nothing propagates events across processes; the v2 store is event-sourced with per-aggregate sequences; a queue/steer/single-writer coordinator exists but is only partially wired.",
+        "decision": "An instance runs exactly one marid serve process that owns that instance's SQLite store. TUI, web UI, SDK apps, and channel gateways are all HTTP+SSE clients of it, so cross-interface sync (FR-038 through FR-043) is the existing bus plus per-session state. Concurrency reuses the v2 queue/steering design, verified by EXP-001; the fallback if EXP-001 had failed was a busy-lock plus queue in the Marid layer.",
+        "consequences": "No distributed coordination in the MVP; restart recovery is server restart plus client reconnect and a re-read of authoritative session state. A PH-3 correction records that the v1 event firehose is live-only (no cursor, no Last-Event-ID), so recovery is authoritative-state re-fetch, not event replay; api-event-contract v1.1 carries the authoritative wording. The TUI runs in client mode against the instance server, a launch default rather than a code fork. Rejected: multi-process shared-SQLite event propagation; a global pessimistic lock (kept as fallback)."
+      },
+      {
+        "id": "ADR-0005",
+        "title": "Channel gateways are separate processes speaking only the public API",
+        "status": "Approved",
+        "date": "2026-07-03",
+        "context": "In-process plugins have zero isolation, the wrong place for untrusted ingress. The pattern of an external process speaking only the public HTTP+SSE API is proven by the upstream slack prototype and Shaheen's WhatsApp gateway. Telegram long polling needs no public endpoint, matching the private-network constraint.",
+        "decision": "marid-telegram and future channels are standalone processes holding a scoped Marid API token, the platform credential, the channel capability policy, ingress dedup, egress formatting and rate compliance, and streaming simulation (edit-coalescing of at least 2 s). Channel users map to the operator identity through an explicit allowlist. The channel's agent is a dedicated restricted agent; INV-001 is enforced by configuration and token scope, not trust.",
+        "consequences": "Core stays untouched; a gateway crash or compromise is bounded by its token; each new channel is a new package against stable contracts (CON-006, FR-045). Rejected: an in-core channel plugin."
+      },
+      {
+        "id": "ADR-0006",
+        "title": "Instance = isolated runtime via env-composed directory namespaces",
+        "status": "Approved",
+        "date": "2026-07-05",
+        "context": "An instance is an isolated runtime with its own config, storage, cache, ports, secrets, and logs; it may host several projects. The R-05 conflict inventory shows today's shared state (DB, auth.json, config, log, caches, port preference). OpenCode already honors XDG overrides, OPENCODE_DB, and OPENCODE_CONFIG; claudectl proves the thin-launcher plus env pattern cross-platform.",
+        "decision": "marid-instance manages per-instance 0700 directory trees containing config, data (DB), cache, logs, secrets, and a port/PID record. It writes per-instance launchers that compose the env (XDG plus OPENCODE_* plus port) and exec the shared binary; it adds port allocation, PID files, graceful shutdown, status/health, and per-instance MCP/LSP child processes. The registry is the directory listing. Isolation is by namespacing, not locking. Verified by EXP-002 and realizing FR-053 and the OQ-001 answer.",
+        "consequences": "No daemon or supervisor in the MVP; cross-instance resource limits are delegated to OS mechanisms with enforced limits deferred behind a trigger. Realized in PH-2 as the marid-instance package; the deferred EXP-002 live two-instance diff is now closed by the isolation test suite. Rejected: one daemon hosting many logical instances; per-agent-process instances."
+      }
+    ],
+    "risks": [
+      {
+        "id": "RISK-001",
+        "description": "Upstream v1-to-v2 API/SDK migration breaks the Marid layer or strands it on a deprecated surface",
+        "impact": "high",
+        "likelihood": "high",
+        "mitigation": "Build on v1 behind the marid-auth facade; standing sync-checklist item watching v2/sdk-next stability; migration decision pre-drafted",
+        "trigger": "sdk-next drops the experimental marker or v1 routes are deprecated",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-002",
+        "description": "Cross-instance state corruption (auth.json read-modify-write lost writes, LSP cache torn installs, shared log)",
+        "impact": "high",
+        "likelihood": "medium",
+        "mitigation": "Directory namespacing per instance (no shared mutable files by construction); EXP-002 verifies",
+        "trigger": "EXP-002 failure or any stray-write report",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-003",
+        "description": "Prompt injection via Telegram, repo content, or tool output leads to unintended tool use",
+        "impact": "high",
+        "likelihood": "medium",
+        "mitigation": "INV-001 policy: channel agent is a restricted ruleset, default-deny sensitive tools, approval prompts; enforce at the tool-authorization boundary",
+        "trigger": "Any policy bypass in testing",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-004",
+        "description": "Supply-chain compromise via runtime npm-install (providers/plugins) or upstream deps",
+        "impact": "high",
+        "likelihood": "low",
+        "mitigation": "Pin provider installs in the distribution profile; dependency and secret scanning in CI (FR-064); plugin trust policy",
+        "trigger": "Scanner alert",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-005",
+        "description": "Solo-maintainer fork fatigue: syncs stop happening and the fork drifts",
+        "impact": "high",
+        "likelihood": "medium",
+        "mitigation": "Small enumerated patch surface; monthly cadence plus CI conflict-detector; delta report keeps drift visible",
+        "trigger": "Two skipped sync cycles",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-006",
+        "description": "SSE firehose is live-only, so the gateway misses events on disconnect",
+        "impact": "medium",
+        "likelihood": "medium",
+        "mitigation": "Reconnect via authoritative-store re-fetch (contract v1.1); gateway tracks last state per session",
+        "trigger": "Integration test shows event loss",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-007",
+        "description": "Secrets leak into session history or logs and get relayed to channels",
+        "impact": "high",
+        "likelihood": "low",
+        "mitigation": "Redaction rules (FR-055, FR-059); audit separation; never echo config/auth values in tool output shown to channels",
+        "trigger": "Redaction test failure",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-008",
+        "description": "Windows parity gaps (no /proc status, .cmd launchers, path handling)",
+        "impact": "medium",
+        "likelihood": "medium",
+        "mitigation": "claudectl already solved launcher parity; 3-OS CI smoke mandatory (NFR-004)",
+        "trigger": "CI matrix failure",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-009",
+        "description": "Private-release update friction (a gh token is needed for self-update)",
+        "impact": "low",
+        "likelihood": "high",
+        "mitigation": "Documented gh-authenticated install/update path; acceptable for a single operator",
+        "trigger": "Operator pain report",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-010",
+        "description": "The v2 queue/steering path is less finished than it looks (only partially wired)",
+        "impact": "high",
+        "likelihood": "medium",
+        "mitigation": "EXP-001 before relying on it; busy-lock fallback pre-selected",
+        "trigger": "EXP-001 FAIL",
+        "scope": "MVP"
+      },
+      {
+        "id": "RISK-011",
+        "description": "Upstream changes direction or license, or goes private",
+        "impact": "medium",
+        "likelihood": "low",
+        "mitigation": "MIT baseline snapshot preserved in fork history; adapter-layer fallback documented",
+        "trigger": "Upstream announcement",
+        "scope": "Full"
+      },
+      {
+        "id": "RISK-012",
+        "description": "Scope creep back toward multi-user/public deployment before the MVP ships",
+        "impact": "medium",
+        "likelihood": "medium",
+        "mitigation": "Charter non-goals plus scope-change rule (a decision is required); auth designed with headroom but not built out",
+        "trigger": "Any FR added outside the registers",
+        "scope": "MVP"
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "HYP-001",
+        "statement": "The upstream v2 single-writer/queue/steering path already gives safe behavior for two simultaneous clients of one session (no corruption; deterministic queue/steer semantics)",
+        "status": "Confirmed",
+        "links": {
+          "tested_by": [
+            "EXP-001"
+          ]
         }
+      },
+      {
+        "id": "HYP-002",
+        "statement": "Env-var composition (XDG overrides + OPENCODE_DB + port) yields complete instance isolation for every item in the R-05 conflict inventory",
+        "status": "Confirmed",
+        "links": {
+          "tested_by": [
+            "EXP-002"
+          ]
+        }
+      },
+      {
+        "id": "HYP-003",
+        "statement": "Telegram edit-coalesced streaming at one edit per 2-3 s gives acceptable UX without hitting 429s in normal use",
+        "status": "Confirmed",
+        "links": {
+          "tested_by": [
+            "EXP-003"
+          ]
+        }
+      },
+      {
+        "id": "HYP-004",
+        "statement": "The marid distribution profile builds and passes upstream tests with all excluded packages absent, without editing upstream files",
+        "status": "Confirmed",
+        "links": {
+          "tested_by": [
+            "EXP-004"
+          ]
+        }
+      }
+    ],
+    "experiments": [
+      {
+        "id": "EXP-001",
+        "title": "Two-client concurrency probe",
+        "method": "One opencode serve instance; two SDK clients prompt the same session simultaneously (and one mid-run steer); observe queue admission, event ordering, and message integrity in the DB.",
+        "pass_criteria": "No interleaved or corrupt messages; the second prompt is queued or steers per documented v2 semantics; SSE events arrive ordered per aggregate.",
+        "status": "Complete",
+        "outcome": "pass",
+        "links": {
+          "tests_hypothesis": [
+            "HYP-001"
+          ]
+        }
+      },
+      {
+        "id": "EXP-002",
+        "title": "Two-instance isolation probe",
+        "method": "Launch two instances via a launcher composing env per instance; exercise both (sessions, provider auth, LSP download, logs); diff the two instance trees and the real HOME.",
+        "pass_criteria": "Zero writes outside each instance's tree; both servers healthy on distinct ports.",
+        "status": "Complete",
+        "outcome": "pass",
+        "links": {
+          "tests_hypothesis": [
+            "HYP-002"
+          ]
+        }
+      },
+      {
+        "id": "EXP-003",
+        "title": "Telegram cadence probe",
+        "method": "Throwaway bot token; a script simulating a streamed reply via sendMessage plus editMessageText at 2-3 s coalescing over one 3-minute run, plus a permission inline-keyboard round trip.",
+        "pass_criteria": "No 429s in normal cadence; approve/deny round trip under 5 s.",
+        "status": "Complete",
+        "outcome": "pass",
+        "links": {
+          "tests_hypothesis": [
+            "HYP-003"
+          ]
+        }
+      },
+      {
+        "id": "EXP-004",
+        "title": "Distribution-profile build probe",
+        "method": "Build with a turbo/workspace filter matching the keep-list; run upstream test suites for kept packages; produce one Bun-compiled binary; check whether marid-auth can attach without editing server files.",
+        "pass_criteria": "Green build and tests, a working binary, and the server-seam question answered.",
+        "status": "Complete",
+        "outcome": "pass",
+        "links": {
+          "tests_hypothesis": [
+            "HYP-004"
+          ]
+        }
+      }
+    ],
+    "comparisons": [
+      {
+        "subject": "Upstream synchronization model",
+        "criteria": [
+          {
+            "name": "Effort",
+            "weight": 1
+          },
+          {
+            "name": "Conflict",
+            "weight": 1
+          },
+          {
+            "name": "Sec-patch",
+            "weight": 1
+          },
+          {
+            "name": "History",
+            "weight": 1
+          },
+          {
+            "name": "Tooling",
+            "weight": 1
+          }
+        ],
+        "options": [
+          {
+            "name": "A. Tracking fork + periodic upstream merge + minimal patch surface",
+            "scores": [
+              {
+                "criterion": "Effort",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Conflict",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Sec-patch",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "History",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Tooling",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 36
+          },
+          {
+            "name": "B. Periodic rebase onto upstream",
+            "scores": [
+              {
+                "criterion": "Effort",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Conflict",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Sec-patch",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "History",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Tooling",
+                "score": 2,
+                "fit": "partial"
+              }
+            ],
+            "weighted_total": 24
+          },
+          {
+            "name": "C. Patch-stack (curated patches)",
+            "scores": [
+              {
+                "criterion": "Effort",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Conflict",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Sec-patch",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "History",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Tooling",
+                "score": 1,
+                "fit": "weak"
+              }
+            ],
+            "weighted_total": 24
+          },
+          {
+            "name": "D. Vendored hard fork (freeze, no sync) — Shaheen's model",
+            "scores": [
+              {
+                "criterion": "Effort",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Conflict",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Sec-patch",
+                "score": 0,
+                "fit": "unsuitable"
+              },
+              {
+                "criterion": "History",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Tooling",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 26
+          },
+          {
+            "name": "E. Adapter layer fully outside the fork (wrap released binaries)",
+            "scores": [
+              {
+                "criterion": "Effort",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Conflict",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Sec-patch",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "History",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Tooling",
+                "score": 2,
+                "fit": "partial"
+              }
+            ],
+            "weighted_total": 26
+          }
+        ],
+        "decision_ref": "DEC-003"
+      },
+      {
+        "subject": "Component reduction strategy",
+        "criteria": [
+          {
+            "name": "Merge",
+            "weight": 1
+          },
+          {
+            "name": "Clean",
+            "weight": 1
+          },
+          {
+            "name": "Reversible",
+            "weight": 1
+          },
+          {
+            "name": "Effort",
+            "weight": 1
+          }
+        ],
+        "options": [
+          {
+            "name": "A. Distribution profile: keep all files, exclude packages from build/release, config-off features",
+            "scores": [
+              {
+                "criterion": "Merge",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Clean",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Reversible",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Effort",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 25
+          },
+          {
+            "name": "B. Delete excluded packages from the repo",
+            "scores": [
+              {
+                "criterion": "Merge",
+                "score": 0,
+                "fit": "unsuitable"
+              },
+              {
+                "criterion": "Clean",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Reversible",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Effort",
+                "score": 2,
+                "fit": "partial"
+              }
+            ],
+            "weighted_total": 12
+          },
+          {
+            "name": "C. Feature-flag everything at runtime",
+            "scores": [
+              {
+                "criterion": "Merge",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Clean",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Reversible",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Effort",
+                "score": 1,
+                "fit": "weak"
+              }
+            ],
+            "weighted_total": 16
+          }
+        ],
+        "decision_ref": "DEC-001"
+      },
+      {
+        "subject": "Remote streaming protocol",
+        "criteria": [
+          {
+            "name": "Reuse",
+            "weight": 1
+          },
+          {
+            "name": "Fit",
+            "weight": 1
+          },
+          {
+            "name": "Simplicity",
+            "weight": 1
+          }
+        ],
+        "options": [
+          {
+            "name": "A. SSE (existing global /event + v2 per-session replay)",
+            "scores": [
+              {
+                "criterion": "Reuse",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Fit",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Simplicity",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 24
+          },
+          {
+            "name": "B. WebSocket",
+            "scores": [
+              {
+                "criterion": "Reuse",
+                "score": 0,
+                "fit": "unsuitable"
+              },
+              {
+                "criterion": "Fit",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Simplicity",
+                "score": 2,
+                "fit": "partial"
+              }
+            ],
+            "weighted_total": 13
+          },
+          {
+            "name": "C. Polling only",
+            "scores": [
+              {
+                "criterion": "Reuse",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Fit",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Simplicity",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 15
+          }
+        ],
+        "decision_ref": "DEC-002"
+      },
+      {
+        "subject": "API generation to build on",
+        "criteria": [
+          {
+            "name": "Stable",
+            "weight": 1
+          },
+          {
+            "name": "SDK",
+            "weight": 1
+          },
+          {
+            "name": "Future",
+            "weight": 1
+          },
+          {
+            "name": "Patch",
+            "weight": 1
+          }
+        ],
+        "options": [
+          {
+            "name": "A. v1 API + published @opencode-ai/sdk behind a thin Marid gateway layer",
+            "scores": [
+              {
+                "criterion": "Stable",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "SDK",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Future",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Patch",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 25
+          },
+          {
+            "name": "B. v2 /api/* + sdk-next now",
+            "scores": [
+              {
+                "criterion": "Stable",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "SDK",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Future",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Patch",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 17
+          },
+          {
+            "name": "C. Design a brand-new Marid public API",
+            "scores": [
+              {
+                "criterion": "Stable",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "SDK",
+                "score": 0,
+                "fit": "unsuitable"
+              },
+              {
+                "criterion": "Future",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Patch",
+                "score": 1,
+                "fit": "weak"
+              }
+            ],
+            "weighted_total": 11
+          }
+        ],
+        "decision_ref": "DEC-004"
+      },
+      {
+        "subject": "Cross-interface sync and concurrency model",
+        "criteria": [
+          {
+            "name": "Correct",
+            "weight": 1
+          },
+          {
+            "name": "Reuse",
+            "weight": 1
+          },
+          {
+            "name": "Simple",
+            "weight": 1
+          }
+        ],
+        "options": [
+          {
+            "name": "A. One server process per instance; all clients attach over HTTP+SSE; reuse the v2 single-writer/queue/steering design",
+            "scores": [
+              {
+                "criterion": "Correct",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Reuse",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Simple",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 24
+          },
+          {
+            "name": "B. Multi-process shared SQLite + event propagation layer",
+            "scores": [
+              {
+                "criterion": "Correct",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Reuse",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Simple",
+                "score": 1,
+                "fit": "weak"
+              }
+            ],
+            "weighted_total": 11
+          },
+          {
+            "name": "C. Pessimistic global session lock",
+            "scores": [
+              {
+                "criterion": "Correct",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Reuse",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Simple",
+                "score": 2,
+                "fit": "partial"
+              }
+            ],
+            "weighted_total": 19
+          }
+        ],
+        "decision_ref": "DEC-005"
+      },
+      {
+        "subject": "MVP distribution method",
+        "criteria": [
+          {
+            "name": "Reuse",
+            "weight": 1
+          },
+          {
+            "name": "Ergonomics",
+            "weight": 1
+          },
+          {
+            "name": "Private",
+            "weight": 1
+          },
+          {
+            "name": "3-OS",
+            "weight": 1
+          }
+        ],
+        "options": [
+          {
+            "name": "A. Bun-compiled standalone binaries to private GitHub Releases",
+            "scores": [
+              {
+                "criterion": "Reuse",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Ergonomics",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Private",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "3-OS",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 30
+          },
+          {
+            "name": "B. Docker/Compose first",
+            "scores": [
+              {
+                "criterion": "Reuse",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Ergonomics",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Private",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "3-OS",
+                "score": 1,
+                "fit": "weak"
+              }
+            ],
+            "weighted_total": 20
+          },
+          {
+            "name": "C. Private npm registry",
+            "scores": [
+              {
+                "criterion": "Reuse",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Ergonomics",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "Private",
+                "score": 2,
+                "fit": "partial"
+              },
+              {
+                "criterion": "3-OS",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 22
+          }
+        ],
+        "decision_ref": "DEC-006"
+      },
+      {
+        "subject": "Channel gateway placement",
+        "criteria": [
+          {
+            "name": "Patch",
+            "weight": 1
+          },
+          {
+            "name": "Contain",
+            "weight": 1
+          },
+          {
+            "name": "Proven",
+            "weight": 1
+          }
+        ],
+        "options": [
+          {
+            "name": "A. Separate gateway process speaking only the public HTTP+SSE API",
+            "scores": [
+              {
+                "criterion": "Patch",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Contain",
+                "score": 3,
+                "fit": "strong"
+              },
+              {
+                "criterion": "Proven",
+                "score": 3,
+                "fit": "strong"
+              }
+            ],
+            "weighted_total": 24
+          },
+          {
+            "name": "B. In-core channel plugin",
+            "scores": [
+              {
+                "criterion": "Patch",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Contain",
+                "score": 1,
+                "fit": "weak"
+              },
+              {
+                "criterion": "Proven",
+                "score": 2,
+                "fit": "partial"
+              }
+            ],
+            "weighted_total": 10
+          }
+        ]
+      }
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-001",
+        "statement": "Given a fresh machine with the Marid binary installed, when the operator runs marid instance add work and marid instance start work, then a server starts on an allocated port with its own directory tree and answers health checks",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-002",
+        "statement": "Given two running instances, when both execute sessions concurrently, then no file outside each instance's tree is written and neither instance's behavior changes",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-003",
+        "statement": "Given no bearer token, when any API call is made, then the response is 401 and an audit line is written",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-004",
+        "statement": "Given a client-scope token, when it accesses another client's session or an admin route, then 403 with audit",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-005",
+        "statement": "Given a token exceeding its rate limit, when it continues calling, then 429 with retry-after, and SSE connections above the cap are refused",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-006",
+        "statement": "Given a session created via the SDK, when the operator opens the TUI on the same instance, then the session appears and can be continued, and the SDK subscriber receives the TUI-driven updates live",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-007",
+        "statement": "Given an SSE client that disconnects mid-run, when it reconnects, then it receives every missed event for that session exactly once (dedup by aggregate and sequence)",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-008",
+        "statement": "Given the server process is killed mid-prompt and restarted, when clients reconnect, then session history is intact and the session is usable per the documented recovery behavior",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-009",
+        "statement": "Given two simultaneous prompts to one session, when both are submitted, then behavior matches the documented queue/steer semantics (EXP-001 outcome) with no corruption",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-010",
+        "statement": "Given a non-allowlisted Telegram user, when they message the bot, then no session is created, nothing is answered, and the attempt is logged",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-011",
+        "statement": "Given the allowlisted operator asks the bot a question, when the agent streams its answer, then the Telegram message updates progressively (at least a 2 s cadence), respects the 4096-char split, and finishes with the complete text",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-012",
+        "statement": "Given the channel agent's policy denies a tool, when the model requests it, then a permission prompt appears as an inline keyboard; Deny or timeout blocks the tool; Approve allows exactly once",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-013",
+        "statement": "Given the marid profile build, when the binary is inspected or run, then excluded surfaces (desktop, console, cloud, slack, docs-site) are absent and a grep-based hygiene test passes",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-014",
+        "statement": "Given a tagged release, when CI completes, then binaries and checksums exist as a private GitHub Release and install/update works via the documented gh-authenticated path on all 3 OSes",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-015",
+        "statement": "Given an upstream sync PR, when CI runs, then contract tests, migration review, dependency diff, and the delta report are all present, and one real sync cycle has been merged",
+        "status": "Approved"
+      },
+      {
+        "id": "AC-016",
+        "statement": "Given any log, error output, or channel message, when a configured secret value would appear, then it is redacted",
+        "status": "Approved"
+      }
+    ],
+    "phases": [
+      {
+        "id": "PH-0",
+        "name": "Foundations",
+        "goal": "Fork exists, CI skeleton green, all four experiments answered",
+        "status": "done",
+        "depends_on": [],
+        "work_items": [
+          "WBS-0.1",
+          "WBS-0.2",
+          "WBS-0.3",
+          "WBS-0.4",
+          "WBS-0.5",
+          "WBS-0.6",
+          "WBS-0.7"
+        ],
+        "exit_criteria": [
+          "Experiments EXP-001, EXP-002, EXP-003, EXP-004 all PASS (no FAIL, so no fallbacks); reports in experiments/; CI skeleton green"
+        ],
+        "acceptance_refs": [],
+        "risks": [
+          "RISK-002",
+          "RISK-010"
+        ]
+      },
+      {
+        "id": "PH-1",
+        "name": "Marid layer",
+        "goal": "marid-auth + distribution profile + branding",
+        "status": "done",
+        "depends_on": [
+          "PH-0"
+        ],
+        "work_items": [
+          "WBS-1.1",
+          "WBS-1.2",
+          "WBS-1.3",
+          "WBS-1.4",
+          "WBS-1.5"
+        ],
+        "exit_criteria": [
+          "Authenticated marid binary from the marid profile passes contract tests; 3-OS marid-build green"
+        ],
+        "acceptance_refs": [
+          "AC-003",
+          "AC-004",
+          "AC-005",
+          "AC-013",
+          "AC-016"
+        ],
+        "risks": [
+          "RISK-001",
+          "RISK-004",
+          "RISK-007"
+        ]
+      },
+      {
+        "id": "PH-2",
+        "name": "Instances",
+        "goal": "marid-instance CLI + isolation",
+        "status": "done",
+        "depends_on": [
+          "PH-1"
+        ],
+        "work_items": [
+          "WBS-2.1",
+          "WBS-2.2",
+          "WBS-2.3"
+        ],
+        "exit_criteria": [
+          "KPI-003 met: 3-OS marid-isolation green (two consecutive all-green runs)"
+        ],
+        "acceptance_refs": [
+          "AC-001",
+          "AC-002"
+        ],
+        "risks": [
+          "RISK-002"
+        ]
+      },
+      {
+        "id": "PH-3",
+        "name": "Cross-interface",
+        "goal": "TUI-as-client default + the §7 cross-interface flow verified",
+        "status": "done",
+        "depends_on": [
+          "PH-1"
+        ],
+        "work_items": [
+          "WBS-3.1",
+          "WBS-3.2",
+          "WBS-3.3"
+        ],
+        "exit_criteria": [
+          "KPI-001 demo repeatable: 3-OS marid-sync green; concurrency semantics documented (contract v1.1)"
+        ],
+        "acceptance_refs": [
+          "AC-006",
+          "AC-007",
+          "AC-008",
+          "AC-009"
+        ],
+        "risks": [
+          "RISK-006",
+          "RISK-010"
+        ]
+      },
+      {
+        "id": "PH-4",
+        "name": "Telegram",
+        "goal": "marid-telegram + capability policy",
+        "status": "not-started",
+        "depends_on": [
+          "PH-1",
+          "PH-3"
+        ],
+        "work_items": [
+          "WBS-4.1",
+          "WBS-4.2",
+          "WBS-4.3",
+          "WBS-4.4",
+          "WBS-4.5"
+        ],
+        "exit_criteria": [
+          "KPI-002 met: round trip plus policy-denial paths green"
+        ],
+        "acceptance_refs": [
+          "AC-010",
+          "AC-011",
+          "AC-012"
+        ],
+        "risks": [
+          "RISK-003"
+        ]
+      },
+      {
+        "id": "PH-5",
+        "name": "Release & sync",
+        "goal": "Private distribution + one real upstream sync + docs",
+        "status": "not-started",
+        "depends_on": [
+          "PH-2",
+          "PH-3",
+          "PH-4"
+        ],
+        "work_items": [
+          "WBS-5.1",
+          "WBS-5.2",
+          "WBS-5.3",
+          "WBS-5.4",
+          "WBS-5.5"
+        ],
+        "exit_criteria": [
+          "KPI-004, KPI-005, KPI-006 green; readiness report accepted (execution gate 14)"
+        ],
+        "acceptance_refs": [
+          "AC-014",
+          "AC-015"
+        ],
+        "risks": [
+          "RISK-005",
+          "RISK-009"
+        ]
+      }
+    ]
+  },
+  "scope": {
+    "mvp": "Remote API + SSE, cross-interface session sync, Telegram adapter, and multi-instance operation (WhatsApp deferred to post-MVP).",
+    "full_target": "Adds WhatsApp (FR-047), durable global event replay (FR-037), session retention/export/deletion (FR-044), and the full metrics catalog (FR-058).",
+    "in_scope": [
+      "Remote API + SSE fronted by marid-auth (bearer tokens, scopes, rate limits, audit, request-ID)",
+      "Cross-interface session sync with the TUI as a client of the instance server",
+      "Telegram channel adapter as a separate gateway process",
+      "Multiple isolated instance runtimes via marid-instance",
+      "Keep and maintain the upstream Web UI (CON-005)",
+      "Private GitHub Releases distribution and one real upstream sync cycle"
+    ],
+    "out_of_scope": [
+      "WhatsApp adapter (post-MVP, FR-047)",
+      "Multi-user access or public network exposure of the API",
+      "Desktop apps, IDE integrations, and cloud/enterprise surfaces",
+      "Durable global event replay (FR-037)",
+      "Distributed coordination across processes"
+    ]
+  },
+  "selected_artifacts": [
+    "00-charter.md",
+    "01-executive-summary.md",
+    "requirements/functional.md",
+    "requirements/non-functional.md",
+    "requirements/constraint-register.md",
+    "requirements/invariant-register.md",
+    "requirements/dependency-register.md",
+    "decisions/assumption-register.md",
+    "decisions/open-question-register.md",
+    "decisions/open-decision-register.md",
+    "decisions/naming-proposal.md",
+    "decisions/deviation-branch-protection.md",
+    "architecture/architecture.md",
+    "architecture/api-event-contract.md",
+    "architecture/security-threat-model.md",
+    "architecture/upstream-sync-strategy.md",
+    "architecture/keep-remove-matrix.md",
+    "architecture/technology-comparison.md",
+    "adrs/adr-0001-tracking-fork-periodic-merge.md",
+    "adrs/adr-0002-distribution-profile-exclusion.md",
+    "adrs/adr-0003-v1-api-sse-marid-auth-facade.md",
+    "adrs/adr-0004-one-server-per-instance.md",
+    "adrs/adr-0005-channel-gateway-separate-process.md",
+    "adrs/adr-0006-instance-isolated-runtime-env-namespacing.md",
+    "risks/risk-register.md",
+    "research/hypothesis-register.md",
+    "research/research-plan.md",
+    "research/rnd-backlog.md",
+    "experiments/exp-001-report.md",
+    "experiments/exp-002-report.md",
+    "experiments/exp-003-report.md",
+    "experiments/exp-004-report.md",
+    "planning/roadmap.md",
+    "planning/work-breakdown.md",
+    "planning/milestones.md",
+    "validation/acceptance-criteria.md",
+    "validation/test-strategy.md",
+    "validation/traceability-matrix.md",
+    "validation/acceptance-audit.md",
+    "branding/branding.md",
+    "handoff/initial-prompt.md",
+    "handoff/follow-up-prompts.md",
+    "handoff/review-prompts.md",
+    "handoff/execution-readiness-report.md",
+    "handoff/gate-11-forking-checklist.md",
+    "handoff/handoff-manifest.json",
+    "progress/ms-001-status.md",
+    "keystone-state.json"
+  ],
+  "stages": [
+    {
+      "id": "stage-01-intake",
+      "name": "Intake",
+      "status": "done"
+    },
+    {
+      "id": "stage-02-classify",
+      "name": "Classify",
+      "status": "done"
+    },
+    {
+      "id": "stage-03-extract",
+      "name": "Extract",
+      "status": "done"
+    },
+    {
+      "id": "stage-04-normalize",
+      "name": "Normalize",
+      "status": "done"
+    },
+    {
+      "id": "stage-05-ambiguity",
+      "name": "Ambiguity",
+      "status": "done"
+    },
+    {
+      "id": "stage-06-contradiction",
+      "name": "Contradiction",
+      "status": "done"
+    },
+    {
+      "id": "stage-07-clarify",
+      "name": "Clarify",
+      "status": "done"
+    },
+    {
+      "id": "stage-08-scope",
+      "name": "Scope",
+      "status": "done"
+    },
+    {
+      "id": "stage-09-research-plan",
+      "name": "Research plan",
+      "status": "done"
+    },
+    {
+      "id": "stage-10-arch-explore",
+      "name": "Architecture exploration",
+      "status": "done"
+    },
+    {
+      "id": "stage-11-option-compare",
+      "name": "Option comparison",
+      "status": "done"
+    },
+    {
+      "id": "stage-12-hypotheses",
+      "name": "Hypotheses",
+      "status": "done"
+    },
+    {
+      "id": "stage-13-experiments",
+      "name": "Experiments",
+      "status": "done"
+    },
+    {
+      "id": "stage-14-decisions",
+      "name": "Decisions",
+      "status": "done"
+    },
+    {
+      "id": "stage-15-risk",
+      "name": "Risk",
+      "status": "done"
+    },
+    {
+      "id": "stage-16-exec-plan",
+      "name": "Execution plan",
+      "status": "done"
+    },
+    {
+      "id": "stage-17-artifacts",
+      "name": "Artifacts",
+      "status": "done"
+    },
+    {
+      "id": "stage-18-repo-init",
+      "name": "Repository init",
+      "status": "done"
+    },
+    {
+      "id": "stage-19-quality",
+      "name": "Quality gates",
+      "status": "done"
+    },
+    {
+      "id": "stage-20-handoff",
+      "name": "Handoff",
+      "status": "done"
+    },
+    {
+      "id": "stage-21-updates",
+      "name": "Execution updates",
+      "status": "done"
+    },
+    {
+      "id": "stage-22-readiness",
+      "name": "Readiness",
+      "status": "done"
+    }
+  ],
+  "last_completed_stage": "stage-22-readiness",
+  "traceability": [
+    {
+      "requirement": "FR-001",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
       ]
     },
-    "22-readiness": { "status": "done", "date": "2026-07-03", "note": "gate 14 GO — execution cleared; next act = operator pastes handoff/initial-prompt.md into an execution session (gate 11 checklist first)" }
-  },
-  "registers": {
-    "functional": "requirements/functional.md",
-    "non_functional": "requirements/non-functional.md",
-    "constraints": "requirements/constraint-register.md",
-    "invariants": "requirements/invariant-register.md",
-    "dependencies": "requirements/dependency-register.md",
-    "open_questions": "decisions/open-question-register.md",
-    "assumptions": "decisions/assumption-register.md",
-    "open_decisions": "decisions/open-decision-register.md"
-  },
-  "decision_gates_from_brief": [
-    "1 clarification batch", "2 scope+MVP", "3 name", "4 current-state assessment", "5 target architecture",
-    "6 keep/modify/exclude/remove", "7 public API+event model", "8 security+permission model",
-    "9 upstream sync strategy", "10 roadmap", "11 repo creation", "12 import local changes",
-    "13 final handoff", "14 go/no-go"
+    {
+      "requirement": "FR-002",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-003",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-004",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-005",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-006",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-007",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-008",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.5"
+      ],
+      "risks": [
+        "RISK-004"
+      ]
+    },
+    {
+      "requirement": "FR-009",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-010",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-011",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-012",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0006"
+      ],
+      "work_items": [
+        "WBS-2.1"
+      ],
+      "risks": [
+        "RISK-002"
+      ]
+    },
+    {
+      "requirement": "FR-013",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.5"
+      ],
+      "risks": [
+        "RISK-004"
+      ]
+    },
+    {
+      "requirement": "FR-014",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.5"
+      ],
+      "acceptance": [
+        "AC-013"
+      ]
+    },
+    {
+      "requirement": "FR-015",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-016",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-017",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-018",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.5",
+        "WBS-2.1"
+      ],
+      "risks": [
+        "RISK-007"
+      ],
+      "acceptance": [
+        "AC-016"
+      ]
+    },
+    {
+      "requirement": "FR-019",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-1.4"
+      ],
+      "risks": [
+        "RISK-001"
+      ]
+    },
+    {
+      "requirement": "FR-020",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ]
+    },
+    {
+      "requirement": "FR-021",
+      "coverage": "full",
+      "work_items": [
+        "WBS-4.4"
+      ],
+      "risks": [
+        "RISK-003"
+      ],
+      "acceptance": [
+        "AC-012"
+      ]
+    },
+    {
+      "requirement": "FR-022",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-1.4"
+      ],
+      "risks": [
+        "RISK-001"
+      ],
+      "acceptance": [
+        "AC-006"
+      ]
+    },
+    {
+      "requirement": "FR-023",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-1.4"
+      ],
+      "risks": [
+        "RISK-001"
+      ],
+      "acceptance": [
+        "AC-006"
+      ]
+    },
+    {
+      "requirement": "FR-024",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0003",
+        "DEC-002"
+      ],
+      "work_items": [
+        "WBS-1.4"
+      ],
+      "risks": [
+        "RISK-006"
+      ],
+      "acceptance": [
+        "AC-006"
+      ]
+    },
+    {
+      "requirement": "FR-025",
+      "coverage": "full",
+      "decisions": [
+        "DEC-002",
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-1.4"
+      ]
+    },
+    {
+      "requirement": "FR-026",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-1.4"
+      ],
+      "acceptance": [
+        "AC-008"
+      ]
+    },
+    {
+      "requirement": "FR-027",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-1.4"
+      ],
+      "acceptance": [
+        "AC-008"
+      ]
+    },
+    {
+      "requirement": "FR-028",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-1.4",
+        "WBS-4.3"
+      ],
+      "risks": [
+        "RISK-003"
+      ],
+      "acceptance": [
+        "AC-012"
+      ]
+    },
+    {
+      "requirement": "FR-029",
+      "coverage": "partial",
+      "decisions": [
+        "ADR-0003"
+      ],
+      "work_items": [
+        "WBS-0.4",
+        "WBS-1.4"
+      ]
+    },
+    {
+      "requirement": "FR-030",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ]
+    },
+    {
+      "requirement": "FR-031",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.2"
+      ],
+      "acceptance": [
+        "AC-003",
+        "AC-004"
+      ]
+    },
+    {
+      "requirement": "FR-032",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ],
+      "acceptance": [
+        "AC-005"
+      ]
+    },
+    {
+      "requirement": "FR-033",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ],
+      "acceptance": [
+        "AC-003"
+      ]
+    },
+    {
+      "requirement": "FR-034",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.2"
+      ],
+      "acceptance": [
+        "AC-001"
+      ]
+    },
+    {
+      "requirement": "FR-035",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.4"
+      ],
+      "risks": [
+        "RISK-001"
+      ],
+      "acceptance": [
+        "AC-015"
+      ]
+    },
+    {
+      "requirement": "FR-036",
+      "coverage": "full",
+      "work_items": [
+        "WBS-3.2"
+      ],
+      "risks": [
+        "RISK-006"
+      ],
+      "acceptance": [
+        "AC-007"
+      ]
+    },
+    {
+      "requirement": "FR-037",
+      "coverage": "gap"
+    },
+    {
+      "requirement": "FR-038",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-3.1"
+      ],
+      "acceptance": [
+        "AC-006"
+      ]
+    },
+    {
+      "requirement": "FR-039",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-3.1"
+      ],
+      "acceptance": [
+        "AC-006"
+      ]
+    },
+    {
+      "requirement": "FR-040",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-0.4",
+        "WBS-3.3"
+      ],
+      "risks": [
+        "RISK-010"
+      ],
+      "acceptance": [
+        "AC-009"
+      ]
+    },
+    {
+      "requirement": "FR-041",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-3.3"
+      ],
+      "risks": [
+        "RISK-010"
+      ],
+      "acceptance": [
+        "AC-009"
+      ]
+    },
+    {
+      "requirement": "FR-042",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-3.1"
+      ],
+      "acceptance": [
+        "AC-006"
+      ]
+    },
+    {
+      "requirement": "FR-043",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-3.2"
+      ],
+      "acceptance": [
+        "AC-008"
+      ]
+    },
+    {
+      "requirement": "FR-044",
+      "coverage": "gap"
+    },
+    {
+      "requirement": "FR-045",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0005"
+      ],
+      "work_items": [
+        "WBS-4.1",
+        "WBS-4.5"
+      ]
+    },
+    {
+      "requirement": "FR-046",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0005"
+      ],
+      "work_items": [
+        "WBS-4.1",
+        "WBS-4.2"
+      ],
+      "acceptance": [
+        "AC-011"
+      ]
+    },
+    {
+      "requirement": "FR-047",
+      "coverage": "gap"
+    },
+    {
+      "requirement": "FR-048",
+      "coverage": "full",
+      "work_items": [
+        "WBS-4.2"
+      ],
+      "acceptance": [
+        "AC-011"
+      ]
+    },
+    {
+      "requirement": "FR-049",
+      "coverage": "full",
+      "work_items": [
+        "WBS-4.5"
+      ]
+    },
+    {
+      "requirement": "FR-050",
+      "coverage": "full",
+      "work_items": [
+        "WBS-4.1"
+      ],
+      "risks": [
+        "RISK-003"
+      ],
+      "acceptance": [
+        "AC-010"
+      ]
+    },
+    {
+      "requirement": "FR-051",
+      "coverage": "full",
+      "work_items": [
+        "WBS-4.1"
+      ],
+      "acceptance": [
+        "AC-010"
+      ]
+    },
+    {
+      "requirement": "FR-052",
+      "coverage": "full",
+      "work_items": [
+        "WBS-4.4"
+      ],
+      "risks": [
+        "RISK-003"
+      ],
+      "acceptance": [
+        "AC-012"
+      ]
+    },
+    {
+      "requirement": "FR-053",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0006"
+      ],
+      "work_items": [
+        "WBS-2.1",
+        "WBS-2.2",
+        "WBS-2.3"
+      ],
+      "risks": [
+        "RISK-002"
+      ],
+      "acceptance": [
+        "AC-001",
+        "AC-002"
+      ]
+    },
+    {
+      "requirement": "FR-054",
+      "coverage": "full",
+      "work_items": [
+        "WBS-2.1"
+      ],
+      "acceptance": [
+        "AC-001"
+      ]
+    },
+    {
+      "requirement": "FR-055",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ],
+      "risks": [
+        "RISK-007"
+      ],
+      "acceptance": [
+        "AC-016"
+      ]
+    },
+    {
+      "requirement": "FR-056",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ]
+    },
+    {
+      "requirement": "FR-057",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ]
+    },
+    {
+      "requirement": "FR-058",
+      "coverage": "gap"
+    },
+    {
+      "requirement": "FR-059",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ],
+      "acceptance": [
+        "AC-016"
+      ]
+    },
+    {
+      "requirement": "FR-060",
+      "coverage": "partial",
+      "work_items": [
+        "WBS-1.1",
+        "WBS-5.1",
+        "WBS-5.2"
+      ],
+      "risks": [
+        "RISK-009"
+      ],
+      "acceptance": [
+        "AC-013",
+        "AC-014"
+      ]
+    },
+    {
+      "requirement": "FR-061",
+      "coverage": "partial",
+      "decisions": [
+        "ADR-0001"
+      ],
+      "work_items": [
+        "WBS-5.3"
+      ],
+      "risks": [
+        "RISK-005"
+      ],
+      "acceptance": [
+        "AC-015"
+      ]
+    },
+    {
+      "requirement": "FR-062",
+      "coverage": "full",
+      "work_items": [
+        "WBS-0.3"
+      ]
+    },
+    {
+      "requirement": "FR-063",
+      "coverage": "full",
+      "work_items": [
+        "WBS-0.3"
+      ]
+    },
+    {
+      "requirement": "FR-064",
+      "coverage": "full",
+      "work_items": [
+        "WBS-0.3",
+        "WBS-5.1"
+      ],
+      "risks": [
+        "RISK-004"
+      ],
+      "acceptance": [
+        "AC-014"
+      ]
+    },
+    {
+      "requirement": "FR-065",
+      "coverage": "partial",
+      "decisions": [
+        "DEC-008"
+      ],
+      "work_items": [
+        "WBS-1.5",
+        "WBS-5.4"
+      ],
+      "acceptance": [
+        "AC-013"
+      ]
+    },
+    {
+      "requirement": "NFR-001",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0001",
+        "ADR-0002"
+      ],
+      "work_items": [
+        "WBS-5.3"
+      ],
+      "risks": [
+        "RISK-005"
+      ]
+    },
+    {
+      "requirement": "NFR-002",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ]
+    },
+    {
+      "requirement": "NFR-003",
+      "coverage": "partial",
+      "work_items": [
+        "WBS-5.5"
+      ]
+    },
+    {
+      "requirement": "NFR-004",
+      "coverage": "full",
+      "work_items": [
+        "WBS-0.3"
+      ],
+      "risks": [
+        "RISK-004"
+      ],
+      "acceptance": [
+        "AC-014"
+      ]
+    },
+    {
+      "requirement": "NFR-005",
+      "coverage": "full",
+      "work_items": [
+        "WBS-1.3"
+      ],
+      "risks": [
+        "RISK-003"
+      ]
+    },
+    {
+      "requirement": "NFR-006",
+      "coverage": "partial",
+      "decisions": [
+        "ADR-0003",
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-3.1",
+        "WBS-3.3"
+      ]
+    },
+    {
+      "requirement": "NFR-007",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0004"
+      ],
+      "work_items": [
+        "WBS-3.1",
+        "WBS-3.2"
+      ],
+      "risks": [
+        "RISK-006"
+      ],
+      "acceptance": [
+        "AC-006",
+        "AC-007"
+      ]
+    },
+    {
+      "requirement": "NFR-008",
+      "coverage": "full",
+      "decisions": [
+        "ADR-0006"
+      ],
+      "work_items": [
+        "WBS-2.3"
+      ],
+      "risks": [
+        "RISK-002"
+      ],
+      "acceptance": [
+        "AC-002"
+      ]
+    },
+    {
+      "requirement": "NFR-009",
+      "coverage": "partial",
+      "work_items": [
+        "WBS-1.3"
+      ]
+    },
+    {
+      "requirement": "NFR-010",
+      "coverage": "partial",
+      "work_items": [
+        "WBS-5.4"
+      ]
+    },
+    {
+      "requirement": "NFR-011",
+      "coverage": "partial",
+      "work_items": [
+        "WBS-0.3"
+      ]
+    },
+    {
+      "requirement": "NFR-012",
+      "coverage": "full",
+      "decisions": [
+        "DEC-009"
+      ]
+    }
+  ],
+  "progress": [
+    {
+      "date": "2026-07-04",
+      "author": "keystone-migration",
+      "summary": "PH-0 / MS-001 MET — Foundations complete, PH-1 unblocked. Experiments EXP-001, EXP-002, EXP-003, EXP-004 all PASS (no FAIL, so no fallbacks and no new Proposed decisions). Outcomes: no Marid concurrency layer needed (EXP-001); the instance-isolation env set confirmed (EXP-002); Telegram at a 2 s or greater edit cadence with zero rate-limit hits (EXP-003); the P-1 server edit dropped, since marid-auth attaches as an outer wrapper on Server.Default.app.fetch (EXP-004). The CI timing-flake class was fixed at root via OPENCODE_TIMING_SCALE (P-CI-4). Shipped PR #9 (reports) and PR #10 (P-CI-4).",
+      "items_completed": [
+        "WBS-0.4",
+        "WBS-0.5",
+        "WBS-0.6",
+        "WBS-0.7",
+        "EXP-001",
+        "EXP-002",
+        "EXP-003",
+        "EXP-004"
+      ]
+    },
+    {
+      "date": "2026-07-04",
+      "author": "keystone-migration",
+      "summary": "PH-1 / MS-002 MET — Marid layer complete, PH-2 and PH-3 unblocked. PR #13 merged with all CI checks green including the 3-OS marid-build. Built @marid/auth (bearer tokens with admin/client/channel scopes, token-bucket rate limiting with 429 plus retry-after, audit JSONL, x-request-id echo) on the EXP-004 wrapper seam with zero server edit; contract tests pin the v1 routes and event taxonomy (FR-035). Decisions: DEC-011 durable client-scope ownership sidecar; DEC-012 additive src/marid.ts entry; DEC-013 branding split (identity now, cosmetic and config deferred to PH-5).",
+      "items_completed": [
+        "WBS-1.1",
+        "WBS-1.2",
+        "WBS-1.3",
+        "WBS-1.4",
+        "WBS-1.5"
+      ]
+    },
+    {
+      "date": "2026-07-05",
+      "author": "keystone-migration",
+      "summary": "PH-1 follow-up — the deferred firehose/list isolation was RESOLVED (operator-directed; closes a registered deferred decision, not an MS or WBS item). A Marid-owned filter in @marid/auth body-filters non-owned SSE frames from the global event stream and non-owned entries from the session and permission lists for any non-admin token; admin is never filtered. Zero upstream edit, no new patch surface. PR #15 merged to develop, synced to main via PR #16."
+    },
+    {
+      "date": "2026-07-05",
+      "author": "keystone-migration",
+      "summary": "PH-2 — marid-instance BUILT (WBS-2.1, WBS-2.2, WBS-2.3); local-validated on Windows, MS-003 exit pending 3-OS CI. New dependency-free @marid/instance package: composeInstanceEnv (the EXP-002 isolation env set), race-free port capture via a port-zero launch plus logfile readiness, PID/port records, a platform-split tree-kill (taskkill on Windows, process-group signal on POSIX), and an idempotent start guard. The live two-instance isolation test closes the deferred EXP-002 diff. New 3-OS marid-isolation CI job. Operator action: add marid-isolation to branch protection (8 to 9 checks).",
+      "items_completed": [
+        "WBS-2.1",
+        "WBS-2.2",
+        "WBS-2.3"
+      ]
+    },
+    {
+      "date": "2026-07-05",
+      "author": "keystone-migration",
+      "summary": "PH-2 / MS-003 MET — KPI-003 green on three OSes; PH-2 complete. The 3-OS marid-isolation job passed on every PR #17 run, including two consecutive all-green runs. The P-CI-4 timing-flake fix was retro-gated with runtime probes proving the knob reaches non-opencode packages through turbo. PR #17 merged to develop (6e013b45e); sync PR #18 to main; branch protection at 11 required checks."
+    },
+    {
+      "date": "2026-07-05",
+      "author": "keystone-migration",
+      "summary": "PH-3 — Cross-interface BUILT (WBS-3.1, WBS-3.2, WBS-3.3; ADR-0004; KPI-001); local-validated on Windows, MS-004 exit pending 3-OS CI. marid instance attach resolves a running instance URL plus a bearer token and launches the upstream TUI attach path; the SDK applies the bearer to both HTTP and the SSE stream, so the existing TUI becomes a client of a marid-auth server with zero upstream edit. api-event-contract updated to v1.1: a new Concurrency section (join/steer, BusyError, abort, ordering) and a correction that the v1 event firehose is live-only (no cursor). New 3-OS marid-sync CI job. Operator action: add the three marid-sync jobs to branch protection (11 to 14 checks).",
+      "items_completed": [
+        "WBS-3.1",
+        "WBS-3.2",
+        "WBS-3.3"
+      ]
+    },
+    {
+      "date": "2026-07-05",
+      "author": "keystone-migration",
+      "summary": "PH-3 / MS-004 MET — KPI-001 green on three OSes; PH-3 complete and synced to main. The 3-OS marid-sync job passed on PR #19's first run (macOS and Linux exercised for the first time). PR #19 squash-merged to develop (82a92d8943); sync PR #20 merge-commit to main, which now holds PH-0 through PH-3. Branch protection at 14 required checks. Next: PH-4 (Telegram, MS-005) is unblocked, then PH-5 (Release & sync, MS-006 = MVP)."
+    }
+  ],
+  "change_log": [
+    {
+      "timestamp": "2026-07-06T00:00:00Z",
+      "actor": "keystone-migration",
+      "action": "Migrated the planning package state to the Keystone v1.0.0 structure and rebuilt keystone-state.json against keystone-state.schema.json (fully tool-managed registers).",
+      "target": "keystone-state.json"
+    }
   ]
 }

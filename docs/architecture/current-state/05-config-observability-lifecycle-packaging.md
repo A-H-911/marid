@@ -1,8 +1,8 @@
 ---
-artifact: current-state-operations
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # OpenCode Current State: Config, Secrets, Caching, Lifecycle, Observability, Packaging

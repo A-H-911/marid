@@ -1,8 +1,8 @@
 ---
-artifact: current-state-server-api
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Current State: HTTP Server, SSE, and SDKs (Research Track R-02)

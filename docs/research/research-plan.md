@@ -1,8 +1,8 @@
 ---
-artifact: research-plan
 status: Approved-by-scope (gate 2 scope drives it)
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Research Plan

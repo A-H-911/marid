@@ -1,8 +1,8 @@
 ---
-artifact: current-state-runtime
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # 04 — Agent Runtime Core: Loop, Tools, Permissions, Plugins, MCP, LSP, Providers

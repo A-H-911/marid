@@ -1,13 +1,16 @@
 ---
-artifact: adr
-status: Approved (gate 6)
+id: ADR-0002
+status: Approved
 version: v1.0
 updated: 2026-07-03
+supersedes: none
+superseded_by: none
+owner: operator (STK-001)
 ---
 
 # ADR-0002 — Exclude by distribution profile, delete nothing
 
-**Status:** Approved (2026-07-03) · promotes DEC-001 · derives from C-2
+**Status:** Approved (2026-07-03; gate 6) · promotes DEC-001 · derives from C-2
 
 **Context.** §5 requires dropping desktop/IDE/cloud surfaces; §2 warns stripping ≠ deleting; deletion
 creates recurring merge conflicts against an active upstream (RISK-005).

@@ -1,8 +1,8 @@
 ---
-artifact: current-state-assessment
 status: Approved (gate 4, 2026-07-03 — with approved principle: reuse over new unless justified)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Current-State OpenCode Assessment (Gate 4)

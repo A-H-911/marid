@@ -1,8 +1,11 @@
 ---
-artifact: adr
-status: Approved (gate 5; verified by EXP-002; realized + live-verified in PH-2)
+id: ADR-0006
+status: Approved
 version: v1.1
 updated: 2026-07-05
+supersedes: none
+superseded_by: none
+owner: operator (STK-001)
 ---
 
 > **PH-2 realization note (2026-07-05).** Implemented as the `@marid/instance` package
@@ -16,7 +19,7 @@ updated: 2026-07-05
 
 # ADR-0006 — Instance = isolated runtime via env-composed directory namespaces
 
-**Status:** Approved (2026-07-03) · realizes OQ-001 answer + FR-053 · derives from R-05, R-11 (claudectl)
+**Status:** Approved (2026-07-03; gate 5, verified by EXP-002, live-verified in PH-2) · realizes OQ-001 answer + FR-053 · derives from R-05, R-11 (claudectl)
 
 **Context.** OQ-001 (gate 1): an instance is an isolated runtime — own config, storage, cache, ports,
 secrets, logs; may host several projects. R-05's conflict inventory shows today's shared state (DB,

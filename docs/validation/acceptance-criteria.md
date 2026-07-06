@@ -1,8 +1,8 @@
 ---
-artifact: acceptance-criteria
 status: Proposed (approved with gate 13 handoff)
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Acceptance Criteria (AC-)

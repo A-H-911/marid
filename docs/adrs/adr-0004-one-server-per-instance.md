@@ -1,13 +1,16 @@
 ---
-artifact: adr
-status: Approved (gate 5; concurrency wording final after EXP-001)
+id: ADR-0004
+status: Approved
 version: v1.0
 updated: 2026-07-03
+supersedes: none
+superseded_by: none
+owner: operator (STK-001)
 ---
 
 # ADR-0004 — One server process per instance; all clients attach over HTTP+SSE
 
-**Status:** Approved (2026-07-03) · promotes DEC-005 · derives from C-5
+**Status:** Approved (2026-07-03; gate 5, concurrency final after EXP-001) · promotes DEC-005 · derives from C-5
 
 **Context.** R-03: live events reach every client of one server process; nothing propagates events
 across processes; the v2 store is event-sourced with per-aggregate sequences; a queue/steer/single-writer
