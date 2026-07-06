@@ -2202,7 +2202,7 @@
         "id": "PH-4",
         "name": "Telegram",
         "goal": "marid-telegram + capability policy",
-        "status": "not-started",
+        "status": "done",
         "depends_on": [
           "PH-1",
           "PH-3"
@@ -3367,6 +3367,11 @@
         "WBS-4.4",
         "WBS-4.5"
       ]
+    },
+    {
+      "date": "2026-07-07",
+      "author": "execution-agent",
+      "summary": "PH-4 / MS-005 MET — KPI-002 green on three OSes; PH-4 complete. 3-OS marid-telegram job green on PR #23 (20/20 checks incl. TEST-TG on ubuntu/macOS/windows); squash-merged to develop (81ba7e7). AC-010 (stranger ignored) and AC-011 (streamed round trip) proven live in TEST-TG; AC-012 (policy-denied permission) proven via a faked-SDK permission round trip (event→keyboard→Deny→permission.respond(reject)) plus the @marid/auth INV-001 backstop — the live LLM-tool→permission link is an opencode harness limit (the HTTP-served run resolves zero tools), not a gateway or provider defect. Acceptance now 13/16 MVP ACs Met. Branch protection to 17 required checks (operator action). Next: PH-5 (Release & sync, MS-006 = MVP)."
     }
   ],
   "change_log": [
@@ -3381,6 +3386,12 @@
       "actor": "execution-agent",
       "action": "PH-4 Telegram gateway built (WBS-4.1..4.5) with the @marid/auth INV-001 by-construction backstop; recorded the BUILT progress entry (MS-005 exit pending 3-OS CI + merge).",
       "target": "progress[]"
+    },
+    {
+      "timestamp": "2026-07-07T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-4/MS-005 MET — flipped PH-4 trackers after PR #23 merged @81ba7e7 (phases[] PH-4 done; MS-005 MET; WBS-4.1..4.5 done; AC-010/011/012 Met, 13/16 MVP ACs).",
+      "target": "milestones/roadmap/work-breakdown/acceptance-audit/keystone-state"
     }
   ]
 }
