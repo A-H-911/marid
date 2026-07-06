@@ -25,6 +25,24 @@ const TEXT_EVENTS = new Set(["message.part.updated", "session.next.text.delta"])
 const DONE_EVENTS = new Set(["session.idle", "session.next.step.ended"])
 const ASK_EVENTS = new Set(["permission.asked", "permission.updated"])
 
+// Map a permission-ask event to the fields the keyboard needs. Field names are the
+// committed v1 PermissionRequest schema (packages/schema/src/v1/permission.ts):
+// `id` (the per_ id = reply requestID), `sessionID`, and `permission` (the tool/
+// permission name — there is NO `title` field). Pure + exported so the extraction is
+// locked by a unit test (the live harness cannot drive a real permission — the
+// openai-compatible test provider does not forward tools to the model).
+export function parseAskEvent(payload: {
+  type: string
+  properties?: Record<string, unknown>
+}): { id: string; sessionID: string; title?: string } | undefined {
+  if (!ASK_EVENTS.has(payload.type)) return undefined
+  const props = payload.properties ?? {}
+  const id = typeof props.id === "string" ? props.id : undefined
+  const sessionID = typeof props.sessionID === "string" ? props.sessionID : undefined
+  if (!id || !sessionID) return undefined
+  return { id, sessionID, title: typeof props.permission === "string" ? props.permission : undefined }
+}
+
 export interface RunGatewayDeps {
   sdk: OpencodeClient
   bot: BotApi
@@ -77,11 +95,9 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
   function onEvent(payload: { type: string; properties?: Record<string, unknown> }): void {
     const props = payload.properties ?? {}
     const sessionID = typeof props.sessionID === "string" ? props.sessionID : undefined
-    if (ASK_EVENTS.has(payload.type)) {
-      const id = typeof props.id === "string" ? props.id : undefined
-      if (id && sessionID) {
-        void permissions.onAsk({ id, sessionID, title: typeof props.title === "string" ? props.title : undefined })
-      }
+    const ask = parseAskEvent(payload)
+    if (ask) {
+      void permissions.onAsk(ask)
       return
     }
     if (!sessionID) return

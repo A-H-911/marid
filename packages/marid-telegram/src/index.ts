@@ -1,4 +1,4 @@
-export { runGateway } from "./gateway"
+export { runGateway, parseAskEvent } from "./gateway"
 export type { RunGatewayDeps } from "./gateway"
 export { loadConfig } from "./config"
 export type { TelegramEnvConfig } from "./config"

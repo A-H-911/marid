@@ -122,7 +122,7 @@ async function waitFor(predicate: () => boolean, timeoutMs = 20_000): Promise<bo
 
 // Launch a real marid instance + a channel token bound to AGENT + a fake Telegram,
 // wire a gateway to both, and register teardown. Returns the fake + abort handle.
-function setup(llm: TestLLMServer["Service"]) {
+function setup(llm: TestLLMServer["Service"], agent: string = AGENT) {
   return Effect.gen(function* () {
     const root = yield* Effect.promise(() => fs.mkdtemp(path.join(os.tmpdir(), "marid-tg-")))
     const dir = path.join(root, "inst")
@@ -130,7 +130,7 @@ function setup(llm: TestLLMServer["Service"]) {
     yield* Effect.promise(() => fs.mkdir(fakeHome, { recursive: true }))
     const token = yield* Effect.promise(() =>
       createTokenStore(instanceMaridDir(dir))
-        .create("tg", "channel:telegram", AGENT)
+        .create("tg", "channel:telegram", agent)
         .then((r) => r.secret),
     )
     const record = yield* Effect.promise(() => start("inst", dir, launch, { env: overlay(fakeHome, llm.url), timeoutMs: 60_000 }))
@@ -142,7 +142,7 @@ function setup(llm: TestLLMServer["Service"]) {
       sdk,
       bot,
       allow: new Set([OPERATOR]),
-      agent: AGENT,
+      agent,
       dedupFile: path.join(root, "dedup.json"),
       now: () => Date.now(),
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
@@ -162,7 +162,7 @@ function setup(llm: TestLLMServer["Service"]) {
         await fs.rm(root, { recursive: true, force: true }).catch(() => {})
       }),
     )
-    return { tg }
+    return { tg, url: `http://127.0.0.1:${record.port}`, headers: { authorization: `Bearer ${token}` } }
   })
 }
 
@@ -192,16 +192,21 @@ suite("TEST-TG: Telegram round trip + policy denial (live)", () => {
   )
 
   // AC-012 (policy-gated tool → inline keyboard; Deny/timeout blocks; Approve allows
-  // exactly once) is NOT driven here as a live LLM tool call: the fake LLM cannot
-  // manifest a tool call through the openai-compatible HTTP provider in this harness,
-  // so no real permission.asked event is produced (a harness limitation, unrelated to
-  // the gateway). AC-012 is fully covered by:
-  //   - packages/marid-telegram/test/permission.test.ts — the keyboard/claim/reply/
-  //     timeout/exactly-once/double-tap/late-callback/restart-recover semantics; and
-  //   - packages/marid-auth/test/{channel-binding,scope}.test.ts — the INV-001 server
+  // exactly once) is NOT driven live here, because this harness cannot produce a real
+  // permission. EVIDENCE (diagnosed, not assumed): the fake LLM IS called (calls=1,
+  // misses=0), but the request the server sends carries NO `tools` field — the
+  // `@ai-sdk/openai-compatible` test provider does not forward tools to the model
+  // (verified across the build agent and a custom agent with `tools:{bash:true}`;
+  // `GET /permission` stays empty). No existing repo test drives tools through this
+  // HTTP provider. So no tool call can fire → no permission.asked → nothing to render.
+  // This is a harness limit, not a gateway defect.
+  //
+  // AC-012 is covered instead by:
+  //   - test/gateway.test.ts (parseAskEvent) — the ask-event field extraction, locked
+  //     against the committed PermissionRequest schema (id/sessionID/permission);
+  //   - packages/marid-telegram/test/permission.test.ts — keyboard/claim/reply/timeout/
+  //     exactly-once/double-tap/late-callback/restart-recover;
+  //   - packages/marid-auth/test/{channel-binding,scope}.test.ts — INV-001 server
   //     enforcement (a channel token cannot reach /shell or /command, cannot select
   //     another agent, cannot widen tools/permission).
-  // The gateway maps the real "permission.asked" event (packages/schema/src/v1/
-  // permission.ts) to onAsk; that wiring is exercised by the happy-path round trip
-  // above, which runs through a real channel:telegram token bound to its agent.
 })
