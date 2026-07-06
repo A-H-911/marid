@@ -11,6 +11,29 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-06 — PH-4 Telegram built (WBS-4.1..4.5)
+- **Done:** new additive `@marid/telegram` pkg (ADR-0005, zero runtime deps, type-only SDK) — long-poll
+  ingress + allowlist + `update_id` dedup (AC-010), HTML/4096-split streaming with EXP-003 cadence + 429
+  (AC-011), permission inline-keyboard flow (race-safe exactly-once), policy, full media, `marid telegram
+  start` CLI. Plus the `@marid/auth` **INV-001 by-construction backstop** (WBS-4.4): channel scope is now
+  deny-by-default on owned-session sub-routes (closes a verified hole — `channel:` == `client` could reach
+  `/session/:id/shell`), and a token-bound-agent body guard rejects any channel prompt that selects a
+  different agent or widens tools. 169 unit tests (auth 72, instance 40, telegram 58) + live TEST-TG
+  (AC-010/011) vs a real `marid serve` + fake LLM + local fake Telegram; new 3-OS `marid-telegram` CI job.
+- **Decisions:** (operator, this session) INV-001 = by-construction backstop (not gateway convention);
+  hand-rolled Bot API client (no telegram-library dep, RISK-004); full media send+receive. Client
+  `messageID` dropped from prompts (server ids are timestamp-ordered — a fabricated one corrupts history;
+  idempotency is the update_id dedup store).
+- **Deviations:** AC-012's LLM-tool→permission link is NOT driven live — the opencode HTTP-served run
+  resolves **zero tools** (verified: fake LLM called, calls=1/misses=0, request carries no `tools` field,
+  for the build agent AND a `tools:{bash:true}` agent; internal `prompt.loop()` has tools, served
+  `promptAsync` does not). Not a provider or gateway issue. The gateway's permission ROUND TRIP
+  (event→keyboard→Deny→`permission.respond(reject)`) is instead proven end-to-end via a faked-SDK
+  integration test emitting a schema-shaped `permission.asked`; `parseAskEvent` locks the field names
+  (id/sessionID/permission — a review caught the gateway reading a non-existent `title`).
+- **Blockers:** operator to add `marid-telegram` ×3 to required checks (14→17). **Next:** open the PH-4 PR;
+  on 3-OS green + merge, flip MS-005 (separate trackers PR).
+
 ## 2026-07-06 — Keystone v1.0.0 package migration
 - **Done:** re-homed the whole `docs/` package to the Keystone v1.0.0 layout (progress/, execution/,
   governance/, planning split, validation/traceability, architecture/diagrams); rebuilt `keystone-state.json`
