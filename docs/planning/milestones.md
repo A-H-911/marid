@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-05
+updated: 2026-07-07
 owner: operator (STK-001)
 ---
 
@@ -17,5 +17,5 @@ Binary, verifiable phase-exit checkpoints. Each milestone gates entry to the nex
 | MS-002 | Marid layer ready | authenticated `marid` binary from the `marid` profile passes contract tests; 3-OS `marid-build` green | PH-1 | MET 2026-07-04 (PR #13) |
 | MS-003 | Instances isolated | KPI-003 — 3-OS `marid-isolation` green (2 consecutive all-green runs) | PH-2 | MET 2026-07-05 (PR #17) |
 | MS-004 | Cross-interface sync | KPI-001 demo repeatable — 3-OS `marid-sync` green; concurrency semantics documented (contract v1.1) | PH-3 | MET 2026-07-05 (PR #19) |
-| MS-005 | Telegram working | KPI-002 — round trip + policy-denial paths green | PH-4 | not-started |
+| MS-005 | Telegram working | KPI-002 — round trip + policy-denial paths green | PH-4 | MET 2026-07-07 (PR #23) |
 | MS-006 | MVP / release-ready | KPI-004, KPI-005, KPI-006 green; readiness report accepted (execution gate 14) | PH-5 | not-started |

@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-06
+updated: 2026-07-07
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,20 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-07 — MS-005 MET (PH-4 Telegram complete)
+- **Done:** 3-OS `marid-telegram` green on PR #23 (all 20 checks incl. TEST-TG on ubuntu/macOS/windows) —
+  KPI-002. Telegram round trip (AC-010 stranger-ignored, AC-011 streamed reply) proven live; policy-denial
+  path (AC-012) proven via the faked-SDK permission round trip + marid-auth INV-001 backstop. Merged
+  develop@81ba7e7 (squash). AC-010/011/012 flip to Met → **13 / 16 MVP ACs Met**.
+- **Decisions:** (recap of this session's, now shipped) INV-001 = by-construction backstop in `@marid/auth`
+  (channel scope deny-by-default on owned-session sub-routes + token-bound-agent guard), not gateway
+  convention; hand-rolled Bot API client (no telegram-library dep, RISK-004); full media send + receive.
+- **Deviations:** AC-012's LLM-tool→permission link is an opencode harness limit — the HTTP-served run
+  resolves zero tools (not a provider or gateway defect), so the permission ROUND TRIP is proven via a
+  faked-SDK integration test (event→keyboard→Deny→`permission.respond(reject)`) rather than a live model call.
+- **Blockers:** operator to add `marid-telegram` ×3 to required checks (14→17). **Next:** PH-5 (Release &
+  sync, MS-006 = MVP).
 
 ## 2026-07-06 — PH-4 Telegram built (WBS-4.1..4.5)
 - **Done:** new additive `@marid/telegram` pkg (ADR-0005, zero runtime deps, type-only SDK) — long-poll

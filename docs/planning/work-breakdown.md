@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-05
+updated: 2026-07-07
 owner: operator (STK-001)
 ---
 
@@ -10,7 +10,7 @@ owner: operator (STK-001)
 Phase → work-item decomposition. Every leaf has a Definition of Done and traces to FRs/NFRs/ADRs/KPIs/RISKs.
 Phases and their exit milestones are in [roadmap](roadmap.md) and [milestones](milestones.md); execution
 follows TDD per [test strategy](../validation/test-strategy.md). Status `✅ done` marks completed leaves;
-PH-4/PH-5 tables have no Status column yet (not started).
+the PH-5 table has no Status column yet (not started).
 
 ## PH-0 Foundations — ✅ COMPLETE (MS-001 met, 2026-07-04)
 | WBS | Item | DoD | Traces | Status |
@@ -46,14 +46,14 @@ PH-4/PH-5 tables have no Status column yet (not started).
 | WBS-3.2 | Reconnect/replay client behavior (SDK guidance + gateway lib) | No event loss across restart in test | FR-036/043, RISK-006 | ✅ done — kill+restart E2E: reconnecting client re-fetches authoritative history written before the restart (no state loss). Firehose is live-only (no `?after=` — contract v1.1 correction); recovery = authoritative-store re-fetch. Speculative gateway package deferred to PH-4 (its consumer, YAGNI); reconnect pattern documented as SDK guidance in the contract |
 | WBS-3.3 | Concurrency semantics doc + tests (from EXP-001 result) | Documented queue/steer behavior; tests assert it | FR-040/041 | ✅ done — api-event-contract v1.1 *Concurrency* section (join/steer, BusyError, abort, ordering); concurrency E2E asserts it through the authenticated marid wrapper (two clients, one session, no corruption) |
 
-## PH-4 Telegram
-| WBS | Item | DoD | Traces |
-|---|---|---|---|
-| WBS-4.1 | marid-telegram: long polling, `update_id` dedup, allowlist | Unknown senders ignored; dedup test | FR-046/050/051 |
-| WBS-4.2 | Egress: HTML formatting, 4096-split, edit-coalesced streaming, typing action | Cadence within EXP-003 constants; 429 honored | FR-048 |
-| WBS-4.3 | Permission prompts as inline keyboards → `/permission/:id/reply` | Approve/deny round trip < 5 s | FR-028, KPI-002 |
-| WBS-4.4 | Capability policy wiring (restricted agent + `channel:` token + caps) | Policy denial paths tested | FR-052, INV-001 |
-| WBS-4.5 | Media within Bot-API caps | Send/receive tests | FR-049 |
+## PH-4 Telegram — ✅ COMPLETE (MS-005 met, 2026-07-07, PR #23)
+| WBS | Item | DoD | Traces | Status |
+|---|---|---|---|---|
+| WBS-4.1 | marid-telegram: long polling, `update_id` dedup, allowlist | Unknown senders ignored; dedup test | FR-046/050/051 | ✅ done — long-poll ingress + operator-id allowlist + `update_id` dedup store; AC-010 proven live in the 3-OS TEST-TG job (stranger ignored + logged) |
+| WBS-4.2 | Egress: HTML formatting, 4096-split, edit-coalesced streaming, typing action | Cadence within EXP-003 constants; 429 honored | FR-048 | ✅ done — HTML/4096-split edit-coalesced streaming at the EXP-003 cadence with 429 handling; AC-011 proven live in TEST-TG (progressive edits, complete) |
+| WBS-4.3 | Permission prompts as inline keyboards → `/permission/:id/reply` | Approve/deny round trip < 5 s | FR-028, KPI-002 | ✅ done — race-safe exactly-once inline-keyboard permission flow → `permission.respond`; round trip proven via the faked-SDK integration test (event→keyboard→Deny→reject) |
+| WBS-4.4 | Capability policy wiring (restricted agent + `channel:` token + caps) | Policy denial paths tested | FR-052, INV-001 | ✅ done — `@marid/auth` INV-001 by-construction backstop: channel route-allowlist (deny-by-default on owned-session sub-routes, cannot reach /shell or /command) + token-bound-agent body guard; `channel-binding` + `scope` tests |
+| WBS-4.5 | Media within Bot-API caps | Send/receive tests | FR-049 | ✅ done — full media send + receive within Bot-API caps; media tests |
 
 ## PH-5 Release & sync
 | WBS | Item | DoD | Traces |
