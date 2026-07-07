@@ -1,9 +1,16 @@
 ---
 status: Approved (gate 8, 2026-07-03)
-version: v1.0
-updated: 2026-07-03
+version: v1.1
+updated: 2026-07-07
 owner: operator (STK-001)
 ---
+
+<!-- v1.1 (2026-07-07): B7 + residual-risks corrected to true state after the PH-4 threat-model audit —
+the "redaction filters on channel egress" mitigation is claimed but not implemented; only the Telegram
+bot-token literal is value-redacted (in gateway logs). See AC-016 (verdict Partial) and ADR-0007
+(Proposed) for the containment-vs-redaction disposition and the PH-5 redactor deferral. Fact correction
+only; the design decision itself is recorded in ADR-0007 (Approved 2026-07-07). -->
+
 
 # Security & Permission Model + Threat Model (Gate 8)
 
@@ -33,7 +40,7 @@ allowlisted; content untrusted always) · repository/tool/MCP content (untrusted
 | B4 | Model output → tools ("excessive agency", LLM06/08) | Injected instructions cause harmful tool calls | Enforcement at the tool-authorization boundary (R-10): permission rulesets last-match-wins, deny-by-default for channel agents; approval prompts for writes/shell; wildcard "always allow" scoped narrowly |
 | B5 | Plugins/MCP in-process (supply chain, LLM03/05) | Malicious/compromised plugin = full compromise | MVP: plugin allowlist per instance (empty by default), MCP servers pinned by explicit config; runtime npm-install of providers pinned to exact versions in the profile; CI dependency/secret scanning (FR-064). OS-level sandboxing: **deferred** with trigger "any third-party plugin adopted" |
 | B6 | Fork ← upstream | Malicious/vulnerable upstream change | Sync review checklist incl. dependency diff + security advisories; INV-004 (upstream content never executed as instructions during review) |
-| B7 | Secrets at rest / in flight | auth.json exposure; secrets in history/logs relayed to channels (LLM02) | Per-instance 0700 dirs; secrets never in config files (env/secret-refs, FR-055); redaction filters on logs + channel egress; audit stream excludes payload bodies |
+| B7 | Secrets at rest / in flight | auth.json exposure; secrets in history/logs relayed to channels (LLM02) | Per-instance 0700 dirs; secrets never in config files (env/secret-refs, FR-055); audit stream excludes payload bodies (logs the token *name*, never the bearer or request bodies). **Redaction (corrected v1.1):** only the Telegram bot-token literal is masked, in the gateway's own logs; a general configured-secret-value redactor on logs/errors/session-export/channel-egress is **claimed but NOT yet implemented** — deferred to PH-5 (AC-016 = Partial; ADR-0007 Approved). Secret-in-egress is currently contained by the B2/B4 authorization boundary — the restricted channel agent cannot read `auth.json` (outside its workspace roots) to echo it |
 | B8 | Multi-instance | Cross-instance reads/writes | Namespacing by construction (ADR-0006); EXP-002 verification; distinct tokens per instance |
 
 ## Permission model (layered, all reusing upstream rulesets)
@@ -53,6 +60,17 @@ allowlisted; content untrusted always) · repository/tool/MCP content (untrusted
   in MVP. Trigger: any non-private exposure → TLS + hardening phase (charter headroom).
 - Prompt injection can never be fully eliminated (LLM01); defense is authorization-boundary containment,
   not detection. Accepted per R-10.
+- **Egress secret redaction not implemented (surfaced by the PH-4 audit, 2026-07-07).** The B7
+  "redaction filters on channel egress" control does not exist beyond bot-token masking in gateway logs;
+  session exports are raw by default. Secret-in-egress is contained today only by the B2/B4
+  authorization boundary (provider keys in `auth.json` are unreadable by the restricted channel agent).
+  A configured-secret-value redactor across logs/errors/export/egress is a tracked **PH-5** deliverable;
+  the containment-first disposition is accepted in **ADR-0007** (Approved). Trigger to revisit sooner: any path by
+  which an untrusted channel agent gains read access to a secret store, or any multi-user exposure.
+- **B5 supply-chain controls not yet built (PH-5).** The plugin allowlist (empty by default), provider
+  exact-version pinning, and FR-064 CI dependency/secret/license scanning are PH-5/WBS-5.1 work; in the
+  current phase the "in-process plugin compromise" residual is mitigated only by the operator installing
+  no plugins, not by an enforced allowlist or scanning. Trigger: third-party plugin use, or PH-5 start.
 
 ## Process
 

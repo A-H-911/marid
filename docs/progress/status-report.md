@@ -34,10 +34,12 @@ generation: derived
 
 ## Acceptance snapshot
 
-MVP: **13 / 16 Met**, 1 Not-met (AC-007 premise superseded), 2 Pending. AC-010/011 Met via the live 3-OS
-TEST-TG; AC-012 Met via the faked-SDK permission round trip + `parseAskEvent` + `permission.test` +
-marid-auth `channel-binding` (the LLM-tool→permission link is unreachable in-harness — see progress log).
-AC-014, 015 → PH-5. Detail in the [acceptance audit](../validation/acceptance-audit.md).
+MVP: **12 / 16 Met**, **1 Partial** (AC-016 — redaction corrected by the PH-4 audit: only the MVP slice
+holds, full secret-value redactor → PH-5; see ADR-0007), 1 Not-met (AC-007 premise superseded), 2
+Pending. AC-010/011 Met via the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip +
+`parseAskEvent` + `permission.test` + marid-auth `channel-binding` (the LLM-tool→permission link is
+unreachable in-harness — see progress log). AC-014, 015 → PH-5. Detail in the
+[acceptance audit](../validation/acceptance-audit.md).
 
 ## Completed since last report
 MS-005 MET — PH-4 Telegram shipped (PR #23, squash-merged develop@81ba7e7): 3-OS `marid-telegram` green
@@ -48,7 +50,11 @@ PH-5 prep / none. PH-5 (Release & sync, MS-006 = MVP) is the next execution phas
 
 ## Blockers & risks
 No active blockers. Watch: upstream v1→v2 migration (RISK-001, contract tests), Telegram prompt-injection
-(INV-001 capability policy, RISK-003) — both addressed as PH-4 lands.
+(INV-001 capability policy, RISK-003) — both addressed as PH-4 lands. **PH-4 security audit (2026-07-07):**
+all B1–B8 mitigations verified against code + 170/0 tests; injection-containment probes all fail closed.
+Deltas: egress secret-redaction not implemented (RISK-007 corrected; AC-016 → Partial; redactor → PH-5,
+ADR-0007); B5 supply-chain controls are PH-5 (RISK-004 corrected). Cheap guards landed now: explicit
+loopback bind (B3 drift guard), export raw-default guardrail (P-4 reserved).
 
 ## Decisions since last report
 the three PH-1 sub-decisions (formerly 11a/b/c) promoted to DEC-011 / DEC-012 / DEC-013 (migration housekeeping; no semantic change).

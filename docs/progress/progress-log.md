@@ -11,6 +11,30 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-07 — PH-4 security threat-model audit (B1–B8) + corrective doc reconciliation
+- **Done:** Full audit against `security-threat-model.md` — every B1–B8 mitigation verified against code and
+  tests; ran all three Marid suites (**marid-telegram 58 / marid-auth 72 / marid-instance 40 = 170 pass, 0
+  fail**); TEST-SEC injection-containment probes (`channel-binding.test.ts`: escape-agent / widen-tools /
+  widen-permission / `/shell` / `/command` / no-agent / unbound-agent) all fail closed (403, `delegated=false`);
+  AC-012 permission round trip confirmed. **Finding:** the B7 "redaction filters on channel egress" control is
+  claimed but not implemented — only the Telegram bot-token literal is masked (gateway logs); channel egress,
+  general logs/errors, and `marid export` (raw by default) have no configured-secret-value redactor; AC-016's
+  cited evidence (`audit.test.ts`) tests 0600 + field shape, not redaction. Secret-in-egress is contained by the
+  B2/B4 authorization boundary (restricted agent can't read `auth.json`). B5 supply-chain controls (plugin
+  allowlist, provider pinning, FR-064 scanning) are unbuilt PH-5 work.
+- **Corrective changes (operator-approved scope "docs + cheap guards"):** threat model → v1.1 (B7 + residual
+  corrected to fact, status stays Approved — defect fix); **AC-016 verdict Met → Partial** + evidence fixed
+  (13 → **12 / 16 Met**, +1 Partial); RISK-007 / RISK-004 mitigation text corrected (flagged for operator
+  re-score); **ADR-0007 (Proposed)** records containment-first MVP posture + redactor deferred to PH-5;
+  **code guard:** explicit `--hostname 127.0.0.1` loopback bind in `marid-instance` `serveLaunch()` (B3 drift
+  guard; `MARID_BIND_HOST` override + warning preserves the documented non-loopback path); **P-4 reserved**
+  (deferred `export` default-flip).
+- **Decisions:** containment-not-redaction is **Proposed** (ADR-0007), not settled — awaits operator approval.
+  **Open sub-decision:** `marid export` raw-default fix — (a) global default-flip [P-4, upstream edit], (b)
+  provenance-aware, (c) *interim* doc guardrail + defer to PH-5 (chosen pending confirmation). **Deviations:**
+  none (audit-only + doc/guard; no upstream code edited; no merge). **Blockers:** operator to (1) approve
+  ADR-0007, (2) pick the export option. **Next:** PH-5 (redactor + B5 controls), or operator direction.
+
 ## 2026-07-07 — MS-005 MET (PH-4 Telegram complete)
 - **Done:** 3-OS `marid-telegram` green on PR #23 (all 20 checks incl. TEST-TG on ubuntu/macOS/windows) —
   KPI-002. Telegram round trip (AC-010 stranger-ignored, AC-011 streamed reply) proven live; policy-denial
