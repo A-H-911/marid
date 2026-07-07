@@ -1083,6 +1083,15 @@
         "context": "An instance is an isolated runtime with its own config, storage, cache, ports, secrets, and logs; it may host several projects. The R-05 conflict inventory shows today's shared state (DB, auth.json, config, log, caches, port preference). OpenCode already honors XDG overrides, OPENCODE_DB, and OPENCODE_CONFIG; claudectl proves the thin-launcher plus env pattern cross-platform.",
         "decision": "marid-instance manages per-instance 0700 directory trees containing config, data (DB), cache, logs, secrets, and a port/PID record. It writes per-instance launchers that compose the env (XDG plus OPENCODE_* plus port) and exec the shared binary; it adds port allocation, PID files, graceful shutdown, status/health, and per-instance MCP/LSP child processes. The registry is the directory listing. Isolation is by namespacing, not locking. Verified by EXP-002 and realizing FR-053 and the OQ-001 answer.",
         "consequences": "No daemon or supervisor in the MVP; cross-instance resource limits are delegated to OS mechanisms with enforced limits deferred behind a trigger. Realized in PH-2 as the marid-instance package; the deferred EXP-002 live two-instance diff is now closed by the isolation test suite. Rejected: one daemon hosting many logical instances; per-agent-process instances."
+      },
+      {
+        "id": "ADR-0007",
+        "title": "Channel secret safety is authorization-boundary containment, not egress redaction (MVP)",
+        "status": "Approved",
+        "date": "2026-07-07",
+        "context": "PH-4 threat-model audit found the B7 'redaction filters on channel egress' control unimplemented: only the Telegram bot-token literal is masked (gateway logs); channel egress, general logs/errors, and marid export (raw by default) have no configured-secret-value redactor; AC-016's cited evidence tests 0600+field-shape, not redaction. Provider keys in auth.json sit outside the restricted channel agent's workspace roots, so secret-in-egress is effectively contained by the B2/B4 authorization boundary.",
+        "decision": "Adopt authorization-boundary containment as the accepted MVP posture and defer a configured-secret-value redactor (logs/errors/export/channel-egress) + secret registry to PH-5/WBS-5.1. Interim (now): correct threat model/acceptance-audit to fact (B7 not-implemented; AC-016 Partial), pin explicit loopback bind (B3 drift guard), correct RISK-007/RISK-004. Open sub-decision (operator to confirm): marid export raw-default fix - (a) global default-flip [P-4, upstream edit], (b) provenance-aware sanitize, (c) interim doc guardrail + defer to PH-5 [chosen pending confirmation]. export is a local CLI command a channel token cannot reach.",
+        "consequences": "Threat model no longer over-claims a missing control; acceptance surface honest (AC-016 Partial). Residual 'secret relayed to channel' accepted for MVP under containment, redactor tracked to PH-5. If operator picks (a), P-4 activates; else it stays reserved/deferred."
       }
     ],
     "risks": [
@@ -1118,8 +1127,8 @@
         "description": "Supply-chain compromise via runtime npm-install (providers/plugins) or upstream deps",
         "impact": "high",
         "likelihood": "low",
-        "mitigation": "Pin provider installs in the distribution profile; dependency and secret scanning in CI (FR-064); plugin trust policy",
-        "trigger": "Scanner alert",
+        "mitigation": "PH-4 audit (2026-07-07): code-side controls NOT yet built - provider exact-version pinning, FR-064 dependency/secret/license CI scanning, empty-by-default plugin allowlist are all PH-5/WBS-5.1 (WBS-0.3 delivered only the CI skeleton; no scanning job exists; .gitleaksignore orphaned). Currently mitigated only by the operator installing no plugins/providers beyond the profile. Re-score I/L at operator review; controls land PH-5.",
+        "trigger": "Scanner alert; PH-5 start",
         "scope": "MVP"
       },
       {
@@ -1145,8 +1154,8 @@
         "description": "Secrets leak into session history or logs and get relayed to channels",
         "impact": "high",
         "likelihood": "low",
-        "mitigation": "Redaction rules (FR-055, FR-059); audit separation; never echo config/auth values in tool output shown to channels",
-        "trigger": "Redaction test failure",
+        "mitigation": "CORRECTED by PH-4 audit (2026-07-07): the redaction layer is NOT implemented (only the Telegram bot-token literal is masked in gateway logs; egress/log/export secret-value redaction deferred to PH-5 - ADR-0007, AC-016 Partial). Active controls: audit separation (token name, no bodies); secrets only in env/hashed stores; containment - the restricted channel agent cannot read auth.json (outside workspace roots) to relay provider keys. Residual: in-workspace secrets in a transcript still egress un-redacted. Re-score I/L at operator review.",
+        "trigger": "Redaction test failure; audit found redaction absent 2026-07-07",
         "scope": "MVP"
       },
       {
@@ -3372,6 +3381,11 @@
       "date": "2026-07-07",
       "author": "execution-agent",
       "summary": "PH-4 / MS-005 MET — KPI-002 green on three OSes; PH-4 complete. 3-OS marid-telegram job green on PR #23 (20/20 checks incl. TEST-TG on ubuntu/macOS/windows); squash-merged to develop (81ba7e7). AC-010 (stranger ignored) and AC-011 (streamed round trip) proven live in TEST-TG; AC-012 (policy-denied permission) proven via a faked-SDK permission round trip (event→keyboard→Deny→permission.respond(reject)) plus the @marid/auth INV-001 backstop — the live LLM-tool→permission link is an opencode harness limit (the HTTP-served run resolves zero tools), not a gateway or provider defect. Acceptance now 13/16 MVP ACs Met. Branch protection to 17 required checks (operator action). Next: PH-5 (Release & sync, MS-006 = MVP)."
+    },
+    {
+      "date": "2026-07-07",
+      "author": "execution-agent",
+      "summary": "PH-4 security threat-model audit: B1-B8 verified against code + 170/0 Marid tests; TEST-SEC injection-containment probes (channel-binding: escape-agent/widen-tools/widen-permission/shell/command/no-agent/unbound) all fail closed (403, delegated=false); AC-012 round trip confirmed. Delta: B7 egress secret-redaction claimed but not implemented (only bot-token masked in gateway logs); AC-016 Met->Partial, redactor->PH-5 (ADR-0007 Proposed); B5 supply-chain controls unbuilt (PH-5), RISK-004 corrected; RISK-007 corrected (containment active, redaction absent). Cheap guards landed: explicit --hostname 127.0.0.1 loopback bind (B3 drift guard, MARID_BIND_HOST override+warning); export raw-default guardrail documented (P-4 reserved). Acceptance now 12/16 MVP ACs Met + 1 Partial. Awaiting operator: approve ADR-0007; pick export option."
     }
   ],
   "change_log": [
@@ -3392,6 +3406,24 @@
       "actor": "execution-agent",
       "action": "PH-4/MS-005 MET — flipped PH-4 trackers after PR #23 merged @81ba7e7 (phases[] PH-4 done; MS-005 MET; WBS-4.1..4.5 done; AC-010/011/012 Met, 13/16 MVP ACs).",
       "target": "milestones/roadmap/work-breakdown/acceptance-audit/keystone-state"
+    },
+    {
+      "timestamp": "2026-07-07T14:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-4 security threat-model audit (B1-B8) + corrective reconciliation. Verified all mitigations vs code; ran Marid suites 170/0; injection-containment probes fail closed. Finding: B7 egress secret-redaction claimed but unimplemented (bot-token-in-logs only); B5 supply-chain controls are unbuilt PH-5. Operator-approved scope 'docs+cheap guards': threat model v1.0->v1.1 (B7+residual corrected, status stays Approved); AC-016 verdict Met->Partial + evidence fixed (13->12/16 Met, +1 Partial); RISK-007/RISK-004 mitigation corrected (flagged re-score); ADR-0007 (Proposed) containment-first + redactor->PH-5; code guard: explicit loopback bind in marid-instance serveLaunch; P-4 reserved (deferred export default-flip). No upstream code edited; no merge.",
+      "target": "security-threat-model/acceptance-criteria/acceptance-audit/risk-register/architecture(patch-surface)/adrs/status-report/progress-log/keystone-state; code: packages/opencode/src/cli/cmd/marid-instance.ts"
+    },
+    {
+      "timestamp": "2026-07-07T15:00:00Z",
+      "actor": "operator (STK-001)",
+      "action": "Approved ADR-0007 (channel secret safety = authorization-boundary containment; redactor deferred to PH-5). Core decision accepted; the marid export raw-default sub-decision remains OPEN pending operator selection (interim (c) doc-guardrail holds). Flipped ADR-0007 status Proposed->Approved and reconciled the (Proposed) references in security-threat-model.md + acceptance-audit.md.",
+      "target": "adrs/security-threat-model/acceptance-audit/keystone-state"
+    },
+    {
+      "timestamp": "2026-07-07T15:30:00Z",
+      "actor": "operator (STK-001)",
+      "action": "Resolved ADR-0007 open sub-decision to (c): marid export keeps raw default; interim documentation guardrail (operators pass --sanitize for channel/untrusted transcripts); default-flip P-4 stays reserved/deferred to PH-5. No code change.",
+      "target": "adrs/architecture(patch-surface P-4)/keystone-state"
     }
   ]
 }

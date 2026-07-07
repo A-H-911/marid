@@ -1,6 +1,17 @@
 import path from "node:path"
 import fs from "node:fs/promises"
-import { add, isAlive, list, pathOf, readRecord, remove, start, status, stop, type LaunchResolver } from "@marid/instance"
+import {
+  add,
+  isAlive,
+  list,
+  pathOf,
+  readRecord,
+  remove,
+  start,
+  status,
+  stop,
+  type LaunchResolver,
+} from "@marid/instance"
 import { cmd } from "./cmd"
 import { validateSession } from "../tui/validate-session"
 
@@ -11,15 +22,34 @@ import { validateSession } from "../tui/validate-session"
 //     elsewhere in the repo). The compiled binary bakes its run conditions in.
 // Always `--port 0`: the OS assigns a free port and marid-instance reads the actual
 // one back from the server log (no port-allocation race).
+//
+// B3 (threat model): bind to loopback EXPLICITLY, not by relying on the upstream serve
+// default. Passing `--hostname` sets `hostnameExplicitlySet` in network.ts, which
+// overrides BOTH a stray `config.server.hostname` and the mDNS→`0.0.0.0` branch — so an
+// upstream default change or a stray config can never silently expose the instance on the
+// LAN. A non-loopback bind is still supported but must be opted into via MARID_BIND_HOST
+// (the "explicit config + warning" path B3 requires; there is no TLS in the MVP).
+function bindHost(): string {
+  const override = process.env.MARID_BIND_HOST?.trim()
+  if (override && override !== "127.0.0.1" && override !== "localhost") {
+    console.warn(
+      `WARNING: MARID_BIND_HOST=${override} binds the instance server to a non-loopback address; ` +
+        `only do this on a trusted private network (no TLS in the MVP).`,
+    )
+  }
+  return override || "127.0.0.1"
+}
 function serveLaunch(): LaunchResolver {
   const exec = process.execPath
   const base = path.basename(exec).toLowerCase()
   const isRuntime = base.startsWith("bun") || base.startsWith("node")
   const maridEntry = path.resolve(import.meta.dir, "../../marid.ts")
-  return () =>
-    isRuntime
-      ? { command: exec, args: ["run", "--conditions=browser", maridEntry, "serve", "--port", "0"] }
-      : { command: exec, args: ["serve", "--port", "0"] }
+  return () => {
+    const host = bindHost()
+    return isRuntime
+      ? { command: exec, args: ["run", "--conditions=browser", maridEntry, "serve", "--port", "0", "--hostname", host] }
+      : { command: exec, args: ["serve", "--port", "0", "--hostname", host] }
+  }
 }
 
 async function requireExists(name: string): Promise<string> {

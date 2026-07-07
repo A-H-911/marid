@@ -31,7 +31,7 @@ PH-5 criteria are `Pending`.
 | AC-013 | `marid` profile build → excluded surfaces absent + hygiene grep | Met | MS-002: additive `src/marid.ts` + `script/marid-build.ts`; 3-OS `marid-build` green; hygiene grep passes | PH-1 · ADR-0002 |
 | AC-014 | Tagged release → private binaries+checksums, 3-OS install | Pending | — | PH-5 |
 | AC-015 | Upstream sync PR → contract/migration/delta + one real cycle | Pending | — | PH-5 · KPI-004 |
-| AC-016 | Secret would appear → redacted | Met | MS-002: marid-auth audit redaction test (WBS-1.3) | PH-1 · RISK-007 |
+| AC-016 | Secret would appear → redacted | Partial | Corrected by PH-4 audit (2026-07-07). MET slice: the audit stream never carries the bearer (logs the token *name*, no request bodies) and secrets live only in env / sha256-hashed stores — `marid-auth` `audit.test.ts` proves the 0600 append + field shape (NOT redaction); the Telegram **bot-token literal** is masked in gateway logs (`marid-telegram` `redact.test.ts` + `safeLog`). OPEN slice → **PH-5**: no configured-secret-value redactor on channel egress (`stream.ts`), on general logs/errors (no runtime facility), or on session export (`marid export` raw by default). Secret-in-egress is contained in the MVP by the B2/B4 authorization boundary (restricted agent cannot read `auth.json`). Disposition: ADR-0007 (Approved); redactor tracked to PH-5/WBS-5.1. | PH-1 (partial) · PH-5 (redactor) · RISK-007 |
 
 ## Summary
 
