@@ -29,6 +29,11 @@ const singleFlag = process.argv.includes("--single")
 const baselineFlag = process.argv.includes("--baseline")
 const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
+// --release (or OPENCODE_RELEASE, matching build.ts's Script.release gate): after building the
+// targets, package each into dist/<name>.{tar.gz|zip} + a dist/<name>.<ext>.sha256 sidecar.
+// Signing (minisign) and `gh release` upload are done by marid-release.yml, NOT here — the secret
+// key stays in the workflow and this script has no network/gh dependency (locally testable). WBS-5.1.
+const releaseFlag = process.argv.includes("--release") || Script.release
 const plugin = createSolidTransformPlugin()
 
 const allTargets: { os: string; arch: "arm64" | "x64"; abi?: "musl"; avx2?: false }[] = [
@@ -51,6 +56,8 @@ const targets = singleFlag
   : allTargets
 
 await $`rm -rf dist/marid`
+
+const built: string[] = []
 
 if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
@@ -138,4 +145,23 @@ for (const item of targets) {
       2,
     ),
   )
+
+  built.push(name)
+}
+
+if (releaseFlag) {
+  // Package each built target from its bin dir (contains only the compiled `marid[.exe]`).
+  // linux → .tar.gz, everything else → .zip, matching the upstream install-script asset naming
+  // (marid-<os>-<arch>[-baseline][-musl].<ext>). Archives + checksums land in dist/.
+  for (const name of built) {
+    const archive = name.includes("linux") ? `${name}.tar.gz` : `${name}.zip`
+    if (name.includes("linux")) {
+      await $`tar -czf ../../${archive} *`.cwd(`dist/${name}/bin`)
+    } else {
+      await $`zip -qr ../../${archive} *`.cwd(`dist/${name}/bin`)
+    }
+    // Checksum the basename (cwd dist/) so `sha256sum -c <archive>.sha256` verifies from dist/.
+    await $`sha256sum ${archive} > ${archive}.sha256`.cwd("dist")
+    console.log(`packaged ${archive} (+ .sha256)`)
+  }
 }

@@ -1,0 +1,104 @@
+name: marid-release
+
+# Marid release pipeline (WBS-5.1). Marid-owned; kept by strip-upstream-workflows.ts (KEEP).
+# Adapts the upstream packaging pattern (packages/opencode/script/build.ts release block) but strips
+# every public channel — npm, ghcr/Docker, AUR, Homebrew, VSCode/github-action, electron desktop,
+# Azure/Apple signing, Sentry. Produces public GitHub Release assets (DEC-010): per-target archives
+# + SHA-256 sidecars + minisign signatures. Single ubuntu job — Bun cross-compiles all 7 targets.
+#
+# Trigger: push a `v*` tag (real release) or workflow_dispatch with a version (prerelease test).
+# Version flows to the build via OPENCODE_VERSION (bypasses Script's npm-registry lookup).
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, e.g. 0.1.0-rc.1 (published as a prerelease for testing)."
+        required: true
+
+concurrency:
+  group: marid-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version + release flags
+        id: v
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            PRERELEASE=true
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+            case "$VERSION" in *-*) PRERELEASE=true ;; *) PRERELEASE=false ;; esac
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "Resolved VERSION=$VERSION prerelease=$PRERELEASE"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - uses: ./.github/actions/bun-install
+
+      - name: Install minisign
+        run: sudo apt-get update && sudo apt-get install -y minisign
+
+      - name: Create draft release
+        run: |
+          gh release create "v${{ steps.v.outputs.version }}" \
+            --draft \
+            --title "Marid v${{ steps.v.outputs.version }}" \
+            --notes "Marid v${{ steps.v.outputs.version }} — private downstream distribution of OpenCode (MIT). Verify assets with the committed minisign public key (minisign.pub) and the .sha256 sidecars." \
+            $([ "${{ steps.v.outputs.prerelease }}" = "true" ] && echo --prerelease) \
+            || echo "Release v${{ steps.v.outputs.version }} already exists; continuing to (re)upload assets."
+
+      - name: Build + package all targets
+        working-directory: packages/opencode
+        env:
+          OPENCODE_VERSION: ${{ steps.v.outputs.version }}
+          OPENCODE_RELEASE: "1"
+        run: bun run script/marid-build.ts --release
+
+      - name: Sign archives (minisign)
+        working-directory: packages/opencode
+        run: |
+          if [ -z "$MINISIGN_SECRET_KEY" ]; then
+            echo "::warning::MINISIGN_SECRET_KEY not set — skipping signing (build + checksums only)."
+            exit 0
+          fi
+          printf '%s\n' "$MINISIGN_SECRET_KEY" > "$RUNNER_TEMP/minisign.key"
+          shopt -s nullglob
+          for f in dist/*.tar.gz dist/*.zip; do
+            minisign -Sm "$f" -s "$RUNNER_TEMP/minisign.key"
+            echo "signed $f"
+          done
+          rm -f "$RUNNER_TEMP/minisign.key"
+
+      - name: Upload assets
+        working-directory: packages/opencode
+        run: |
+          shopt -s nullglob
+          assets=(dist/*.tar.gz dist/*.zip dist/*.sha256 dist/*.minisig)
+          echo "Uploading ${#assets[@]} asset(s)"
+          gh release upload "v${{ steps.v.outputs.version }}" "${assets[@]}" --clobber
+
+      - name: Publish release
+        run: gh release edit "v${{ steps.v.outputs.version }}" --draft=false
