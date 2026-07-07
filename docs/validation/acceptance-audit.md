@@ -1,7 +1,7 @@
 ---
 status: Draft
 version: 0.1.0
-updated: 2026-07-07
+updated: 2026-07-08
 owner: operator (STK-001)
 generation: derived
 ---
@@ -29,13 +29,14 @@ PH-5 criteria are `Pending`.
 | AC-011 | Allowlisted ask → progressive edits, 4096-split, complete | Met | MS-005 (PR #23): HTML/4096-split edit-coalesced streaming (EXP-003 cadence); progressive edits + complete reply proven live in the 3-OS `marid-telegram` TEST-TG job | PH-4 · KPI-002 |
 | AC-012 | Policy-denied tool → inline-keyboard permission; deny blocks | Met | MS-005 (PR #23): permission round trip proven via faked-SDK integration test (event→keyboard→Deny→`permission.respond(reject)`) + `parseAskEvent` schema lock + `permission.test` (claim/timeout/races) + marid-auth `channel-binding`/`scope` (INV-001: channel token cannot reach /shell or /command, cannot escape its bound agent). The live LLM-tool→permission link is unreachable in-harness (the opencode HTTP-served run resolves zero tools — a harness limit, not a gateway/provider defect) | PH-4 · INV-001 |
 | AC-013 | `marid` profile build → excluded surfaces absent + hygiene grep | Met | MS-002: additive `src/marid.ts` + `script/marid-build.ts`; 3-OS `marid-build` green; hygiene grep passes | PH-1 · ADR-0002 |
-| AC-014 | Tagged release → private binaries+checksums, 3-OS install | Pending | — | PH-5 |
-| AC-015 | Upstream sync PR → contract/migration/delta + one real cycle | Pending | — | PH-5 · KPI-004 |
+| AC-014 | Tagged release → public signed binaries+checksums, 3-OS install (DEC-010: public/anonymous) | Partial | Release half verified (WBS-5.1, PR #27): `marid-release.yml` produces tar/zip + `.sha256` + `.minisig`; end-to-end run 28892667716 green — a throwaway prerelease was signed+checksummed and `minisign -Vm`/`sha256sum -c` validated, then deleted. **Install half pending (WBS-5.2)**: documented anonymous download→verify path + 3-OS asset smoke + RC not yet cut. Flips to Met at WBS-5.2/5.5. | PH-5 |
+| AC-015 | Upstream sync PR → contract/migration/delta + one real cycle | Met | `marid-sync-upstream.yml` (PR #28) provides the weekly conflict-check + monthly merge PR carrying the delta report, migration-review, and dependency-diff; **one real 91-commit cycle merged via merge-commit (PR #31), `upstream/dev` now an ancestor of develop, ≤1 person-day (KPI-004).** | PH-5 · KPI-004 |
 | AC-016 | Secret would appear → redacted | Partial | Corrected by PH-4 audit (2026-07-07). MET slice: the audit stream never carries the bearer (logs the token *name*, no request bodies) and secrets live only in env / sha256-hashed stores — `marid-auth` `audit.test.ts` proves the 0600 append + field shape (NOT redaction); the Telegram **bot-token literal** is masked in gateway logs (`marid-telegram` `redact.test.ts` + `safeLog`). OPEN slice → **PH-5**: no configured-secret-value redactor on channel egress (`stream.ts`), on general logs/errors (no runtime facility), or on session export (`marid export` raw by default). Secret-in-egress is contained in the MVP by the B2/B4 authorization boundary (restricted agent cannot read `auth.json`). Disposition: ADR-0007 (Approved); redactor tracked to PH-5/WBS-5.1. | PH-1 (partial) · PH-5 (redactor) · RISK-007 |
 
 ## Summary
 
-- **13 / 16 Met** (AC-001..006, 008..013, 016), **1 Not-met** (AC-007 — premise superseded),
-  **2 Pending** (AC-014, 015 → PH-5). Realized through PH-4 (MS-005).
+- **13 / 16 Met** (AC-001..006, 008..013, 015), **1 Not-met** (AC-007 — premise superseded),
+  **2 Partial** (AC-014 — release verified, install path pending WBS-5.2; AC-016 — redactor deferred, ADR-0007).
+  AC-015 met at PH-5 (sync cycle #31, KPI-004); through PH-4 the count was 13 Met / 2 Pending.
 - **Residual honesty:** AC-007 will be formally superseded (re-fetch recovery is the delivered behavior);
   tracked in the [deferred-work register](../execution/deferred-work-register.md).
