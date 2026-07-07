@@ -111,9 +111,15 @@ function fakeTelegram() {
 
 const wait = (ms: number) => Effect.promise(() => new Promise((r) => setTimeout(r, ms)))
 
+// marid (P-CI-4): route the poll budget through OPENCODE_TIMING_SCALE (Windows=4, set by the
+// marid-telegram job). This helper ignored it, so the 25s wait at :187 flaked on cold 2-core
+// Windows CI where instance-boot + LLM + round trip legitimately took ~32s.
+const TIMING_SCALE = Number(process.env.OPENCODE_TIMING_SCALE) || 1
+
 async function waitFor(predicate: () => boolean, timeoutMs = 20_000): Promise<boolean> {
   const start = Date.now()
-  while (Date.now() - start < timeoutMs) {
+  const deadline = timeoutMs * TIMING_SCALE
+  while (Date.now() - start < deadline) {
     if (predicate()) return true
     await new Promise((r) => setTimeout(r, 50))
   }
