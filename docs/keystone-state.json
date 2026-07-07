@@ -2239,7 +2239,7 @@
         "id": "PH-5",
         "name": "Release & sync",
         "goal": "Private distribution + one real upstream sync + docs",
-        "status": "not-started",
+        "status": "in-progress",
         "depends_on": [
           "PH-2",
           "PH-3",
@@ -3386,6 +3386,11 @@
       "date": "2026-07-07",
       "author": "execution-agent",
       "summary": "PH-4 security threat-model audit: B1-B8 verified against code + 170/0 Marid tests; TEST-SEC injection-containment probes (channel-binding: escape-agent/widen-tools/widen-permission/shell/command/no-agent/unbound) all fail closed (403, delegated=false); AC-012 round trip confirmed. Delta: B7 egress secret-redaction claimed but not implemented (only bot-token masked in gateway logs); AC-016 Met->Partial, redactor->PH-5 (ADR-0007 Proposed); B5 supply-chain controls unbuilt (PH-5), RISK-004 corrected; RISK-007 corrected (containment active, redaction absent). Cheap guards landed: explicit --hostname 127.0.0.1 loopback bind (B3 drift guard, MARID_BIND_HOST override+warning); export raw-default guardrail documented (P-4 reserved). Acceptance now 12/16 MVP ACs Met + 1 Partial. Awaiting operator: approve ADR-0007; pick export option."
+    },
+    {
+      "date": "2026-07-08",
+      "author": "execution-agent",
+      "summary": "PH-5 partial + tracker reconciliation. WBS-5.1 (release pipeline, PR #27: marid-release.yml + marid-build.ts --release, tar/zip + sha256 + minisign; trust anchor minisign.pub + secret MINISIGN_SECRET_KEY; verified end-to-end run 28892667716, throwaway prerelease signed+checksummed then deleted) and WBS-5.3 (sync automation PR #28 + one real 91-commit upstream cycle merged via merge-commit PR #31 = KPI-004; upstream/dev now an ancestor of develop; delta + migration-review + dependency-diff jobs; codemode reconciled per ADR-0002 via external + hygiene allowlist) done & merged to develop@51fb00c6b (PRs #27-#31). PH-5 phase status not-started->in-progress. Acceptance: AC-015 Met (sync cycle #31), AC-014 Partial (release verified, install path + 3-OS smoke = WBS-5.2), AC-016 stays Partial (audit summary recount fixed). Decisions: releases public/anonymous (DEC-010), minisign signing, ship-under-containment (ADR-0007); logo red-orange flame + shadowed marid wordmark (operator directive, amends branding.md 2-color); first RC v0.1.0 on independent 0.x line (package.json stays upstream 1.17.15; release<->upstream link is baseline SHA). Devil's-advocate review flagged for WBS-5.5: FR-064 hollow trace (marked full, scans unbuilt -> re-mark partial) and AC-014 statement stale vs DEC-010 (private/gh-auth -> public/anonymous). Remaining: WBS-5.4 branding -> WBS-5.2 RC -> WBS-5.5 readiness -> STOP at gate 14."
     }
   ],
   "change_log": [
@@ -3424,6 +3429,12 @@
       "actor": "operator (STK-001)",
       "action": "Resolved ADR-0007 open sub-decision to (c): marid export keeps raw default; interim documentation guardrail (operators pass --sanitize for channel/untrusted transcripts); default-flip P-4 stays reserved/deferred to PH-5. No code change.",
       "target": "adrs/architecture(patch-surface P-4)/keystone-state"
+    },
+    {
+      "timestamp": "2026-07-08T00:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-5 tracker reconciliation (WBS-5.1 release + WBS-5.3 sync/KPI-004 done & merged, PRs #27-#31): work-breakdown WBS-5.1/5.3 -> done; acceptance-audit AC-015 -> Met, AC-014 -> Partial (install path pending WBS-5.2), summary recount fixed (AC-016 was wrongly listed Met); PH-5 phase status -> in-progress; progress-log + status-report regenerated; keep-remove-matrix codemode-excluded note added. Roadmap/milestone phase rows NOT flipped (flip at MS-006/gate 14). No merge without operator approval (INV-005).",
+      "target": "planning/work-breakdown+validation/acceptance-audit+progress/*+keystone-state+architecture/keep-remove-matrix"
     }
   ]
 }
