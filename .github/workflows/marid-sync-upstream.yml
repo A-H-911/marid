@@ -1,0 +1,168 @@
+name: marid-sync-upstream
+
+# Marid upstream-sync automation (WBS-5.3). Marid-owned; kept by strip-upstream-workflows.ts (KEEP).
+# Implements docs/architecture/upstream-sync-strategy.md: weekly conflict-check (no merge) + monthly
+# merge PR into develop, with a post-merge strip of re-introduced upstream workflows, a delta report
+# (git diff --stat + patch-surface reminder + v2/sdk-next scan), migration-review, and dependency-diff.
+# The actual merge is reviewed + merged by the operator (INV-005) — this only opens the draft PR.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # weekly Mon 06:00 UTC — conflict check only (no push)
+    - cron: "0 6 1 * *" # monthly 1st  06:00 UTC — open a merge PR
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "check = dry conflict report (no push); merge = open a sync PR"
+        type: choice
+        options: [check, merge]
+        default: check
+
+concurrency:
+  group: marid-sync-upstream
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  UPSTREAM_URL: https://github.com/anomalyco/opencode.git
+  UPSTREAM_BRANCH: dev
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Resolve mode
+        id: m
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ github.event.inputs.mode }}"
+          elif [ "${{ github.event.schedule }}" = "0 6 1 * *" ]; then
+            MODE="merge"
+          else
+            MODE="check"
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Mode: $MODE"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream "$UPSTREAM_URL" 2>/dev/null || git remote set-url upstream "$UPSTREAM_URL"
+          git fetch --no-tags upstream "$UPSTREAM_BRANCH"
+          AHEAD=$(git rev-list --count HEAD..upstream/$UPSTREAM_BRANCH)
+          echo "AHEAD=$AHEAD" >> "$GITHUB_ENV"
+          echo "develop is $AHEAD commit(s) behind upstream/$UPSTREAM_BRANCH"
+
+      - name: Conflict check (read-only merge-tree)
+        id: check
+        run: |
+          if git merge-tree --write-tree HEAD "upstream/$UPSTREAM_BRANCH" > /tmp/mt.txt 2>&1; then
+            echo "clean=true" >> "$GITHUB_OUTPUT"
+            echo "✅ merge is clean ($AHEAD commits)"
+          else
+            echo "clean=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ merge has conflicts ($AHEAD commits) — files:"
+            git merge-tree --write-tree --name-only HEAD "upstream/$UPSTREAM_BRANCH" 2>/dev/null | tail -n +2 | tee /tmp/conflicts.txt || true
+          fi
+
+      - name: Configure git identity
+        if: steps.m.outputs.mode == 'merge'
+        run: |
+          git config user.name "marid-sync[bot]"
+          git config user.email "marid-sync@users.noreply.github.com"
+
+      - name: Create sync branch + merge
+        if: steps.m.outputs.mode == 'merge'
+        id: merge
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          BRANCH="sync/upstream-$DATE"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          git checkout -b "$BRANCH"
+          if git merge --no-edit "upstream/$UPSTREAM_BRANCH"; then
+            echo "conflicts=false" >> "$GITHUB_OUTPUT"
+            echo "Merged cleanly."
+            # Re-strip any upstream workflows the merge re-introduced (P-CI-1).
+            bun run script/strip-upstream-workflows.ts
+            if ! git diff --quiet; then
+              git add -A && git commit -m "chore(sync): strip re-introduced upstream workflows"
+            fi
+          else
+            echo "conflicts=true" >> "$GITHUB_OUTPUT"
+            git merge --abort
+            echo "::warning::Merge has conflicts — resolve locally per the P-* reconcile checklist. No PR opened."
+          fi
+
+      - name: Build delta report
+        if: steps.m.outputs.mode == 'merge'
+        run: |
+          DATE="${{ steps.merge.outputs.date }}"
+          BASELINE=$(git tag -l 'upstream-baseline/*' | head -1)
+          {
+            echo "## Upstream sync delta — $DATE"
+            echo ""
+            echo "- Behind by: **$AHEAD** commit(s) on \`upstream/$UPSTREAM_BRANCH\`"
+            echo "- Baseline tag: \`${BASELINE:-none}\`"
+            echo "- Clean merge: \`${{ steps.check.outputs.clean }}\`"
+            echo ""
+            echo "### \`git diff upstream/$UPSTREAM_BRANCH...HEAD --stat\` (downstream delta)"
+            echo '```'
+            git diff "upstream/$UPSTREAM_BRANCH...HEAD" --stat | tail -80
+            echo '```'
+            echo ""
+            echo "### Patch surface (P-*) — reconcile per docs/architecture/architecture.md"
+            echo "- **P-ENTRY** additive-file reconcile: diff \`src/marid.ts\` vs \`src/index.ts\` command list; \`script/marid-build.ts\` vs \`script/build.ts\` config."
+            echo "- **P-CI-3/4** timing edits (\`marid:\`-commented test files) — re-apply on conflict, or adopt upstream if larger/drive-agnostic."
+            echo "- **P-2** (branding) / **P-3** (config) user-visible surfaces."
+            echo ""
+            echo "### Migration review (flag new DB migrations)"
+            MIGR=$(git diff "upstream/$UPSTREAM_BRANCH...HEAD" --name-only | grep -iE 'migration|\.sql$' || true)
+            if [ -n "$MIGR" ]; then echo '```'; echo "$MIGR"; echo '```'; else echo "None."; fi
+            echo ""
+            echo "### Dependency diff"
+            echo '```'
+            git diff "upstream/$UPSTREAM_BRANCH...HEAD" --stat -- '**/package.json' bun.lock | tail -30
+            echo '```'
+            echo ""
+            echo "### v2 / sdk-next stability scan (RISK-001)"
+            SDK=$(git log "HEAD..upstream/$UPSTREAM_BRANCH" --oneline | grep -iE 'sdk-next|/api/|server\.ts|openapi' | head -20 || true)
+            if [ -n "$SDK" ]; then echo '```'; echo "$SDK"; echo '```'; else echo "No obvious v1-API/sdk-next commits in range."; fi
+          } > delta-report.md
+          cat delta-report.md
+
+      - uses: actions/upload-artifact@v4
+        if: steps.m.outputs.mode == 'merge'
+        with:
+          name: delta-report
+          path: delta-report.md
+
+      - name: Push + open draft PR
+        if: steps.m.outputs.mode == 'merge' && steps.merge.outputs.conflicts == 'false'
+        run: |
+          BRANCH="${{ steps.merge.outputs.branch }}"
+          git push -u origin "$BRANCH"
+          gh pr create --base develop --head "$BRANCH" --draft \
+            --title "sync: upstream ${{ steps.merge.outputs.date }} (${AHEAD} commits)" \
+            --body-file delta-report.md
+
+      - name: Fail if conflicts (visible signal)
+        if: steps.m.outputs.mode == 'merge' && steps.merge.outputs.conflicts == 'true'
+        run: |
+          echo "::error::Sync merge conflicts — resolve the sync/upstream branch locally, then push + open the PR."
+          exit 1

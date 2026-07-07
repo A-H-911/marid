@@ -22,7 +22,7 @@ import path from "path"
 const WORKFLOWS_DIR = path.join(".github", "workflows")
 
 // Marid-owned workflows to preserve. Everything else under .github/workflows is upstream.
-const KEEP = new Set(["ci.yml", "marid-pr-title.yml", "marid-release.yml"])
+const KEEP = new Set(["ci.yml", "marid-pr-title.yml", "marid-release.yml", "marid-sync-upstream.yml"])
 
 const removed = readdirSync(WORKFLOWS_DIR, { withFileTypes: true })
   .filter((entry) => entry.isFile() && (entry.name.endsWith(".yml") || entry.name.endsWith(".yaml")))
