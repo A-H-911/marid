@@ -89,7 +89,11 @@ for (const item of targets) {
     conditions: ["bun", "node"],
     tsconfig: "./tsconfig.json",
     plugins: [plugin],
-    external: ["node-gyp"],
+    // marid (sync 2026-07-07): @opencode-ai/codemode is an excluded package. Upstream's
+    // src/tool/code-mode.ts imports it, but registry.ts only dynamically imports code-mode
+    // behind the default-off `experimentalCodeMode` flag — mark it external so the codemode
+    // package is never bundled into the marid binary (ADR-0002 exclude-by-profile).
+    external: ["node-gyp", "@opencode-ai/codemode"],
     format: "esm",
     minify: true,
     sourcemap: sourcemapsFlag ? "linked" : "none",
