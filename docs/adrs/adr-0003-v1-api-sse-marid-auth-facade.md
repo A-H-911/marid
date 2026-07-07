@@ -1,13 +1,16 @@
 ---
-artifact: adr
-status: Approved (gate 5; API details confirmed at gate 7)
+id: ADR-0003
+status: Approved
 version: v1.0
 updated: 2026-07-03
+supersedes: none
+superseded_by: none
+owner: operator (STK-001)
 ---
 
 # ADR-0003 — Build on the v1 API + SSE behind a marid-auth layer; watch v2
 
-**Status:** Approved (2026-07-03) · promotes DEC-002 + DEC-004 · derives from C-3, C-4
+**Status:** Approved (2026-07-03; gate 5, API confirmed gate 7) · promotes DEC-002 + DEC-004 · derives from C-3, C-4
 
 **Context.** R-02: the v1 HTTP surface + published `@opencode-ai/sdk` already satisfy 7/16 remote-API FRs
 as-is; every v2 `/api/*` group is annotated Experimental; SSE exists with per-session durable replay

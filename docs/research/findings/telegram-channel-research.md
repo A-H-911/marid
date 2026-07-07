@@ -1,5 +1,4 @@
 ---
-artifact: telegram-research
 status: Draft
 version: v0.1
 updated: 2026-07-03
@@ -9,6 +8,7 @@ sources_primary:
   - https://core.telegram.org/bots/faq
   - https://core.telegram.org/bots/webhooks
   - https://core.telegram.org/bots/features
+owner: operator (STK-001)
 ---
 
 # Telegram Bot API — Channel Adapter Research (R-09)

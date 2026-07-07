@@ -1,8 +1,8 @@
 ---
-artifact: claudectl-reference-analysis
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # claudectl Reference Analysis (R-11, user-supplied 2026-07-03)

@@ -1,8 +1,8 @@
 ---
-artifact: open-question-register
 status: Draft
 version: v0.2
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Open-Question Register (OQ-)

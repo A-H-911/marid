@@ -119,6 +119,13 @@ jobs:
       # the dedicated 3-OS marid-isolation job below (KPI-003).
       - name: Run marid-instance unit tests
         run: bun --cwd packages/marid-instance test
+      # marid (WBS-4.1..4.5): TEST-TG unit tier — redact, allowlist, dedup, router
+      # (AC-010), format/split, streaming cadence (AC-011), permission keyboard
+      # exactly-once/timeout/races (AC-012), policy, media. Deterministic (injected
+      # clock + fakes), no network. The live round trip runs in the dedicated 3-OS
+      # marid-telegram job below (KPI-002).
+      - name: Run marid-telegram unit tests
+        run: bun --cwd packages/marid-telegram test
 
   smoke:
     name: smoke (${{ matrix.os }})
@@ -251,6 +258,44 @@ jobs:
         working-directory: packages/opencode
         env:
           MARID_SYNC: "1"
+          OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
+          OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
+          TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+          TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+
+  marid-telegram:
+    name: marid-telegram (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: ./.github/actions/bun-install
+      - name: Install ripgrep (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ripgrep -y
+      - name: Prepare temp dir on workspace drive (Windows)
+        if: runner.os == 'Windows'
+        run: mkdir -p /d/opencode-tmp
+      # TEST-TG live tier (KPI-002): the Telegram round trip (AC-010 stranger ignored,
+      # AC-011 streamed reply) against a real `marid serve` + fake LLM + local fake
+      # Telegram server. Gated by MARID_TELEGRAM=1 (describe.skip otherwise).
+      - name: Run Telegram gateway live suite
+        run: bun test test/marid/telegram.test.ts --timeout 300000
+        working-directory: packages/opencode
+        env:
+          MARID_TELEGRAM: "1"
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
           OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
           TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}

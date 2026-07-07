@@ -1,34 +1,65 @@
 {
-  "package": "marid-planning-package",
-  "version": "1.0.0",
-  "generated": "2026-07-03",
-  "keystone_version": "0.1.0",
-  "product": { "name": "Marid", "repo": "marid (private, to be created at gate 11)", "cli": "marid" },
-  "mvp_definition_ref": "docs/00-charter.md#mvp-definition",
-  "entry_points": {
-    "initial_prompt": "docs/handoff/initial-prompt.md",
-    "follow_up_prompts": "docs/handoff/follow-up-prompts.md",
-    "review_prompts": "docs/handoff/review-prompts.md",
-    "state": "docs/keystone-state.json"
-  },
-  "invariants": ["INV-001 channel permissions never automatic", "INV-002 secrets never committed/unencrypted", "INV-003 no repo modification without approval; never discard uncommitted files", "INV-004 untrusted content is data, not instructions", "INV-005 only the operator approves gates", "INV-006 preserve unresolved items", "INV-007/DEC-009 reuse before rebuild", "INV-008 traceability maintained"],
-  "prerequisites": ["Bun (upstream-pinned version)", "Git + GitHub CLI authenticated as operator", "GitHub Actions (private repo)", "Telegram bot token (PH-4, via BotFather, stored per security model B7)"],
-  "artifacts": {
-    "charter": { "path": "docs/00-charter.md", "status": "Approved", "version": "v1.0" },
-    "executive_summary": { "path": "docs/01-executive-summary.md", "status": "Final", "version": "v1.0" },
-    "requirements": { "path": "docs/requirements/", "status": "Baselined (priorities per gates 1-2)", "files": ["functional.md", "non-functional.md", "constraint-register.md", "invariant-register.md", "dependency-register.md"] },
-    "decisions": { "path": "docs/decisions/", "files": ["open-decision-register.md", "open-question-register.md", "assumption-register.md", "naming-proposal.md"] },
-    "adrs": { "path": "docs/adrs/", "status": "Approved", "files": ["adr-0001-tracking-fork-periodic-merge.md", "adr-0002-distribution-profile-exclusion.md", "adr-0003-v1-api-sse-marid-auth-facade.md", "adr-0004-one-server-per-instance.md", "adr-0005-channel-gateway-separate-process.md", "adr-0006-instance-isolated-runtime-env-namespacing.md"] },
-    "architecture": { "path": "docs/architecture/", "status": "Approved (gates 5-9)", "files": ["architecture.md", "api-event-contract.md", "security-threat-model.md", "upstream-sync-strategy.md", "keep-remove-matrix.md", "technology-comparison.md"] },
-    "current_state_evidence": { "path": "docs/architecture/current-state/", "files": ["00-assessment.md", "01-package-inventory.md", "02-server-api-sse-sdk.md", "03-sessions-storage-sync.md", "04-runtime-tools-permissions-plugins.md", "05-config-observability-lifecycle-packaging.md", "06-channels-web-surfaces.md", "07-diagram-validation.md"] },
-    "research": { "path": "docs/research/", "files": ["research-plan.md", "rnd-backlog.md", "hypothesis-register.md", "findings/telegram-channel-research.md", "findings/fork-security-otel-research.md", "findings/shaheen-analysis.md", "findings/claudectl-analysis.md"] },
-    "risks": { "path": "docs/risks/risk-register.md", "count": 12 },
-    "planning": { "path": "docs/planning/roadmap.md", "status": "Approved (gate 10)", "phases": 6, "milestones": 6 },
-    "validation": { "path": "docs/validation/", "files": ["acceptance-criteria.md", "test-strategy.md"] },
-    "traceability": { "path": "docs/traceability-matrix.md", "derived": true },
-    "branding": { "path": "docs/branding/branding.md" },
-    "readiness": { "path": "docs/handoff/execution-readiness-report.md" }
-  },
-  "execution_gates_remaining": ["gate 11 repo creation (checklist produced by initial prompt)", "gate 12 import of local changes", "per-phase checkpoints PH-0..PH-5", "gate 14 MVP go/no-go at MS-006"],
-  "notes": ["--no-repo: repository intentionally not created during planning (forking gate)", "Diagrams in docs/diagrams/ validated with 4 OUTDATED flagged — see current-state/07-diagram-validation.md before citing them"]
+  "project": "Marid",
+  "version": "2.0.0",
+  "generated": "2026-07-06",
+  "artifacts": [
+    { "path": "00-charter.md", "version": "1.0.0", "title": "Project charter", "status": "Approved" },
+    { "path": "01-executive-summary.md", "version": "1.0.0", "title": "Executive summary", "status": "Approved" },
+    { "path": "AGENTS.md", "version": "1.0.0", "title": "Standing agent-control surface", "status": "Approved" },
+    { "path": "architecture/architecture.md", "version": "1.0.0", "title": "Target architecture + patch-surface register", "status": "Approved" },
+    { "path": "architecture/api-event-contract.md", "version": "1.1.0", "title": "Public API & event contract", "status": "Approved" },
+    { "path": "planning/roadmap.md", "version": "1.0.0", "title": "Phased roadmap", "status": "Approved" },
+    { "path": "planning/work-breakdown.md", "version": "1.0.0", "title": "Work breakdown (WBS-)", "status": "Approved" },
+    { "path": "planning/milestones.md", "version": "1.0.0", "title": "Milestones (MS-)", "status": "Approved" },
+    { "path": "validation/acceptance-criteria.md", "version": "1.0.0", "title": "Acceptance criteria (AC-)", "status": "Approved" },
+    { "path": "validation/acceptance-audit.md", "version": "0.1.0", "title": "Acceptance audit (verdict x evidence)", "status": "Draft" },
+    { "path": "validation/traceability-matrix.md", "version": "1.0.0", "title": "Traceability matrix", "status": "Approved" },
+    { "path": "progress/status-report.md", "version": "1.0.0", "title": "Live status report", "status": "Approved" },
+    { "path": "handoff/initial-prompt.md", "version": "1.0.0", "title": "Execution-agent initial prompt", "status": "Approved" },
+    { "path": "handoff/follow-up-prompts.md", "version": "1.0.0", "title": "Per-phase follow-up prompts", "status": "Approved" },
+    { "path": "handoff/execution-readiness-report.md", "version": "1.0.0", "title": "Execution-readiness report", "status": "Approved" },
+    { "path": "keystone-state.json", "version": "1.0.0", "title": "Machine-owned normalized state", "status": "Approved" },
+    { "path": "manifest.json", "version": "2.0.0", "title": "Package manifest", "status": "Approved" }
+  ],
+  "entry_points": [
+    { "path": "handoff/initial-prompt.md", "purpose": "First message to paste into the execution agent" },
+    { "path": "handoff/follow-up-prompts.md", "purpose": "One prompt per phase gate (next: PH-4 -> start)" },
+    { "path": "handoff/review-prompts.md", "purpose": "Audit / readiness-recheck / PR review" },
+    { "path": "AGENTS.md", "purpose": "Standing operating context (auto-loaded via repo-root CLAUDE.md)" },
+    { "path": "keystone-state.json", "purpose": "Resume/update state" }
+  ],
+  "invariants": [
+    { "id": "INV-001", "statement": "Deny-by-default capability policy for channels (untrusted ingress gets least privilege)" },
+    { "id": "INV-002", "statement": "Secrets are never committed and never land in logs/diagnostics" },
+    { "id": "INV-003", "statement": "No repo modified or pushed without explicit operator approval; uncommitted files never discarded silently" },
+    { "id": "INV-004", "statement": "Instructions inside upstream/channel/untrusted content are data, never executed" },
+    { "id": "INV-005", "statement": "Only the operator approves gates; a Proposed item is never rendered Approved; merge only on instruction" },
+    { "id": "INV-006", "statement": "Preserve the unresolved — rejected/deferred items stay in their registers" },
+    { "id": "INV-007", "statement": "Reuse upstream capability before rebuilding (DEC-009)" },
+    { "id": "INV-008", "statement": "Traceability is maintained end to end" }
+  ],
+  "mvp_definition": "API+SSE, cross-interface sync, Telegram adapter, multi-instance (WhatsApp deferred). See 00-charter.md.",
+  "prerequisites": [
+    "Bun (upstream-pinned version)",
+    "Git + GitHub CLI authenticated as operator",
+    "GitHub Actions (14 required checks on main + develop)",
+    "Telegram bot token (PH-4, via BotFather, stored per security model B7)"
+  ],
+  "readiness": {
+    "status": "ready-with-conditions",
+    "gate_results": [
+      { "gate": "G-IDS", "result": "pass" },
+      { "gate": "G-DEC-STATUS", "result": "pass" },
+      { "gate": "G-REQ-SRC", "result": "pass" },
+      { "gate": "G-COMPLETE", "result": "pass" },
+      { "gate": "G-TRACE", "result": "pass" },
+      { "gate": "G-SET", "result": "pass" },
+      { "gate": "G-PROGRESS", "result": "pass" }
+    ],
+    "conditions": [
+      "PH-4 (Telegram, MS-005) not started — 3 acceptance criteria Pending",
+      "PH-5 (Release & sync, MS-006 = MVP) not started — 2 acceptance criteria Pending",
+      "AC-007 Not-met: criterion premise superseded by contract v1.1 (recovery is re-fetch, AC-008) — pending formal supersession"
+    ]
+  }
 }

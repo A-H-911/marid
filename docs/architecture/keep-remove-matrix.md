@@ -1,8 +1,8 @@
 ---
-artifact: keep-remove-matrix
 status: Approved (gate 6, 2026-07-03)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Keep / Change / Exclude / Remove Matrix (Gate 6)

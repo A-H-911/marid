@@ -1,17 +1,17 @@
 ---
-artifact: experiment-report
 experiment: EXP-001
 hypothesis: HYP-001
 status: PASS
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # EXP-001 — Two-client concurrency probe
 
 **Verdict: PASS. HYP-001 confirmed.**
 
-Validates [HYP-001](../hypothesis-register.md): *the upstream v2 single-writer / queue / steering
+Validates [HYP-001](../research/hypothesis-register.md): *the upstream v2 single-writer / queue / steering
 path already gives safe behavior for two simultaneous clients of one session (no corruption;
 deterministic queue/steer semantics).* Blocks DEC-005 final wording and the C-5 fallback choice.
 

@@ -14,11 +14,19 @@ const TokenCreateCommand = cmd({
         type: "string",
         default: "client",
         describe: "admin | client | channel:<name>",
+      })
+      .option("agent", {
+        type: "string",
+        describe: "for channel:<name> scope — bind the token to this restricted agent (WBS-4.4, INV-001)",
       }),
   handler: async (args) => {
     if (!isValidScope(args.scope)) throw new Error(`invalid scope "${args.scope}" (use admin | client | channel:<name>)`)
     const scope: Scope = args.scope
-    const result = await store().create(args.name, scope)
+    if (args.agent && !scope.startsWith("channel:")) throw new Error("--agent is only valid for a channel:<name> scope")
+    if (scope.startsWith("channel:") && !args.agent) {
+      throw new Error("a channel:<name> token requires --agent <name> (the restricted agent it may run)")
+    }
+    const result = await store().create(args.name, scope, args.agent)
     // The secret is shown exactly once — only its hash is persisted.
     console.log(result.secret)
   },

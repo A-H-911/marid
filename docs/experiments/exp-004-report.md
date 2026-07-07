@@ -1,17 +1,17 @@
 ---
-artifact: experiment-report
 experiment: EXP-004
 hypothesis: HYP-004
 status: PASS (analysis-strength; live build + binary deferred — see Method)
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # EXP-004 — Distribution-profile build probe (analysis half)
 
 **Verdict: PASS (analysis-strength). Both analysis questions answered favorably; live build deferred.**
 
-Validates [HYP-004](../hypothesis-register.md): *the `marid` distribution profile builds and passes
+Validates [HYP-004](../research/hypothesis-register.md): *the `marid` distribution profile builds and passes
 upstream tests with all excluded packages absent, without editing upstream files (and reveals whether the
 P-1 server seam is even needed).* Blocks the Gate-6 verdict durability and the patch-surface register.
 
@@ -34,7 +34,7 @@ any *kept* package depend on an *excluded* one? (A kept→excluded edge breaks t
 
 **Method:** parsed `dependencies` + `devDependencies` + `peerDependencies` of every `@opencode-ai/*`
 package and cross-checked kept-package deps against the exclusion set from the
-[keep-remove matrix](../../architecture/keep-remove-matrix.md).
+[keep-remove matrix](../architecture/keep-remove-matrix.md).
 
 **Keep-list** (build in `marid` profile): `opencode, core, llm, schema, protocol, server, tui, plugin,
 sdk (packages/sdk/js), effect-drizzle-sqlite, effect-sqlite-node, script, ui, session-ui, app` +
@@ -55,7 +55,7 @@ import not captured in `package.json` could still surface only at build time.
 
 **Question:** can **marid-auth** (FR-030 request-ID correlation, FR-031 bearer-token auth, FR-032 rate
 limiting, FR-033 audit log — all HTTP-ingress concerns) attach **without editing upstream server files**?
-P-1 in the [patch-surface register](../../architecture/architecture.md) is explicitly conditional:
+P-1 in the [patch-surface register](../architecture/architecture.md) is explicitly conditional:
 *"only if no equivalent plugin/server hook exists — verify in EXP-004."*
 
 **Finding A — not via a plugin.** The plugin SDK `Hooks` interface (`packages/plugin/src/index.ts:222-291`)

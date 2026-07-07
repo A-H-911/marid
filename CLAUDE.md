@@ -5,6 +5,10 @@ the execution procedure, and the rules that gate every action. **Part 2** is cod
 underlying OpenCode monorepo. When Part 1 and Part 2 conflict (e.g. default branch), **Part 1 wins** —
 Part 2 is upstream-derived and describes the code, Part 1 describes how we work here.
 
+**Standing context:** this manual imports the plan's ambient control surface — @docs/AGENTS.md — which
+carries the invariants, hard constraints, and the tracking protocol. The `docs/` package is a
+**Keystone v1.0.0** package; validate it with `python <keystone-skill>/scripts/validate_package.py docs/`.
+
 ---
 
 # Part 1 — Marid (this repo)
@@ -26,23 +30,26 @@ Orient from `docs/01-executive-summary.md` and `docs/00-charter.md`.
 
 ## Docs are the source of truth
 
-`docs/` is authoritative; code follows the docs, not the other way around. Every artifact carries YAML
-frontmatter (`artifact`, `status`, `version`, `updated`). Map:
+`docs/` is authoritative; code follows the docs, not the other way around. It is a **Keystone v1.0.0**
+package: every artifact carries YAML frontmatter (`status`, `version`, `updated`, `owner`; derived docs add
+`generation: derived`). Start at `docs/README.md`; standing context is `docs/AGENTS.md`. Map:
 
 | Need | File(s) |
 |---|---|
-| **Execution state (machine-readable)** | `docs/keystone-state.json` |
-| **Phases / milestones / WBS + DoD** | `docs/planning/roadmap.md` |
+| **Execution state (machine-readable)** | `docs/keystone-state.json` (+ `docs/manifest.json` package manifest) |
+| **Phases · WBS · milestones** | `docs/planning/{roadmap,work-breakdown,milestones}.md` |
+| **Definition of Ready/Done · checkpoints · deferred work** | `docs/execution/` |
+| **Progress log · status report** | `docs/progress/{progress-log,status-report}.md` |
 | Requirements | `docs/requirements/{functional,non-functional,constraint-register,invariant-register,dependency-register}.md` |
-| Decisions / open questions / assumptions | `docs/decisions/*` (incl. `open-decision-register.md`) |
-| Target architecture + **patch-surface register** | `docs/architecture/architecture.md` |
+| Decisions / open questions / assumptions | `docs/decisions/*` (incl. `open-decision-register.md`, DEC-001..013) |
+| Target architecture + **patch-surface register** · diagrams | `docs/architecture/architecture.md`, `docs/architecture/diagrams/` |
 | API/event contract · threat model · **sync strategy (+ P-CI register)** · keep-list | `docs/architecture/{api-event-contract,security-threat-model,upstream-sync-strategy,keep-remove-matrix}.md`, `current-state/` |
 | ADRs | `docs/adrs/adr-0001..0006-*.md` |
-| Risks · full traceability (FR→decision→work→test→AC→risk) | `docs/risks/risk-register.md`, `docs/traceability-matrix.md` |
-| Hypotheses + experiment reports · research findings/plan | `docs/research/hypothesis-register.md`, `docs/research/experiments/`, `docs/research/findings/` |
+| Risks · **traceability + acceptance audit** | `docs/risks/risk-register.md`, `docs/validation/{traceability-matrix,acceptance-audit}.md` |
+| Hypotheses · experiment reports · research findings/plan | `docs/research/hypothesis-register.md`, `docs/experiments/`, `docs/research/findings/` |
 | **Phase-start / PR-review prompts** | `docs/handoff/{follow-up-prompts,review-prompts,initial-prompt,gate-11-forking-checklist}.md` |
 | Branding (name, README plan, logo) | `docs/branding/branding.md` |
-| Test strategy + acceptance criteria | `docs/validation/` |
+| Test strategy + acceptance criteria · **governance** | `docs/validation/`, `docs/governance/` |
 
 ## Execution flow
 
@@ -56,19 +63,24 @@ Six dependency-ordered phases, each exiting at a measurable milestone:
 - **Building:** TDD per `docs/validation/` (test-strategy). Avoid mocks; test real behavior.
 - **Ending a phase:** operator review checkpoint. Review PRs against `docs/handoff/review-prompts.md`
   (esp. patch-surface discipline — flag any upstream edit not registered as a `P-*`).
-- **Current status:** see the PH-status in `docs/planning/roadmap.md` + the latest `stage-21` entry in
-  `keystone-state.json`. (As of this writing: PH-0 done / MS-001 met; PH-1 / MS-002 next.)
+- **Current status:** see `docs/progress/status-report.md` (the live snapshot) + `docs/planning/roadmap.md`.
+  (As of this writing: PH-0..3 done / MS-004 met; **PH-4 / MS-005 next**.)
 
-## State-update procedure (MANDATORY — do not let the trackers drift)
+## Tracking protocol (MANDATORY — do not let the trackers drift)
 
-`keystone-state.json` and `roadmap.md` are the two mirrored execution-state records. Keeping them current
-is not optional hygiene — stale or drifting trackers are a defect. **Concrete trigger:**
+The v1.0 tracking surface (defined in `docs/AGENTS.md`, imported above) is the successor to the old
+hand-rolled state-update procedure. Keeping it current is not optional hygiene — stale or drifting trackers
+are a defect. **Concrete trigger:**
 
-> On **each `MS-00N` exit**, and on **each merged PR that closes a WBS item** →
-> (1) append a `stage-21` log entry to `docs/keystone-state.json`, and
-> (2) flip the matching status in `docs/planning/roadmap.md`.
+> On **each milestone exit**, and on **each merged PR that closes a WBS item** → in the same change:
+> (1) append an entry to `docs/progress/progress-log.md`;
+> (2) regenerate `docs/progress/status-report.md`;
+> (3) update the verdict + evidence for the affected `AC-` in `docs/validation/acceptance-audit.md`;
+> (4) flip the status in `docs/planning/{roadmap,work-breakdown,milestones}.md`;
+> (5) reconcile `docs/keystone-state.json` (`progress[]` + `change_log[]` + the affected register).
 
-Do this in the same change that lands the work (or immediately after the merge), not "later."
+Then re-run `validate_package.py docs/` (must be `RESULT: OK`) before opening the PR. Do this in the same
+change that lands the work, not "later."
 
 ## Invariants & approvals (these gate every action)
 
@@ -109,10 +121,9 @@ last-resort upstream-file edit**. Current surface:
   release branch. Local `main` may lag; use `develop` / `origin/develop` for diffs and PR bases.
 - Feature branch → **PR into `develop`, squash-merge**. `develop → main` via a **sync PR, merge-commit**
   (this leaves benign merge nodes on `main` that `develop` lacks — the "ahead/behind 2" is normal).
-- **Branch protection** (main + develop): 11 required checks — `lint`, `typecheck`, `unit` (ubuntu +
+- **Branch protection** (main + develop): 14 required checks — `lint`, `typecheck`, `unit` (ubuntu +
   windows), `smoke` (ubuntu/macos/windows), `pr-title`, `marid-isolation` (ubuntu/macos/windows, added
-  PH-2). You cannot self-merge. (PH-3 adds a `marid-sync` 3-OS job → will be 14 once the operator adds it
-  to the ruleset; until then it runs but does not gate.)
+  PH-2), `marid-sync` (ubuntu/macos/windows, added PH-3). You cannot self-merge.
 - CI is `.github/workflows/ci.yml` (**Marid-owned**; upstream workflows are stripped by
   `script/strip-upstream-workflows.ts` with a KEEP allowlist). Marid's `marid-pr-title.yml` replaces
   upstream's PR-standards check.

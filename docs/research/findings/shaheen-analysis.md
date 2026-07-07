@@ -1,8 +1,8 @@
 ---
-artifact: shaheen-reference-analysis
 status: Draft
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # R-07: Reference Analysis — github.com/ahmadabusa3/shaheen

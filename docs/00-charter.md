@@ -1,11 +1,11 @@
 ---
-artifact: charter
 status: Approved (gate 2, 2026-07-03)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
-# Project Charter — Private Agent Platform on OpenCode (working name: TBD at gate 3)
+# Project Charter — Marid (private agent platform on OpenCode)
 
 ## Problem
 

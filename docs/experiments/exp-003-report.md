@@ -1,17 +1,17 @@
 ---
-artifact: experiment-report
 experiment: EXP-003
 hypothesis: HYP-003
 status: PASS
 version: v1.0
 updated: 2026-07-04
+owner: operator (STK-001)
 ---
 
 # EXP-003 — Telegram cadence probe
 
 **Verdict: PASS (live). HYP-003 confirmed.**
 
-Validates [HYP-003](../hypothesis-register.md): *Telegram edit-coalesced streaming at 1 edit / 2–3 s
+Validates [HYP-003](../research/hypothesis-register.md): *Telegram edit-coalesced streaming at 1 edit / 2–3 s
 gives acceptable UX without hitting 429s in normal use.* Blocks the marid-telegram UX contract; validates
 the R-09 cadence numbers under a real bot token.
 

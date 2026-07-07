@@ -1,8 +1,8 @@
 ---
-artifact: api-event-contract
 status: Approved (gate 7, 2026-07-03; amended v1.1 2026-07-05 — PH-3, additive + reconnect correction)
 version: v1.1
 updated: 2026-07-05
+owner: operator (STK-001)
 ---
 
 # Marid Public API & Event Contract (Gate 7)
@@ -25,9 +25,9 @@ is what Marid **commits to** for apps, gateways, and UIs; upstream v1 provides t
 |---|---|---|
 | Sessions | create · list/discover · get · history (paged) · prompt (sync + async w/ client message ID) · cancel/abort · resume/continue · branch | FR-022/023/026/027 |
 | Events | global SSE firehose `GET /event` (live-only) · recovery by authoritative-state re-fetch on reconnect (see *Ordering & recovery* — v1.0's `?after=<seq>` replay claim corrected in v1.1) | FR-024/025, RISK-006 |
-| Permissions | list pending · `POST /permission/:id/reply` (approve/deny) — over API and via bus to TUI | FR-028 |
+| Permissions | list pending · `POST /permission/:id/reply` (approve/deny) — over API and via bus to TUI | FR-028 (reply cycle) |
 | Config/agents | read config · list agents/models (what upstream exposes; no Marid additions) | FR-010 |
-| Meta | health + version (extend to readiness in marid-auth if absent) | FR-034 |
+| Meta | health + version (extend to readiness in marid-auth if absent) | FR-034 (health/version) |
 
 ## Marid envelope (added by marid-auth, all NEW code)
 

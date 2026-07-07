@@ -1,0 +1,162 @@
+import { afterEach, beforeEach, describe, expect, test } from "bun:test"
+import fs from "node:fs/promises"
+import os from "node:os"
+import path from "node:path"
+import type { OpencodeClient } from "@opencode-ai/sdk/v2"
+import type { BotApi } from "../src/bot-api"
+import { runGateway } from "../src/gateway"
+
+// End-to-end proof of the gateway's permission ROUND TRIP (AC-012) that the live
+// server harness cannot produce (the served run resolves zero tools, so no real
+// tool-permission fires). Here runGateway is driven with a FULLY FAKED SDK whose
+// event stream emits a schema-shaped permission.asked (packages/schema/src/v1/
+// permission.ts: id/sessionID/permission). We assert the whole path:
+//   operator message → session.create + promptAsync → permission.asked event →
+//   inline keyboard in the operator's chat → Deny callback → permission.respond(reject).
+
+const OPERATOR = 111
+
+// A minimal async event queue: next() blocks until an item is pushed or the queue
+// is closed, mirroring an SSE stream.
+function eventQueue() {
+  const items: unknown[] = []
+  let waiting: ((r: IteratorResult<unknown>) => void) | null = null
+  let closed = false
+  return {
+    push(v: unknown) {
+      if (waiting) {
+        const w = waiting
+        waiting = null
+        w({ value: v, done: false })
+      } else items.push(v)
+    },
+    close() {
+      closed = true
+      if (waiting) {
+        const w = waiting
+        waiting = null
+        w({ value: undefined, done: true })
+      }
+    },
+    iterator(): AsyncIterator<unknown> {
+      return {
+        next() {
+          if (items.length) return Promise.resolve({ value: items.shift()!, done: false })
+          if (closed) return Promise.resolve({ value: undefined, done: true })
+          return new Promise((res) => (waiting = res))
+        },
+        return() {
+          closed = true
+          return Promise.resolve({ value: undefined, done: true })
+        },
+      }
+    },
+  }
+}
+
+async function waitFor(predicate: () => boolean, timeoutMs = 3000): Promise<boolean> {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    if (predicate()) return true
+    await new Promise((r) => setTimeout(r, 10))
+  }
+  return predicate()
+}
+
+describe("runGateway permission round trip (AC-012, faked SDK)", () => {
+  let dir: string
+  beforeEach(async () => {
+    dir = await fs.mkdtemp(path.join(os.tmpdir(), "tg-gw-"))
+  })
+  afterEach(async () => {
+    await fs.rm(dir, { recursive: true, force: true })
+  })
+
+  test("permission.asked → keyboard → Deny → permission.respond(reject)", async () => {
+    const events = eventQueue()
+    const updates: unknown[] = [] // bot getUpdates queue
+    const sent: Array<{ chatId: number; text: string; markup?: unknown }> = []
+    const replies: Array<{ sessionID: string; permissionID: string; response: string }> = []
+    let promptCount = 0
+
+    const bot = {
+      getUpdates: async () => {
+        if (updates.length) return updates.splice(0) as never
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async (chatId: number, text: string, opts?: { reply_markup?: unknown }) => {
+        sent.push({ chatId, text, markup: opts?.reply_markup })
+        return { message_id: sent.length, chat: { id: chatId, type: "private" } } as never
+      },
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: {
+        create: async () => ({ data: { id: "ses_1" } }),
+        promptAsync: async () => {
+          promptCount += 1
+          return { data: {} }
+        },
+      },
+      permission: {
+        respond: async (p: { sessionID: string; permissionID: string; response: string }) => {
+          replies.push(p)
+          return { data: true }
+        },
+      },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: {
+        set: (cb, ms) => {
+          const t = setTimeout(cb, ms)
+          return () => clearTimeout(t)
+        },
+      },
+      cadenceMs: 0,
+      permissionTimeoutMs: 60_000,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // 1. Operator sends a message → gateway creates a session and prompts.
+      updates.push({ update_id: 1, message: { message_id: 1, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "do a thing" } })
+      expect(await waitFor(() => promptCount === 1)).toBe(true)
+
+      // 2. The server asks a permission (real schema shape) for that session.
+      events.push({ payload: { id: "evt_1", type: "permission.asked", properties: { id: "per_9", sessionID: "ses_1", permission: "bash", patterns: ["*"], metadata: {}, always: [] } } })
+
+      // 3. An inline keyboard appears in the operator's chat.
+      expect(await waitFor(() => sent.some((m) => m.markup))).toBe(true)
+      const prompt = sent.find((m) => m.markup)!
+      const keyboard = (prompt.markup as { inline_keyboard: Array<Array<{ callback_data: string }>> }).inline_keyboard[0]!
+      const denyData = keyboard.find((b) => b.callback_data.endsWith(":d"))!.callback_data
+      expect(denyData).toBe("p:per_9:d")
+
+      // 4. Operator taps Deny → the gateway replies reject to the server exactly once.
+      updates.push({ update_id: 2, callback_query: { id: "cq1", from: { id: OPERATOR, is_bot: false }, data: denyData } })
+      expect(await waitFor(() => replies.length > 0)).toBe(true)
+      expect(replies).toEqual([{ sessionID: "ses_1", permissionID: "per_9", response: "reject" }])
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
+})

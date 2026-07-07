@@ -1,8 +1,8 @@
 ---
-artifact: technology-comparison
 status: Proposed (feeds gates 5–9)
 version: v0.1
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Option Comparisons (Stage 11)

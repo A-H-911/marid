@@ -1,8 +1,8 @@
 ---
-artifact: naming-proposal
 status: Approved (gate 3, 2026-07-03 — selected: Marid)
 version: v1.0
 updated: 2026-07-03
+owner: operator (STK-001)
 ---
 
 # Naming Proposal (DEC-008, gate 3)
