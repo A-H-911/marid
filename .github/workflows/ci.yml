@@ -292,7 +292,25 @@ jobs:
       # AC-011 streamed reply) against a real `marid serve` + fake LLM + local fake
       # Telegram server. Gated by MARID_TELEGRAM=1 (describe.skip otherwise).
       - name: Run Telegram gateway live suite
-        run: bun test test/marid/telegram.test.ts --timeout 300000
+        # Bounded retry-wrapper (operator-chosen). This live E2E rides the SSE firehose over
+        # loopback; on cold Windows CI the connection intermittently drops and the gateway
+        # `pump` has no reconnect (gateway.ts:181-189), so a single drop stalls the reply path
+        # (~100s, no message) — RISK-006 / deferred-work #8. Each attempt re-runs setup fresh;
+        # a hang fails fast at ~110s (the 100s waitFor), so 3× is ~6min worst case. Deterministic
+        # AC-010/011/012 coverage lives in router/stream/permission/gateway-integration tests.
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::telegram live E2E — attempt ${attempt}/3"
+            if bun test test/marid/telegram.test.ts --timeout 300000; then
+              echo "::endgroup::"
+              echo "telegram live E2E passed on attempt ${attempt}/3"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "::warning::telegram live E2E failed attempt ${attempt}/3 (intermittent firehose stall — RISK-006)"
+          done
+          echo "::error::telegram live E2E failed after 3 attempts"
+          exit 1
         working-directory: packages/opencode
         env:
           MARID_TELEGRAM: "1"
