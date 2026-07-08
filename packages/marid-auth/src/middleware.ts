@@ -130,6 +130,13 @@ function trackStream(response: Response, release: () => void, signal: AbortSigna
 export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
   return {
     async handle(request, next) {
+      // CORS preflight: browsers send OPTIONS with NO credentials (the CORS spec forbids them),
+      // so it can never carry a token. Delegate straight to the upstream handler, which answers
+      // the preflight with the Access-Control-Allow-* headers. A preflight returns no data and
+      // has no side effects; the actual credentialed request that follows is still authenticated.
+      // Without this, marid-auth 401s the preflight and the browser blocks every request (the web
+      // UI cannot reach the server at all).
+      if (request.method === "OPTIONS") return next(request)
       const requestId = resolveRequestId(request)
       const url = new URL(request.url)
       const session = sessionFromPathname(url.pathname)

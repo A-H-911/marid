@@ -54,6 +54,17 @@ describe("marid-auth middleware", () => {
     expect(res.status).toBe(401)
   })
 
+  test("CORS preflight (OPTIONS) passes through un-authed so the browser can send the real request", async () => {
+    const { auth } = await build()
+    let delegated = false
+    const res = await auth.handle(new Request("http://x/global/config", { method: "OPTIONS" }), async () => {
+      delegated = true
+      return new Response(null, { status: 204, headers: { "access-control-allow-origin": "*" } })
+    })
+    expect(delegated).toBe(true) // preflight reached the upstream CORS handler, not a 401
+    expect(res.status).toBe(204)
+  })
+
   test("accepts the token via Basic auth (password is the token) — the web UI can only send Basic", async () => {
     const { auth, tokens } = await build()
     const { secret } = await tokens.create("web", "client")
