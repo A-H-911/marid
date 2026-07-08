@@ -8,7 +8,7 @@ export function NewSessionDesignView(props: { children: JSX.Element }) {
       <div class="absolute inset-x-0 top-[25.375%] flex justify-center px-6">
         <div class={NEW_SESSION_CONTENT_WIDTH}>
           <WordmarkV2 class="mx-auto block h-20 w-auto" />
-          <div class="mt-2">{props.children}</div>
+          <div class="mt-6">{props.children}</div>
         </div>
       </div>
     </div>
