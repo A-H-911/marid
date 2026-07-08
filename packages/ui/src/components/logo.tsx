@@ -31,43 +31,17 @@ export const Splash = (props: Pick<ComponentProps<"svg">, "ref" | "class">) => {
   )
 }
 
-// Marid wordmark — block glyphs on the same 6px grid as the original opencode
-// mark (strokes 6px, body y6..36), spelling "marid" so the web surfaces match
-// the TUI "MARID" banner (P-2 branding). Solid --icon-base keeps it monochrome
-// + theme-adaptive; rects over packed paths so the letterforms stay editable.
+// Marid brand lockup (the README logo: flame mark + "Marid" wordmark). The asset
+// is an opaque-background PNG, so `mix-blend-mode: lighten` drops its near-black
+// backdrop against the app's dark surface (#131010) — only the flame + letters
+// show. App is dark-themed; a light-theme source is a follow-up if ever needed.
 export const Logo = (props: { class?: string }) => {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 132 42"
-      fill="none"
+    <img
+      src="/marid-logo.png"
+      alt="Marid"
       classList={{ [props.class ?? ""]: !!props.class }}
-    >
-      <g fill="var(--icon-base)">
-        {/* m (0–30): three posts + top bar */}
-        <rect x="0" y="6" width="6" height="30" />
-        <rect x="12" y="6" width="6" height="30" />
-        <rect x="24" y="6" width="6" height="30" />
-        <rect x="0" y="6" width="30" height="6" />
-        {/* a (36–60): flat top bar + full right stem + lower bowl (single-story) */}
-        <rect x="36" y="6" width="24" height="6" />
-        <rect x="54" y="6" width="6" height="30" />
-        <rect x="36" y="18" width="24" height="6" />
-        <rect x="36" y="18" width="6" height="18" />
-        <rect x="36" y="30" width="24" height="6" />
-        {/* r (66–90): stem + arm + shoulder */}
-        <rect x="66" y="6" width="6" height="30" />
-        <rect x="66" y="6" width="24" height="6" />
-        <rect x="84" y="12" width="6" height="6" />
-        {/* i (96–102): dot + stem */}
-        <rect x="96" y="6" width="6" height="6" />
-        <rect x="96" y="18" width="6" height="18" />
-        {/* d (108–132): left bowl + ascending right stem (rises above body, like the original) */}
-        <rect x="126" y="0" width="6" height="36" />
-        <rect x="108" y="18" width="6" height="18" />
-        <rect x="108" y="18" width="24" height="6" />
-        <rect x="108" y="30" width="24" height="6" />
-      </g>
-    </svg>
+      style={{ "mix-blend-mode": "lighten", "object-fit": "contain" }}
+    />
   )
 }
