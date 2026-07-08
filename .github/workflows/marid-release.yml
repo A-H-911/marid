@@ -29,6 +29,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
     defaults:
       run:
         shell: bash
@@ -102,3 +104,59 @@ jobs:
 
       - name: Publish release
         run: gh release edit "v${{ steps.v.outputs.version }}" --draft=false
+
+  # WBS-5.2: prove the PUBLISHED, SIGNED asset installs on all 3 OSes — the download →
+  # minisign-verify → sha256-verify → run path a real operator follows. (The binary itself is
+  # already boot-smoked by ci.yml's marid-build; this job's value is the release-asset + signature.)
+  install-smoke:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: marid-linux-x64.tar.gz
+          - os: macos-latest
+            asset: marid-darwin-arm64.tar.gz
+          - os: windows-latest
+            asset: marid-windows-x64.zip
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.release.outputs.version }}
+      ASSET: ${{ matrix.asset }}
+    steps:
+      - uses: actions/checkout@v4 # for the committed minisign.pub
+
+      - name: Install minisign
+        run: |
+          case "$RUNNER_OS" in
+            Linux)   sudo apt-get update && sudo apt-get install -y minisign ;;
+            macOS)   brew install minisign ;;
+            Windows) choco install minisign -y ;;
+          esac
+
+      - name: Download the published asset + sidecars
+        run: |
+          gh release download "v$VERSION" -R "$GITHUB_REPOSITORY" \
+            -p "$ASSET" -p "$ASSET.minisig" -p "$ASSET.sha256"
+
+      - name: Verify signature against the committed public key
+        run: minisign -Vm "$ASSET" -p minisign.pub
+
+      - name: Verify checksum
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then shasum -a 256 -c "$ASSET.sha256"; else sha256sum -c "$ASSET.sha256"; fi
+
+      - name: Extract and run --version
+        run: |
+          case "$ASSET" in
+            *.tar.gz) tar -xzf "$ASSET" ;;
+            *.zip)    unzip -o "$ASSET" ;;
+          esac
+          if [ -x ./marid ]; then ./marid --version;
+          elif [ -f ./marid.exe ]; then ./marid.exe --version;
+          else echo "::error::marid binary not found after extracting $ASSET" && ls -la && exit 1; fi

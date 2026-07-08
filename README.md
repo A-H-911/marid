@@ -60,6 +60,11 @@ marid token                      # mint a bearer token for API / SDK / web clien
 marid telegram                   # run the Telegram gateway (needs a bot token + allowlist)
 ```
 
+**Updating:** Marid has no self-update command — `marid upgrade` is intentionally omitted (it would fetch the
+upstream `opencode` binary, not Marid). To update, download the newer release asset and repeat the
+verify → checksum → extract steps above, replacing the old binary. Each release's notes record the upstream
+baseline SHA it was cut from.
+
 ## Security model
 
 Marid is built for a **single operator on a private network**, and the defaults reflect that:

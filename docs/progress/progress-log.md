@@ -11,6 +11,21 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-08 — WBS-5.2 prep (install/update path + 3-OS asset smoke; RC still pending)
+- **Done:** Removed the self-update footgun — dropped `UpgradeCommand` from the Marid entry
+  (`packages/opencode/src/marid.ts`); `marid upgrade` would have fetched the upstream `opencode` binary from
+  npm (`installation/index.ts` → registry.npmjs.org/opencode-ai), never Marid. Documented the **update path**
+  in the README (re-download the signed release + re-verify; no self-update by design). Added a **3-OS
+  install-smoke** job to `marid-release.yml` (`needs: release`, matrix ubuntu/macos/windows): downloads the
+  published asset + `.minisig` + `.sha256`, verifies the signature against the committed `minisign.pub`, checks
+  the sha256, extracts, runs `marid --version`. Its value is the **signed-release-asset** path (the binary boot
+  is already covered by `ci.yml`'s `marid-build` self-smoke).
+- **Deviations:** WBS-5.2 is **not closed** and **AC-014 stays Partial** — the install-smoke only proves out
+  when a real release publishes, which happens at the **RC** (`release/v0.1.0` → main → tag `v0.1.0`), the
+  operator-gated outward-facing step still to come. The install-smoke workflow YAML is untested until then.
+- **Blockers:** none (RC is an operator decision, INV-005). **Next:** cut the RC → `marid-release.yml` fires →
+  install-smoke green (17 checks = KPI-006) → flip AC-014 Met → WBS-5.5 readiness → gate 14.
+
 ## 2026-07-08 — WBS-5.4 branding done (README + logo + P-2 + P-3)
 - **Done:** Marid branding realized (FR-065 → full). **README** rewritten (Marid identity, interfaces table,
   minisign verify quick-start, security model, attribution/non-affiliation verbatim, sync/license). **Logo**

@@ -16,7 +16,6 @@ import { GenerateCommand } from "./cli/cmd/generate"
 import { ConsoleCommand } from "./cli/cmd/account"
 import { ProvidersCommand } from "./cli/cmd/providers"
 import { AgentCommand } from "./cli/cmd/agent"
-import { UpgradeCommand } from "./cli/cmd/upgrade"
 import { UninstallCommand } from "./cli/cmd/uninstall"
 import { ModelsCommand } from "./cli/cmd/models"
 import { UI } from "./cli/ui"
@@ -101,7 +100,9 @@ const cli = yargs(args)
   .command(ConsoleCommand)
   .command(ProvidersCommand)
   .command(AgentCommand)
-  .command(UpgradeCommand)
+  // marid: no UpgradeCommand — it fetches the upstream `opencode` binary from npm
+  // (installation/index.ts → registry.npmjs.org/opencode-ai). Marid updates via the
+  // signed GitHub Release download+verify path (README). WBS-5.2.
   .command(UninstallCommand)
   .command(MaridServeCommand) // authenticated; replaces upstream ServeCommand
   .command(MaridTokenCommand) // marid-only: bearer token management
