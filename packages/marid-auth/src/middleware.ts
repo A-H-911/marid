@@ -19,12 +19,26 @@ export interface MaridAuthDeps {
   limiter: RateLimiter
 }
 
+// Extract the bearer token from the Authorization header. Accept it via BOTH schemes:
+//   Bearer <token>                     — the TUI/SDK/API and Telegram gateway
+//   Basic  base64("<user>:<token>")    — the upstream web UI (utils/server.ts) can only
+//                                         send Basic; it puts the token in the password.
+// Same token, same scope/audit/rate-limit — Basic is just the transport the web client
+// speaks. No weaker: Basic base64 is not encryption, but neither is a plaintext Bearer;
+// both are equally exposed off-loopback, and the token is still required.
 function bearer(request: Request): string | undefined {
   const header = request.headers.get("authorization")
   if (!header) return undefined
-  const [scheme, token] = header.split(" ")
-  if (scheme?.toLowerCase() !== "bearer" || !token) return undefined
-  return token
+  const [scheme, value] = header.split(" ")
+  if (!value) return undefined
+  const lower = scheme?.toLowerCase()
+  if (lower === "bearer") return value
+  if (lower === "basic") {
+    const decoded = Buffer.from(value, "base64").toString("utf8")
+    const sep = decoded.indexOf(":")
+    return (sep === -1 ? decoded : decoded.slice(sep + 1)) || undefined
+  }
+  return undefined
 }
 
 function isStream(request: Request): boolean {

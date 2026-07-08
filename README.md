@@ -195,8 +195,11 @@ curl -sN -H "Authorization: Bearer $MARID_TOKEN" http://127.0.0.1:4096/event
 
 ### 🌐 Web UI
 
-The browser client against the same server. Start `marid serve` (or an instance), then open the web app; it
-authenticates with a **`client`-scope token** — the same kind you mint for the API.
+The browser client against the same server. Start `marid serve` on port **4096** (the web app's default target;
+override with `VITE_OPENCODE_SERVER_HOST` / `VITE_OPENCODE_SERVER_PORT`), then open the web app. In its
+**server dialog**, set the URL, leave the username as `opencode`, and paste a **`client`-scope token** as the
+**password** — the web client sends it as HTTP Basic, which marid-auth accepts (the token is the password).
+Without a token every request returns `401`.
 
 ### ✈️ Telegram
 

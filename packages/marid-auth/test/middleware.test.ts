@@ -17,6 +17,10 @@ async function build() {
   return { tokens, ownership, audit, auth }
 }
 const bearer = (secret: string) => ({ authorization: `Bearer ${secret}` })
+// The upstream web UI (utils/server.ts) can only send Basic auth with the token as the password.
+const basic = (secret: string, user = "opencode") => ({
+  authorization: `Basic ${Buffer.from(`${user}:${secret}`).toString("base64")}`,
+})
 const okNext = (body: unknown = { ok: true }) =>
   async () => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } })
 
@@ -47,6 +51,19 @@ describe("marid-auth middleware", () => {
   test("401 on an unknown token", async () => {
     const { auth } = await build()
     const res = await auth.handle(new Request("http://x/session", { headers: bearer("mar_bogus") }), okNext())
+    expect(res.status).toBe(401)
+  })
+
+  test("accepts the token via Basic auth (password is the token) — the web UI can only send Basic", async () => {
+    const { auth, tokens } = await build()
+    const { secret } = await tokens.create("web", "client")
+    const res = await auth.handle(new Request("http://x/config", { headers: basic(secret) }), okNext())
+    expect(res.status).toBe(200)
+  })
+
+  test("401 on a wrong token presented via Basic (no auth bypass)", async () => {
+    const { auth } = await build()
+    const res = await auth.handle(new Request("http://x/config", { headers: basic("mar_bogus") }), okNext())
     expect(res.status).toBe(401)
   })
 
