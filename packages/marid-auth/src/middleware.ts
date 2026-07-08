@@ -100,6 +100,21 @@ function errorResponse(
   })
 }
 
+// Echo CORS headers on marid-auth's OWN responses (its 401/403/429 errors). Without
+// this a cross-origin browser client (the web UI) sees an opaque CORS failure — "No
+// Access-Control-Allow-Origin header" — instead of a readable 401, and cannot tell it
+// simply needs a token. Upstream success/SSE responses already carry the header, so we
+// only add it when absent (never double-set), and a streaming body passes through as-is.
+function withCors(response: Response, request: Request): Response {
+  const origin = request.headers.get("origin")
+  if (!origin || response.headers.has("access-control-allow-origin")) return response
+  const headers = new Headers(response.headers)
+  headers.set("access-control-allow-origin", origin)
+  headers.set("access-control-allow-credentials", "true")
+  headers.append("vary", "Origin")
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
+}
+
 // Free the SSE slot exactly once when the stream ends, is cancelled, or the
 // client disconnects (request.signal aborts). release() is idempotent.
 function trackStream(response: Response, release: () => void, signal: AbortSignal): Response {
@@ -128,8 +143,7 @@ function trackStream(response: Response, release: () => void, signal: AbortSigna
 }
 
 export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
-  return {
-    async handle(request, next) {
+  const run: MaridAuth["handle"] = async (request, next) => {
       // CORS preflight: browsers send OPTIONS with NO credentials (the CORS spec forbids them),
       // so it can never carry a token. Delegate straight to the upstream handler, which answers
       // the preflight with the Access-Control-Allow-* headers. A preflight returns no data and
@@ -265,6 +279,8 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
       }
 
       return withRequestId(response, requestId)
-    },
+  }
+  return {
+    handle: async (request, next) => withCors(await run(request, next), request),
   }
 }

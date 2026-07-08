@@ -65,6 +65,16 @@ describe("marid-auth middleware", () => {
     expect(res.status).toBe(204)
   })
 
+  test("error responses echo CORS headers (a cross-origin browser reads the 401, not an opaque CORS failure)", async () => {
+    const { auth } = await build()
+    const res = await auth.handle(
+      new Request("http://x/global/config", { headers: { origin: "http://localhost:3001" } }),
+      okNext(),
+    )
+    expect(res.status).toBe(401)
+    expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost:3001")
+  })
+
   test("accepts the token via Basic auth (password is the token) — the web UI can only send Basic", async () => {
     const { auth, tokens } = await build()
     const { secret } = await tokens.create("web", "client")
