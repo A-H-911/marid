@@ -31,17 +31,9 @@ export const Splash = (props: Pick<ComponentProps<"svg">, "ref" | "class">) => {
   )
 }
 
-// Marid brand lockup (the README logo: flame mark + "Marid" wordmark). The asset
-// is an opaque-background PNG, so `mix-blend-mode: lighten` drops its near-black
-// backdrop against the app's dark surface (#131010) — only the flame + letters
-// show. App is dark-themed; a light-theme source is a follow-up if ever needed.
+// Marid brand lockup (the README logo: flame mark + "Marid" wordmark), served as a
+// transparent PNG so it drops onto any surface — including true black — with no box
+// and true colors. Size/placement come from the caller's class.
 export const Logo = (props: { class?: string }) => {
-  return (
-    <img
-      src="/marid-logo.png"
-      alt="Marid"
-      classList={{ [props.class ?? ""]: !!props.class }}
-      style={{ "mix-blend-mode": "lighten", "object-fit": "contain" }}
-    />
-  )
+  return <img src="/marid-logo.png" alt="Marid" classList={{ [props.class ?? ""]: !!props.class }} />
 }
