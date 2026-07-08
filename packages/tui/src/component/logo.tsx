@@ -3,6 +3,10 @@ import { For, type JSX } from "solid-js"
 import { tint, useTheme } from "../context/theme"
 import { logo } from "../logo"
 
+// The marid flame, top→base: bright ember → deep red. One entry per logo row; the last
+// entry covers any extra rows. Wordmark stays theme-colored so it reads on any theme.
+const FLAME = [RGBA.fromHex("#F2A03D"), RGBA.fromHex("#F0721E"), RGBA.fromHex("#E6521B"), RGBA.fromHex("#D93A1E")]
+
 export function Logo() {
   const { theme } = useTheme()
 
@@ -51,7 +55,7 @@ export function Logo() {
       <For each={logo.left}>
         {(line, index) => (
           <box flexDirection="row" gap={1}>
-            <box flexDirection="row">{renderLine(line, theme.textMuted, false)}</box>
+            <box flexDirection="row">{renderLine(line, FLAME[index()] ?? FLAME[FLAME.length - 1], false)}</box>
             <box flexDirection="row">{renderLine(logo.right[index()], theme.text, true)}</box>
           </box>
         )}

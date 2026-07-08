@@ -11,6 +11,27 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-08 — WBS-5.4 branding done (README + logo + P-2 + P-3)
+- **Done:** Marid branding realized (FR-065 → full). **README** rewritten (Marid identity, interfaces table,
+  minisign verify quick-start, security model, attribution/non-affiliation verbatim, sync/license). **Logo**
+  operator-designed via a Claude Design project: flame + "Marid" in OpenCode's block-logo style, **Pixelify Sans
+  700, blue face `#2F6BFF` + orange offset `#F0731F`, yellow→orange→red flame** — committed as `docs/branding/
+  mark.svg` (portable flame) + `logo-{light,dark}.png` (lockup; PNG because GitHub won't render a web-font SVG
+  wordmark). **P-2** realized: TUI window title (`app.tsx`) + TUI/CLI startup logo redrawn (`tui/src/logo.ts` +
+  `cli/ui.ts`, flame + "Marid", ember-orange flame; terminal "M" opened up so it no longer reads as "H").
+  **P-3** realized: distribution default `lsp:false` via `OPENCODE_CONFIG_CONTENT` at instance spawn
+  (`marid-instance/src/paths.ts` `instanceConfigEnv` + `lifecycle.ts`), operator-overridable; +2 tests.
+- **Scope decisions (devil's-advocate, documented in `branding.md` + P-2 register):** **User-Agent dropped
+  from P-2** — real UAs are hardcoded `opencode/${version}` at ~15 provider/plugin sites (rebranding all →
+  NFR-001 violation + breaks upstream provider tests; provider-facing, not operator-facing). `package.json` bin
+  not touched (marid binary named by `marid-build.ts`). `index.ts` scriptName / opencode help snapshot left
+  upstream (the marid CLI is already `.scriptName("marid")`).
+- **Verify:** hygiene test 10/10 pass (no excluded-pkg imports); marid-instance paths 18/18 (P-3); opencode +
+  tui typecheck clean.
+- **Decisions:** logo direction/font/palette are operator-approved (Claude Design confirmation loop). **Blockers:**
+  none. **Next:** WBS-5.2 (RC `v0.1.0` + install path + 3-OS asset smoke) → WBS-5.5 (readiness, FR-064 re-mark)
+  → STOP at gate 14.
+
 ## 2026-07-08 — PH-5 partial: WBS-5.1 (release) + WBS-5.3 (sync) done & merged; trackers reconciled
 - **Done:** PH-5 release pipeline + sync automation landed on develop (PRs **#27–#31**, HEAD `51fb00c6b`).
   **WBS-5.1** — `marid-release.yml` + `marid-build.ts --release` (tar/zip + `.sha256` + minisign `.minisig`);

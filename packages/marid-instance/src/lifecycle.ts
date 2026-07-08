@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process"
 import fs from "node:fs/promises"
 import fssync from "node:fs"
-import { composeInstanceEnv, instanceLogFile, instanceRecordFile } from "./paths"
+import { composeInstanceEnv, instanceConfigEnv, instanceLogFile, instanceRecordFile } from "./paths"
 
 // How to launch a fresh `marid serve` for the current runtime. Injected so this
 // package stays runtime-agnostic: the opencode CLI resolves it to the compiled
@@ -147,7 +147,7 @@ export async function start(
   const child = spawn(command, args, {
     detached: true,
     stdio: ["ignore", out, out],
-    env: { ...process.env, ...composeInstanceEnv(dir), ...options.env },
+    env: { ...process.env, ...composeInstanceEnv(dir), ...instanceConfigEnv(), ...options.env },
     windowsHide: true,
   })
   fssync.closeSync(out)
