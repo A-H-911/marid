@@ -100,17 +100,23 @@ function errorResponse(
   })
 }
 
-// Echo CORS headers on marid-auth's OWN responses (its 401/403/429 errors). Without
-// this a cross-origin browser client (the web UI) sees an opaque CORS failure — "No
-// Access-Control-Allow-Origin header" — instead of a readable 401, and cannot tell it
-// simply needs a token. Upstream success/SSE responses already carry the header, so we
-// only add it when absent (never double-set), and a streaming body passes through as-is.
+// Echo Access-Control-Allow-Origin on marid-auth's OWN responses (its 401/403/429
+// errors). Without it a cross-origin browser client (the web UI) sees an opaque CORS
+// failure — "No Access-Control-Allow-Origin header" — instead of a readable 401, and
+// cannot tell it simply needs a token. Upstream success/SSE responses already carry the
+// header, so we only add it when absent (never double-set); a streaming body passes as-is.
+//
+// Deliberately NO Access-Control-Allow-Credentials: this is a Bearer-token API — the web
+// client sends the token in a manual Authorization header, which is NOT a CORS "credential"
+// (cookies/TLS certs are), so credentials mode is never used. Reflecting the Origin without
+// credentials is safe: a hostile cross-origin page cannot present the secret bearer token,
+// so it can only ever read a 401, never authenticated data — and enabling Allow-Credentials
+// alongside a reflected Origin would be the classic exploitable CORS hole. Don't add it.
 function withCors(response: Response, request: Request): Response {
   const origin = request.headers.get("origin")
   if (!origin || response.headers.has("access-control-allow-origin")) return response
   const headers = new Headers(response.headers)
   headers.set("access-control-allow-origin", origin)
-  headers.set("access-control-allow-credentials", "true")
   headers.append("vary", "Origin")
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
 }
