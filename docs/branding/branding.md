@@ -1,7 +1,7 @@
 ---
-status: Proposed (name Approved at gate 3; plan approved with gate 13)
-version: v0.1
-updated: 2026-07-03
+status: Proposed (name Approved at gate 3; plan approved with gate 13; logo realized WBS-5.4)
+version: v0.2
+updated: 2026-07-08
 owner: operator (STK-001)
 ---
 
@@ -24,20 +24,34 @@ no major GitHub collision. Naming surfaces: product **Marid** · repo `marid` ·
    OpenCode project. Upstream copyright and permission notices are preserved."
 7. Upstream sync policy (baseline SHA per release), license, changelog link.
 
-## Logo brief (editable vector, SVG source committed)
+## Logo brief — REALIZED at WBS-5.4 (2026-07-08; supersedes the original 2-color chevron brief)
 
-- Concept: a minimal geometric mark evoking a rising smoke/flame spiral resolving into a sharp
-  chevron/arrow — "summoned power, directed". Must read at 16 px (favicon/TUI glyph) and 512 px.
-- Style: flat, 2-color; primary deep indigo `#3B2E8C` + ember accent `#F2A03D`; dark-mode variant with
-  light mark on transparent. No gradients required; no third-party mascots/jinn imagery clichés (lamps).
-- Deliverables: `logo.svg`, `logo-dark.svg`, `mark-only.svg`, favicon PNGs (16/32/180), all editable
-  (Inkscape-clean paths, no embedded rasters).
-- Typography (wordmark): open-license geometric sans (e.g., Inter/Space Grotesk — pick at design time),
-  lowercase "marid" with slightly tightened tracking.
+The original brief proposed a flat 2-color indigo+ember chevron. The operator revised the direction during
+WBS-5.4 (design iterated in a Claude Design project); the **realized** identity is:
+
+- Concept: a **flame mark** (jinn = *smokeless fire*, مارج من نار) to the left of a **"Marid" wordmark**
+  drawn in OpenCode's own chunky block/pixel logo style — two-tone extruded, recolored.
+- Wordmark: **Pixelify Sans 700** (operator-selected), capital "Marid". Two-tone extrude like OpenCode's
+  white/gray mark, but **blue face `#2F6BFF` + orange offset `#F0731F`** (`text-shadow` offset).
+- Flame: vertical **yellow → orange → red** gradient — `#FBD24A → #F5901E → #DC2A16`, with a brighter core
+  (`#FDEFB0 → #F8B73C`) and a warm glow. Reads from 512 px down to a 16 px favicon.
+- Deliverables (committed under `docs/branding/`): `mark.svg` (the flame, portable vector); `logo-light.png`
+  + `logo-dark.png` (the full flame+wordmark lockup, Pixelify baked in — **PNG, because GitHub does not load
+  web fonts in SVG `<text>`**, so a portable wordmark SVG would not render). The terminal glyph lives in
+  `packages/tui/src/logo.ts` (+ `packages/opencode/src/cli/ui.ts`), flame in ember orange.
 
 ## Rebrand boundary (per ADR-0001/Shaheen reject #3)
 
-User-visible surfaces only: CLI bin name, TUI title, user-agent, README, release names (patch-surface
+User-visible surfaces only: CLI bin name, TUI title + startup logo, README, release names (patch-surface
 P-2). Internal identifiers, env prefixes (`OPENCODE_*`), XDG dir names, and DB names stay upstream to
 keep the sync surface small — revisit only if a conflict with genuine OpenCode installs on the same
 machine emerges (instance dirs already prevent it).
+
+**User-Agent dropped from P-2 (WBS-5.4):** the brief originally listed the user-agent, but the real request
+UAs are hardcoded `opencode/${version}` across ~15 provider/plugin source sites (`session/llm/request.ts`,
+`provider.ts`, the copilot/codex/digitalocean/xai/snowflake plugins…). Rebranding all of them is a large
+upstream patch surface (violates NFR-001) and breaks upstream provider tests that pin `/^opencode\//`; the
+lone `installation/index.ts` `userAgent()` choke point has ~no consumers, so changing it alone would alter
+nothing providers see. The UA is provider-facing, not operator-facing — kept upstream, same rationale as
+leaving the internal `OPENCODE_*` identifiers. (The `package.json` bin was likewise not touched: the marid
+binary is named `marid-<target>` by `script/marid-build.ts`, independent of the upstream package bin.)

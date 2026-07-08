@@ -85,3 +85,17 @@ export function composeInstanceEnv(dir: string): Record<string, string> {
     TEMP: p.tmp,
   }
 }
+
+// P-3 (marid distribution config default). The private distribution launches
+// instances with language servers OFF by default: LSP adds startup latency and a
+// process/footprint the channel-first workloads don't need out of the box. Delivered
+// as an OPENCODE_CONFIG_CONTENT layer, which the server MERGES over the file config
+// (packages/opencode/src/config/config.ts) rather than replacing it. Kept OUT of
+// composeInstanceEnv on purpose: that set is per-instance path isolation (the
+// paths suite asserts every value is instance-unique), and this is a global default.
+// An operator who sets OPENCODE_CONFIG_CONTENT themselves keeps full control — we
+// only supply the default when they haven't.
+export function instanceConfigEnv(env: NodeJS.ProcessEnv = process.env): Record<string, string> {
+  if (env.OPENCODE_CONFIG_CONTENT) return {}
+  return { OPENCODE_CONFIG_CONTENT: JSON.stringify({ lsp: false }) }
+}

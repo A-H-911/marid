@@ -30,7 +30,7 @@ generation: derived
 | PH-2 Instances | done | yes | MS-003 (PR #17) | 3-OS `marid-isolation` |
 | PH-3 Cross-interface | done | yes | MS-004 (PR #19) | 3-OS `marid-sync`; contract v1.1 |
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
-| PH-5 Release & sync | **in progress** | partial | WBS-5.1 (PR #27) + WBS-5.3 (PR #28/#31); PRs #27–#31 on develop@`51fb00c6b` | **KPI-004 met** (sync cycle #31). Remaining: 5.4 branding, 5.2 RC + install smoke, 5.5 readiness → gate 14 |
+| PH-5 Release & sync | **in progress** | partial | WBS-5.1 (PR #27) + WBS-5.3 (PR #28/#31) + Task-0 reconcile (#32) merged; **WBS-5.4 branding done** (this PR) | **KPI-004 met**. WBS-5.1/5.3/5.4 done. Remaining: 5.2 RC + install smoke, 5.5 readiness → gate 14 |
 
 ## Acceptance snapshot
 
@@ -50,8 +50,8 @@ the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `par
   deferred-work #8 (gateway firehose no-reconnect) filed.
 
 ## In progress
-**WBS-5.4** (README + red-orange-flame logo + P-2 branding + P-3 `lsp:false`) is next, then WBS-5.2 (RC `v0.1.0`
-+ install path + 3-OS asset smoke), then WBS-5.5 (readiness).
+**WBS-5.2** (RC `v0.1.0` + documented install path + 3-OS asset smoke) is next, then WBS-5.5 (readiness →
+gate 14). WBS-5.4 branding (Marid README + logo + P-2/P-3) is done — FR-065 full.
 
 ## Blockers & risks
 No active blockers. **Devil's-advocate review (2026-07-08) flagged for WBS-5.5:** FR-064 is a *hollow trace*
