@@ -18,4 +18,4 @@ Binary, verifiable phase-exit checkpoints. Each milestone gates entry to the nex
 | MS-003 | Instances isolated | KPI-003 — 3-OS `marid-isolation` green (2 consecutive all-green runs) | PH-2 | MET 2026-07-05 (PR #17) |
 | MS-004 | Cross-interface sync | KPI-001 demo repeatable — 3-OS `marid-sync` green; concurrency semantics documented (contract v1.1) | PH-3 | MET 2026-07-05 (PR #19) |
 | MS-005 | Telegram working | KPI-002 — round trip + policy-denial paths green | PH-4 | MET 2026-07-07 (PR #23) |
-| MS-006 | MVP / release-ready | KPI-004, KPI-005, KPI-006 green; readiness report accepted (execution gate 14) | PH-5 | MET 2026-07-09 (public `v0.1.0` release; KPI-004∧005∧006 green) — pending operator gate-14 acceptance |
+| MS-006 | MVP / release-ready | KPI-004, KPI-005, KPI-006 green; readiness report accepted (execution gate 14) | PH-5 | **MET + gate-14 ACCEPTED 2026-07-09** (public `v0.1.0` release; KPI-004∧005∧006 green; readiness report Approved). Marid MVP plan (PH-0..5) complete. |

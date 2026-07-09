@@ -1,11 +1,15 @@
 ---
-status: Proposed
+status: Approved
 version: 1.0.0
 updated: 2026-07-09
 owner: operator (STK-001)
 ---
 
 # MVP Readiness Report — MS-006 / execution gate 14
+
+> **ACCEPTED by the operator (STK-001), 2026-07-09 — gate 14 GO.** MS-006 is formally met; the Marid MVP
+> plan (PH-0..5) is complete. Residuals below (AC-016 redactor, AC-007 supersede, Telegram beta, FR-064
+> §18 scans) are accepted post-MVP deferrals with Approved dispositions.
 
 **Purpose.** Evidence pack for the operator's **MVP go/no-go** (execution gate 14). MS-006 is met when
 **KPI-004 ∧ KPI-005 ∧ KPI-006** are green and this readiness report is accepted — **not** when every `AC-`

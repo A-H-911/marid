@@ -19,7 +19,7 @@ Execution is gated: no phase passes without an operator checkpoint (INV-005). Ga
 | PH-3 exit | MS-004 | 3-OS `marid-sync` green; concurrency contract v1.1 | passed |
 | PH-4 exit | MS-005 | KPI-002 — Telegram round trip + policy-denial paths | pending |
 | PH-5 exit | MS-006 | KPI-004/005/006; readiness report accepted | pending |
-| Gate 14 | Go/no-go | Final readiness — all critical gates green | pending |
+| Gate 14 | Go/no-go | Final readiness — all critical gates green | **passed (ACCEPTED 2026-07-09)** — MVP go; MS-006 met |
 
 ## Per-PR checkpoint
 Every feature branch → squash PR into `develop`; all required checks green (14 as of PH-3); reviewed against

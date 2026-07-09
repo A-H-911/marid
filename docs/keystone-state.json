@@ -3476,6 +3476,11 @@
       "timestamp": "2026-07-09T06:00:00Z",
       "actor": "execution-agent",
       "action": "Root docs Marid-ized (patch-surface P-5, folded into PR #39): CONTRIBUTING (docs-first Keystone feature loop), SECURITY (Marid auth/isolation/audit model), CONTEXT (product-name rebrand), STATS (single-operator stub -> deferred #10), AGENTS (Marid-precedence header + dev->develop). README+CLAUDE private-usage/public-repo clarifier (DEC-010). P-5 registered in architecture.md + upstream-sync-strategy reconcile rule. Tarseem diagram overlay deferred to a separate follow-up PR. validate = OK."
+    },
+    {
+      "timestamp": "2026-07-09T07:00:00Z",
+      "actor": "operator (STK-001)",
+      "action": "GATE 14 ACCEPTED — MVP go. MS-006 formally met (KPI-004 sync #31, KPI-005 clean G-TRACE, KPI-006 public v0.1.0 RC 17 checks). Marid MVP plan PH-0..5 complete. MVP readiness report status->Approved; checkpoints Gate 14->passed; milestones MS-006->accepted. Accepted post-MVP residuals: AC-016 redactor (ADR-0007), AC-007 supersede, Telegram beta fork (ADR-0008), FR-064 scans (ADR-0007), stats mechanism (deferred #10)."
     }
   ]
 }
