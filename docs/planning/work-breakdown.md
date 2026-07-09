@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-07
+updated: 2026-07-08
 owner: operator (STK-001)
 ---
 
@@ -56,10 +56,10 @@ the PH-5 table has no Status column yet (not started).
 | WBS-4.5 | Media within Bot-API caps | Send/receive tests | FR-049 | ✅ done — full media send + receive within Bot-API caps; media tests |
 
 ## PH-5 Release & sync
-| WBS | Item | DoD | Traces |
-|---|---|---|---|
-| WBS-5.1 | Private GitHub Releases pipeline (adapted publish.yml: binaries, checksums; public channels stripped) | Signed/checksummed release from tag | FR-060/064, C-6 |
-| WBS-5.2 | Install/update path for private releases (gh-authenticated) | Documented + smoke-tested on 3 OSes | RISK-009 |
-| WBS-5.3 | Upstream sync workflow automation (weekly check, monthly merge PR, delta report) | One real sync cycle executed | FR-061, KPI-004 |
-| WBS-5.4 | README + attribution/non-affiliation + logo (per branding brief) | README complete; SVG logo committed | FR-065 |
-| WBS-5.5 | Readiness: traceability check, KPI evidence, docs validation | KPI-005/006 green; readiness report accepted | INV-008 |
+| WBS | Item | DoD | Traces | Status |
+|---|---|---|---|---|
+| WBS-5.1 | Public GitHub Releases pipeline (binaries, sha256, minisign signatures; upstream publish channels stripped) | Signed/checksummed release from tag | FR-060/064, C-6 | ✅ done — release pipeline (PR #27): `marid-release.yml` + `marid-build.ts --release` (tar/zip + sha256) + minisign signing; trust anchor wired (`minisign.pub` committed, secret `MINISIGN_SECRET_KEY`). Verified end-to-end (run 28892667716 green; throwaway prerelease signed+checksummed then deleted). AC-013 Met; AC-014 **Partial** (install path + 3-OS smoke = WBS-5.2). |
+| WBS-5.2 | Install/update path for public releases (anonymous download + verify; DEC-010) | Documented + smoke-tested on 3 OSes | ~~RISK-009~~ (dissolved, DEC-010) | — pending (RC + documented download→`minisign -Vm`→`sha256sum -c` path + 3-OS asset smoke; removes `marid upgrade` footgun) |
+| WBS-5.3 | Upstream sync workflow automation (weekly check, monthly merge PR, delta report) | One real sync cycle executed | FR-061, KPI-004 | ✅ done — sync automation (PR #28): `marid-sync-upstream.yml` (weekly conflict-check + monthly merge PR, delta + migration-review + dependency-diff) **and one real 91-commit cycle merged via merge-commit (PR #31, KPI-004)**; `upstream/dev` now an ancestor of develop. AC-015 Met. Codemode reconciled per ADR-0002 (`external` + hygiene allowlist). |
+| WBS-5.4 | README + attribution/non-affiliation + logo (per branding brief) | README complete; SVG logo committed | FR-065 | ✅ done — Marid README (attribution + minisign verify + `docs/branding/` logo); flame `mark.svg` + `logo-{light,dark}.png` lockup (operator-designed via Claude Design: Pixelify-Sans "Marid", blue face + orange offset, yellow→orange→red flame); P-2 realized (TUI title + startup logo redrawn, UA dropped w/ rationale); P-3 realized (`lsp:false` distribution default, overridable). FR-065 full. |
+| WBS-5.5 | Readiness: traceability check, KPI evidence, docs validation | KPI-005/006 green; readiness report accepted | INV-008 | — pending |

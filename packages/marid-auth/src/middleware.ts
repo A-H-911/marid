@@ -19,12 +19,26 @@ export interface MaridAuthDeps {
   limiter: RateLimiter
 }
 
+// Extract the bearer token from the Authorization header. Accept it via BOTH schemes:
+//   Bearer <token>                     — the TUI/SDK/API and Telegram gateway
+//   Basic  base64("<user>:<token>")    — the upstream web UI (utils/server.ts) can only
+//                                         send Basic; it puts the token in the password.
+// Same token, same scope/audit/rate-limit — Basic is just the transport the web client
+// speaks. No weaker: Basic base64 is not encryption, but neither is a plaintext Bearer;
+// both are equally exposed off-loopback, and the token is still required.
 function bearer(request: Request): string | undefined {
   const header = request.headers.get("authorization")
   if (!header) return undefined
-  const [scheme, token] = header.split(" ")
-  if (scheme?.toLowerCase() !== "bearer" || !token) return undefined
-  return token
+  const [scheme, value] = header.split(" ")
+  if (!value) return undefined
+  const lower = scheme?.toLowerCase()
+  if (lower === "bearer") return value
+  if (lower === "basic") {
+    const decoded = Buffer.from(value, "base64").toString("utf8")
+    const sep = decoded.indexOf(":")
+    return (sep === -1 ? decoded : decoded.slice(sep + 1)) || undefined
+  }
+  return undefined
 }
 
 function isStream(request: Request): boolean {
@@ -86,6 +100,27 @@ function errorResponse(
   })
 }
 
+// Echo Access-Control-Allow-Origin on marid-auth's OWN responses (its 401/403/429
+// errors). Without it a cross-origin browser client (the web UI) sees an opaque CORS
+// failure — "No Access-Control-Allow-Origin header" — instead of a readable 401, and
+// cannot tell it simply needs a token. Upstream success/SSE responses already carry the
+// header, so we only add it when absent (never double-set); a streaming body passes as-is.
+//
+// Deliberately NO Access-Control-Allow-Credentials: this is a Bearer-token API — the web
+// client sends the token in a manual Authorization header, which is NOT a CORS "credential"
+// (cookies/TLS certs are), so credentials mode is never used. Reflecting the Origin without
+// credentials is safe: a hostile cross-origin page cannot present the secret bearer token,
+// so it can only ever read a 401, never authenticated data — and enabling Allow-Credentials
+// alongside a reflected Origin would be the classic exploitable CORS hole. Don't add it.
+function withCors(response: Response, request: Request): Response {
+  const origin = request.headers.get("origin")
+  if (!origin || response.headers.has("access-control-allow-origin")) return response
+  const headers = new Headers(response.headers)
+  headers.set("access-control-allow-origin", origin)
+  headers.append("vary", "Origin")
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
+}
+
 // Free the SSE slot exactly once when the stream ends, is cancelled, or the
 // client disconnects (request.signal aborts). release() is idempotent.
 function trackStream(response: Response, release: () => void, signal: AbortSignal): Response {
@@ -114,8 +149,14 @@ function trackStream(response: Response, release: () => void, signal: AbortSigna
 }
 
 export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
-  return {
-    async handle(request, next) {
+  const run: MaridAuth["handle"] = async (request, next) => {
+      // CORS preflight: browsers send OPTIONS with NO credentials (the CORS spec forbids them),
+      // so it can never carry a token. Delegate straight to the upstream handler, which answers
+      // the preflight with the Access-Control-Allow-* headers. A preflight returns no data and
+      // has no side effects; the actual credentialed request that follows is still authenticated.
+      // Without this, marid-auth 401s the preflight and the browser blocks every request (the web
+      // UI cannot reach the server at all).
+      if (request.method === "OPTIONS") return next(request)
       const requestId = resolveRequestId(request)
       const url = new URL(request.url)
       const session = sessionFromPathname(url.pathname)
@@ -244,6 +285,8 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
       }
 
       return withRequestId(response, requestId)
-    },
+  }
+  return {
+    handle: async (request, next) => withCors(await run(request, next), request),
   }
 }

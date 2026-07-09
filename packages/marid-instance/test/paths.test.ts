@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import path from "node:path"
 import {
   composeInstanceEnv,
+  instanceConfigEnv,
   instanceDataDir,
   instanceDir,
   instanceMaridDir,
@@ -89,5 +90,18 @@ describe("derived paths are a single source of truth for where the server writes
       if (prev === undefined) delete process.env.MARID_HOME
       else process.env.MARID_HOME = prev
     }
+  })
+})
+
+// P-3: the marid distribution launches instances with LSP off by default, but never
+// overrides an operator who set OPENCODE_CONFIG_CONTENT themselves.
+describe("instanceConfigEnv: marid distribution config default (LSP off)", () => {
+  test("injects lsp:false when the operator has not set OPENCODE_CONFIG_CONTENT", () => {
+    const env = instanceConfigEnv({})
+    expect(JSON.parse(env.OPENCODE_CONFIG_CONTENT!)).toEqual({ lsp: false })
+  })
+
+  test("defers entirely to an operator-set OPENCODE_CONFIG_CONTENT", () => {
+    expect(instanceConfigEnv({ OPENCODE_CONFIG_CONTENT: '{"lsp":true}' })).toEqual({})
   })
 })

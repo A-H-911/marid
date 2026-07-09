@@ -1083,6 +1083,24 @@
         "context": "An instance is an isolated runtime with its own config, storage, cache, ports, secrets, and logs; it may host several projects. The R-05 conflict inventory shows today's shared state (DB, auth.json, config, log, caches, port preference). OpenCode already honors XDG overrides, OPENCODE_DB, and OPENCODE_CONFIG; claudectl proves the thin-launcher plus env pattern cross-platform.",
         "decision": "marid-instance manages per-instance 0700 directory trees containing config, data (DB), cache, logs, secrets, and a port/PID record. It writes per-instance launchers that compose the env (XDG plus OPENCODE_* plus port) and exec the shared binary; it adds port allocation, PID files, graceful shutdown, status/health, and per-instance MCP/LSP child processes. The registry is the directory listing. Isolation is by namespacing, not locking. Verified by EXP-002 and realizing FR-053 and the OQ-001 answer.",
         "consequences": "No daemon or supervisor in the MVP; cross-instance resource limits are delegated to OS mechanisms with enforced limits deferred behind a trigger. Realized in PH-2 as the marid-instance package; the deferred EXP-002 live two-instance diff is now closed by the isolation test suite. Rejected: one daemon hosting many logical instances; per-agent-process instances."
+      },
+      {
+        "id": "ADR-0007",
+        "title": "Channel secret safety is authorization-boundary containment, not egress redaction (MVP)",
+        "status": "Approved",
+        "date": "2026-07-07",
+        "context": "PH-4 threat-model audit found the B7 'redaction filters on channel egress' control unimplemented: only the Telegram bot-token literal is masked (gateway logs); channel egress, general logs/errors, and marid export (raw by default) have no configured-secret-value redactor; AC-016's cited evidence tests 0600+field-shape, not redaction. Provider keys in auth.json sit outside the restricted channel agent's workspace roots, so secret-in-egress is effectively contained by the B2/B4 authorization boundary.",
+        "decision": "Adopt authorization-boundary containment as the accepted MVP posture and defer a configured-secret-value redactor (logs/errors/export/channel-egress) + secret registry to PH-5/WBS-5.1. Interim (now): correct threat model/acceptance-audit to fact (B7 not-implemented; AC-016 Partial), pin explicit loopback bind (B3 drift guard), correct RISK-007/RISK-004. Open sub-decision (operator to confirm): marid export raw-default fix - (a) global default-flip [P-4, upstream edit], (b) provenance-aware sanitize, (c) interim doc guardrail + defer to PH-5 [chosen pending confirmation]. export is a local CLI command a channel token cannot reach.",
+        "consequences": "Threat model no longer over-claims a missing control; acceptance surface honest (AC-016 Partial). Residual 'secret relayed to channel' accepted for MVP under containment, redactor tracked to PH-5. If operator picks (a), P-4 activates; else it stays reserved/deferred."
+      },
+      {
+        "id": "ADR-0008",
+        "title": "Post-MVP: replace the hand-rolled marid-telegram gateway with a fork of grinev/opencode-telegram-bot",
+        "status": "Approved",
+        "date": "2026-07-09",
+        "context": "PH-5 live Telegram E2E surfaced outbound UX defects the mock provider (EXP-003, model big-pickle) never exercised: Markdown un-rendered (stream.ts HTML-escapes then sends parse_mode:HTML, no md->TG-HTML convert), inbound media not landed into the agent workspace, slash commands not routed, multi-part replies concatenated (currentText=parts.join()); web->Telegram not mirrored (request/response bridge, by design). The round-trip and the INV-001 security (channel token + marid-auth deny-by-default/bound-agent) are both verified working; the defects are all outbound formatting/media/command handling - what a mature TG framework + real markdown parser solve off the shelf.",
+        "decision": "Post-MVP, replace the hand-rolled UX layer with a fork/port of grinev/opencode-telegram-bot (MIT, ~897 stars; grammy + @grammyjs/menu + remark-parse/gfm + official @opencode-ai/sdk). INV-001 preserved by CONFIGURATION not rewrite: the fork authenticates to a running Marid instance with a channel: bearer token, so marid-auth enforces deny-by-default + bound-agent server-side; the fork's own allowlist (TELEGRAM_ALLOWED_USER_ID) is kept as defense-in-depth. Stays a separate process holding no provider keys - ADR-0005 unchanged (not superseded).",
+        "consequences": "v0.1.0 ships Telegram BETA on the current hand-rolled gateway with the 5 issues documented as known issues (deferred-work #9); round-trip works, security holds, UX is rough. Fork is a scheduled post-MVP phase (license attribution, channel-token wiring, media->workspace landing, slash mapping, INV-001 parity tests vs a real provider). MIT-compatible with Marid's downstream MIT distribution. Hand-rolled marid-telegram retired once the fork lands + verifies. Rejected: (1) fix-in-place (re-implements grammy/remark, more sync surface, against reuse-first DEC-009); (2) do-nothing/undocumented (tracker defect); (3) broad multi-channel bot (more surface than one operator+Telegram needs)."
       }
     ],
     "risks": [
@@ -1118,8 +1136,8 @@
         "description": "Supply-chain compromise via runtime npm-install (providers/plugins) or upstream deps",
         "impact": "high",
         "likelihood": "low",
-        "mitigation": "Pin provider installs in the distribution profile; dependency and secret scanning in CI (FR-064); plugin trust policy",
-        "trigger": "Scanner alert",
+        "mitigation": "PH-4 audit (2026-07-07): code-side controls NOT yet built - provider exact-version pinning, FR-064 dependency/secret/license CI scanning, empty-by-default plugin allowlist are all PH-5/WBS-5.1 (WBS-0.3 delivered only the CI skeleton; no scanning job exists; .gitleaksignore orphaned). Currently mitigated only by the operator installing no plugins/providers beyond the profile. Re-score I/L at operator review; controls land PH-5.",
+        "trigger": "Scanner alert; PH-5 start",
         "scope": "MVP"
       },
       {
@@ -1145,8 +1163,8 @@
         "description": "Secrets leak into session history or logs and get relayed to channels",
         "impact": "high",
         "likelihood": "low",
-        "mitigation": "Redaction rules (FR-055, FR-059); audit separation; never echo config/auth values in tool output shown to channels",
-        "trigger": "Redaction test failure",
+        "mitigation": "CORRECTED by PH-4 audit (2026-07-07): the redaction layer is NOT implemented (only the Telegram bot-token literal is masked in gateway logs; egress/log/export secret-value redaction deferred to PH-5 - ADR-0007, AC-016 Partial). Active controls: audit separation (token name, no bodies); secrets only in env/hashed stores; containment - the restricted channel agent cannot read auth.json (outside workspace roots) to relay provider keys. Residual: in-workspace secrets in a transcript still egress un-redacted. Re-score I/L at operator review.",
+        "trigger": "Redaction test failure; audit found redaction absent 2026-07-07",
         "scope": "MVP"
       },
       {
@@ -2230,7 +2248,7 @@
         "id": "PH-5",
         "name": "Release & sync",
         "goal": "Private distribution + one real upstream sync + docs",
-        "status": "not-started",
+        "status": "in-progress",
         "depends_on": [
           "PH-2",
           "PH-3",
@@ -3372,6 +3390,21 @@
       "date": "2026-07-07",
       "author": "execution-agent",
       "summary": "PH-4 / MS-005 MET — KPI-002 green on three OSes; PH-4 complete. 3-OS marid-telegram job green on PR #23 (20/20 checks incl. TEST-TG on ubuntu/macOS/windows); squash-merged to develop (81ba7e7). AC-010 (stranger ignored) and AC-011 (streamed round trip) proven live in TEST-TG; AC-012 (policy-denied permission) proven via a faked-SDK permission round trip (event→keyboard→Deny→permission.respond(reject)) plus the @marid/auth INV-001 backstop — the live LLM-tool→permission link is an opencode harness limit (the HTTP-served run resolves zero tools), not a gateway or provider defect. Acceptance now 13/16 MVP ACs Met. Branch protection to 17 required checks (operator action). Next: PH-5 (Release & sync, MS-006 = MVP)."
+    },
+    {
+      "date": "2026-07-07",
+      "author": "execution-agent",
+      "summary": "PH-4 security threat-model audit: B1-B8 verified against code + 170/0 Marid tests; TEST-SEC injection-containment probes (channel-binding: escape-agent/widen-tools/widen-permission/shell/command/no-agent/unbound) all fail closed (403, delegated=false); AC-012 round trip confirmed. Delta: B7 egress secret-redaction claimed but not implemented (only bot-token masked in gateway logs); AC-016 Met->Partial, redactor->PH-5 (ADR-0007 Proposed); B5 supply-chain controls unbuilt (PH-5), RISK-004 corrected; RISK-007 corrected (containment active, redaction absent). Cheap guards landed: explicit --hostname 127.0.0.1 loopback bind (B3 drift guard, MARID_BIND_HOST override+warning); export raw-default guardrail documented (P-4 reserved). Acceptance now 12/16 MVP ACs Met + 1 Partial. Awaiting operator: approve ADR-0007; pick export option."
+    },
+    {
+      "date": "2026-07-08",
+      "author": "execution-agent",
+      "summary": "PH-5 partial + tracker reconciliation. WBS-5.1 (release pipeline, PR #27: marid-release.yml + marid-build.ts --release, tar/zip + sha256 + minisign; trust anchor minisign.pub + secret MINISIGN_SECRET_KEY; verified end-to-end run 28892667716, throwaway prerelease signed+checksummed then deleted) and WBS-5.3 (sync automation PR #28 + one real 91-commit upstream cycle merged via merge-commit PR #31 = KPI-004; upstream/dev now an ancestor of develop; delta + migration-review + dependency-diff jobs; codemode reconciled per ADR-0002 via external + hygiene allowlist) done & merged to develop@51fb00c6b (PRs #27-#31). PH-5 phase status not-started->in-progress. Acceptance: AC-015 Met (sync cycle #31), AC-014 Partial (release verified, install path + 3-OS smoke = WBS-5.2), AC-016 stays Partial (audit summary recount fixed). Decisions: releases public/anonymous (DEC-010), minisign signing, ship-under-containment (ADR-0007); logo red-orange flame + shadowed marid wordmark (operator directive, amends branding.md 2-color); first RC v0.1.0 on independent 0.x line (package.json stays upstream 1.17.15; release<->upstream link is baseline SHA). Devil's-advocate review flagged for WBS-5.5: FR-064 hollow trace (marked full, scans unbuilt -> re-mark partial) and AC-014 statement stale vs DEC-010 (private/gh-auth -> public/anonymous). Remaining: WBS-5.4 branding -> WBS-5.2 RC -> WBS-5.5 readiness -> STOP at gate 14."
+    },
+    {
+      "date": "2026-07-08",
+      "author": "execution-agent",
+      "summary": "WBS-5.4 branding done (FR-065 full). README rewritten (Marid identity + interfaces + minisign-verify quick-start + attribution/non-affiliation + security model). Logo operator-designed via Claude Design: flame + Marid in OpenCode block style, Pixelify Sans 700, blue face #2F6BFF + orange offset #F0731F, yellow-orange-red flame; committed docs/branding/mark.svg + logo-light.png + logo-dark.png (PNG lockup because GitHub does not render web-font SVG text). P-2 realized: TUI window title (app.tsx) + TUI/CLI startup logo redrawn (tui/src/logo.ts + cli/ui.ts, flame + Marid; terminal M opened so it no longer reads as H). P-3 realized: lsp:false distribution default via OPENCODE_CONFIG_CONTENT at instance spawn (marid-instance paths.ts instanceConfigEnv + lifecycle.ts), operator-overridable, +2 tests. Scope decisions (documented): User-Agent DROPPED from P-2 (hardcoded opencode/version at ~15 sites -> NFR-001 + breaks provider tests; provider-facing), package.json bin untouched, index.ts scriptName/help-snapshot left upstream. Verify: hygiene 10/10, marid-instance paths 18/18, opencode+tui typecheck clean. Next: WBS-5.2 RC v0.1.0 + install smoke -> WBS-5.5 readiness -> gate 14."
     }
   ],
   "change_log": [
@@ -3392,6 +3425,42 @@
       "actor": "execution-agent",
       "action": "PH-4/MS-005 MET — flipped PH-4 trackers after PR #23 merged @81ba7e7 (phases[] PH-4 done; MS-005 MET; WBS-4.1..4.5 done; AC-010/011/012 Met, 13/16 MVP ACs).",
       "target": "milestones/roadmap/work-breakdown/acceptance-audit/keystone-state"
+    },
+    {
+      "timestamp": "2026-07-07T14:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-4 security threat-model audit (B1-B8) + corrective reconciliation. Verified all mitigations vs code; ran Marid suites 170/0; injection-containment probes fail closed. Finding: B7 egress secret-redaction claimed but unimplemented (bot-token-in-logs only); B5 supply-chain controls are unbuilt PH-5. Operator-approved scope 'docs+cheap guards': threat model v1.0->v1.1 (B7+residual corrected, status stays Approved); AC-016 verdict Met->Partial + evidence fixed (13->12/16 Met, +1 Partial); RISK-007/RISK-004 mitigation corrected (flagged re-score); ADR-0007 (Proposed) containment-first + redactor->PH-5; code guard: explicit loopback bind in marid-instance serveLaunch; P-4 reserved (deferred export default-flip). No upstream code edited; no merge.",
+      "target": "security-threat-model/acceptance-criteria/acceptance-audit/risk-register/architecture(patch-surface)/adrs/status-report/progress-log/keystone-state; code: packages/opencode/src/cli/cmd/marid-instance.ts"
+    },
+    {
+      "timestamp": "2026-07-07T15:00:00Z",
+      "actor": "operator (STK-001)",
+      "action": "Approved ADR-0007 (channel secret safety = authorization-boundary containment; redactor deferred to PH-5). Core decision accepted; the marid export raw-default sub-decision remains OPEN pending operator selection (interim (c) doc-guardrail holds). Flipped ADR-0007 status Proposed->Approved and reconciled the (Proposed) references in security-threat-model.md + acceptance-audit.md.",
+      "target": "adrs/security-threat-model/acceptance-audit/keystone-state"
+    },
+    {
+      "timestamp": "2026-07-07T15:30:00Z",
+      "actor": "operator (STK-001)",
+      "action": "Resolved ADR-0007 open sub-decision to (c): marid export keeps raw default; interim documentation guardrail (operators pass --sanitize for channel/untrusted transcripts); default-flip P-4 stays reserved/deferred to PH-5. No code change.",
+      "target": "adrs/architecture(patch-surface P-4)/keystone-state"
+    },
+    {
+      "timestamp": "2026-07-08T00:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-5 tracker reconciliation (WBS-5.1 release + WBS-5.3 sync/KPI-004 done & merged, PRs #27-#31): work-breakdown WBS-5.1/5.3 -> done; acceptance-audit AC-015 -> Met, AC-014 -> Partial (install path pending WBS-5.2), summary recount fixed (AC-016 was wrongly listed Met); PH-5 phase status -> in-progress; progress-log + status-report regenerated; keep-remove-matrix codemode-excluded note added. Roadmap/milestone phase rows NOT flipped (flip at MS-006/gate 14). No merge without operator approval (INV-005).",
+      "target": "planning/work-breakdown+validation/acceptance-audit+progress/*+keystone-state+architecture/keep-remove-matrix"
+    },
+    {
+      "timestamp": "2026-07-08T04:00:00Z",
+      "actor": "execution-agent",
+      "action": "WBS-5.4 branding done: README rewritten (Marid); logo committed (docs/branding/mark.svg + logo-light/dark.png, operator-designed via Claude Design); P-2 realized (TUI title + startup logo redrawn, UA dropped w/ rationale, package.json bin untouched); P-3 realized (lsp:false distribution default, overridable). Trackers flipped: work-breakdown WBS-5.4 done, traceability FR-065 partial->full, architecture P-2/P-3 -> done + branding.md realized. No merge without operator approval (INV-005).",
+      "target": "README+docs/branding/*+packages(tui/logo.ts,app.tsx;opencode/cli/ui.ts;marid-instance/paths.ts,lifecycle.ts)+planning/work-breakdown+validation/traceability-matrix+architecture/architecture+progress/*+keystone-state"
+    },
+    {
+      "timestamp": "2026-07-09T00:00:00Z",
+      "actor": "operator (STK-001)",
+      "action": "Telegram gateway fork decision (operator-approved 2026-07-09): PH-5 live E2E surfaced hand-rolled gateway UX defects (markdown un-rendered, media not landed, slash unrouted, replies concatenated; web->TG mirroring is by-design). Scheduled POST-MVP as ADR-0008 + deferred-work #9: replace with a fork of grinev/opencode-telegram-bot (MIT, grammy + remark + official SDK), preserving INV-001 via a server-enforced channel: token. v0.1.0 ships Telegram BETA with the issues documented; the round-trip + security are verified working. Recorded on branch docs/defer-telegram-fork; no merge without operator approval (INV-005).",
+      "target": "adrs/adr-0008-telegram-gateway-fork+execution/deferred-work-register+keystone-state"
     }
   ]
 }

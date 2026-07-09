@@ -42,6 +42,15 @@ describe("scope authorization (pure)", () => {
     })
   })
 
+  test("/session/status is a meta route, not a session — non-admin is NOT ownership-gated (web-UI bootstrap)", () => {
+    // Regression: "status" was read as a session id → ownership gate → 403 on every connect.
+    for (const scope of ["client", "channel:telegram"] as const) {
+      expect(authorize({ scope, method: "GET", pathname: "/session/status", owns: () => false })).toEqual({
+        allow: true,
+      })
+    }
+  })
+
   describe("channel scope (PH-4, WBS-4.4): stricter than client — deny-by-default on owned sessions", () => {
     const ch = "channel:telegram" as const
     const mine = owns(["ses_x"])

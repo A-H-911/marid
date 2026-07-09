@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-07
+updated: 2026-07-08
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,93 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-08 — WBS-5.2 prep (install/update path + 3-OS asset smoke; RC still pending)
+- **Done:** Removed the self-update footgun — dropped `UpgradeCommand` from the Marid entry
+  (`packages/opencode/src/marid.ts`); `marid upgrade` would have fetched the upstream `opencode` binary from
+  npm (`installation/index.ts` → registry.npmjs.org/opencode-ai), never Marid. Documented the **update path**
+  in the README (re-download the signed release + re-verify; no self-update by design). Added a **3-OS
+  install-smoke** job to `marid-release.yml` (`needs: release`, matrix ubuntu/macos/windows): downloads the
+  published asset + `.minisig` + `.sha256`, verifies the signature against the committed `minisign.pub`, checks
+  the sha256, extracts, runs `marid --version`. Its value is the **signed-release-asset** path (the binary boot
+  is already covered by `ci.yml`'s `marid-build` self-smoke).
+- **Deviations:** WBS-5.2 is **not closed** and **AC-014 stays Partial** — the install-smoke only proves out
+  when a real release publishes, which happens at the **RC** (`release/v0.1.0` → main → tag `v0.1.0`), the
+  operator-gated outward-facing step still to come. The install-smoke workflow YAML is untested until then.
+- **Blockers:** none (RC is an operator decision, INV-005). **Next:** cut the RC → `marid-release.yml` fires →
+  install-smoke green (17 checks = KPI-006) → flip AC-014 Met → WBS-5.5 readiness → gate 14.
+
+## 2026-07-08 — WBS-5.4 branding done (README + logo + P-2 + P-3)
+- **Done:** Marid branding realized (FR-065 → full). **README** rewritten (Marid identity, interfaces table,
+  minisign verify quick-start, security model, attribution/non-affiliation verbatim, sync/license). **Logo**
+  operator-designed via a Claude Design project: flame + "Marid" in OpenCode's block-logo style, **Pixelify Sans
+  700, blue face `#2F6BFF` + orange offset `#F0731F`, yellow→orange→red flame** — committed as `docs/branding/
+  mark.svg` (portable flame) + `logo-{light,dark}.png` (lockup; PNG because GitHub won't render a web-font SVG
+  wordmark). **P-2** realized: TUI window title (`app.tsx`) + TUI/CLI startup logo redrawn (`tui/src/logo.ts` +
+  `cli/ui.ts`, flame + "Marid", ember-orange flame; terminal "M" opened up so it no longer reads as "H").
+  **P-3** realized: distribution default `lsp:false` via `OPENCODE_CONFIG_CONTENT` at instance spawn
+  (`marid-instance/src/paths.ts` `instanceConfigEnv` + `lifecycle.ts`), operator-overridable; +2 tests.
+- **Scope decisions (devil's-advocate, documented in `branding.md` + P-2 register):** **User-Agent dropped
+  from P-2** — real UAs are hardcoded `opencode/${version}` at ~15 provider/plugin sites (rebranding all →
+  NFR-001 violation + breaks upstream provider tests; provider-facing, not operator-facing). `package.json` bin
+  not touched (marid binary named by `marid-build.ts`). `index.ts` scriptName / opencode help snapshot left
+  upstream (the marid CLI is already `.scriptName("marid")`).
+- **Verify:** hygiene test 10/10 pass (no excluded-pkg imports); marid-instance paths 18/18 (P-3); opencode +
+  tui typecheck clean.
+- **Decisions:** logo direction/font/palette are operator-approved (Claude Design confirmation loop). **Blockers:**
+  none. **Next:** WBS-5.2 (RC `v0.1.0` + install path + 3-OS asset smoke) → WBS-5.5 (readiness, FR-064 re-mark)
+  → STOP at gate 14.
+
+## 2026-07-08 — PH-5 partial: WBS-5.1 (release) + WBS-5.3 (sync) done & merged; trackers reconciled
+- **Done:** PH-5 release pipeline + sync automation landed on develop (PRs **#27–#31**, HEAD `51fb00c6b`).
+  **WBS-5.1** — `marid-release.yml` + `marid-build.ts --release` (tar/zip + `.sha256` + minisign `.minisig`);
+  minisign trust anchor wired (`minisign.pub` committed, secret `MINISIGN_SECRET_KEY`); verified end-to-end
+  (workflow run 28892667716 green; throwaway prerelease signed+checksummed, `-Vm`/`-c` validated, then deleted).
+  **WBS-5.3 (KPI-004)** — `marid-sync-upstream.yml` + **one real 91-commit upstream cycle merged via
+  merge-commit (#31)**; `upstream/dev` now an ancestor of develop; delta + migration-review + dependency-diff
+  jobs present. Codemode (new upstream pkg) reconciled per ADR-0002 (`external` in `marid-build.ts` +
+  single-file hygiene allowlist for `tool/code-mode.ts`). Supporting: #29 (telegram P-CI-4 timing scale),
+  #30 (telegram live-E2E retry-wrapper; **RISK-006** corrected + **deferred-work #8** = gateway firehose has
+  no reconnect — diagnosed, not fixed in-phase by design).
+- **Reconciliation (this entry):** `work-breakdown.md` WBS-5.1/5.3 → ✅ done; `acceptance-audit.md`
+  **AC-015 → Met**, **AC-014 → Partial** (release verified; install path + 3-OS smoke = WBS-5.2), AC-016 stays
+  Partial (summary recount fixed — it had wrongly listed AC-016 under Met); `keystone-state.json` + `status-report`
+  regenerated; `keep-remove-matrix.md` gains a codemode-excluded note.
+- **Decisions:** releases **public/anonymous** (DEC-010); **minisign** signing; **ship-under-containment**
+  (AC-016 redactor + FR-064 supply-chain scans deferred post-MVP, ADR-0007). Logo → **red-orange flame + shadowed
+  "marid" wordmark** (operator directive 2026-07-08; amends branding.md's 2-color spec). First RC → **`v0.1.0`**
+  on an independent `0.x` line (package.json stays upstream `1.17.15`; release↔upstream link is the baseline SHA;
+  `--version` reports the tag).
+- **Deviations:** AC-014 marked **Partial not Met** (install half is WBS-5.2) — corrects the resume-file's
+  "AC-014→Met"; the PH-5 **roadmap/milestone rows are NOT flipped** here (they flip at MS-006/gate 14, not per-WBS).
+  Devil's-advocate review (2026-07-08) also found: FR-064 is a **hollow trace** (marked `full`, scans unbuilt →
+  re-mark at WBS-5.5) and AC-014's text was stale vs DEC-010 ("private/gh-auth" → corrected to public/anonymous).
+- **Blockers:** none. **Next:** WBS-5.4 (README + red-orange-flame logo + P-2 branding + P-3 `lsp:false`) → WBS-5.2
+  (RC `v0.1.0` + install path + 3-OS asset smoke) → WBS-5.5 (readiness, FR-064 re-mark) → **STOP at gate 14**.
+
+## 2026-07-07 — PH-4 security threat-model audit (B1–B8) + corrective doc reconciliation
+- **Done:** Full audit against `security-threat-model.md` — every B1–B8 mitigation verified against code and
+  tests; ran all three Marid suites (**marid-telegram 58 / marid-auth 72 / marid-instance 40 = 170 pass, 0
+  fail**); TEST-SEC injection-containment probes (`channel-binding.test.ts`: escape-agent / widen-tools /
+  widen-permission / `/shell` / `/command` / no-agent / unbound-agent) all fail closed (403, `delegated=false`);
+  AC-012 permission round trip confirmed. **Finding:** the B7 "redaction filters on channel egress" control is
+  claimed but not implemented — only the Telegram bot-token literal is masked (gateway logs); channel egress,
+  general logs/errors, and `marid export` (raw by default) have no configured-secret-value redactor; AC-016's
+  cited evidence (`audit.test.ts`) tests 0600 + field shape, not redaction. Secret-in-egress is contained by the
+  B2/B4 authorization boundary (restricted agent can't read `auth.json`). B5 supply-chain controls (plugin
+  allowlist, provider pinning, FR-064 scanning) are unbuilt PH-5 work.
+- **Corrective changes (operator-approved scope "docs + cheap guards"):** threat model → v1.1 (B7 + residual
+  corrected to fact, status stays Approved — defect fix); **AC-016 verdict Met → Partial** + evidence fixed
+  (13 → **12 / 16 Met**, +1 Partial); RISK-007 / RISK-004 mitigation text corrected (flagged for operator
+  re-score); **ADR-0007 (Proposed)** records containment-first MVP posture + redactor deferred to PH-5;
+  **code guard:** explicit `--hostname 127.0.0.1` loopback bind in `marid-instance` `serveLaunch()` (B3 drift
+  guard; `MARID_BIND_HOST` override + warning preserves the documented non-loopback path); **P-4 reserved**
+  (deferred `export` default-flip).
+- **Decisions:** containment-not-redaction is **Proposed** (ADR-0007), not settled — awaits operator approval.
+  **Open sub-decision:** `marid export` raw-default fix — (a) global default-flip [P-4, upstream edit], (b)
+  provenance-aware, (c) *interim* doc guardrail + defer to PH-5 (chosen pending confirmation). **Deviations:**
+  none (audit-only + doc/guard; no upstream code edited; no merge). **Blockers:** operator to (1) approve
+  ADR-0007, (2) pick the export option. **Next:** PH-5 (redactor + B5 controls), or operator direction.
 
 ## 2026-07-07 — MS-005 MET (PH-4 Telegram complete)
 - **Done:** 3-OS `marid-telegram` green on PR #23 (all 20 checks incl. TEST-TG on ubuntu/macOS/windows) —

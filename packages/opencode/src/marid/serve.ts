@@ -45,7 +45,11 @@ export interface MaridServer {
 
 export function maridServe(opts: { hostname: string; port: number; dir?: string }): MaridServer {
   const handler = createMaridHandler(opts.dir ?? maridDir())
-  const server = Bun.serve({ hostname: opts.hostname, port: opts.port, fetch: handler })
+  // idleTimeout: 0 — disable Bun's default 10s idle timeout. The v1 API's SSE stream
+  // (GET /event, /global/event) idles between events; the 10s default closes it, the
+  // client treats the close as an error and reconnect-loops, spamming "event stream
+  // error" in the web UI (and needlessly re-subscribing every client). SSE must stay open.
+  const server = Bun.serve({ hostname: opts.hostname, port: opts.port, idleTimeout: 0, fetch: handler })
   return {
     hostname: server.hostname ?? opts.hostname,
     port: server.port ?? Number(server.url.port),

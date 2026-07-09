@@ -2,11 +2,13 @@ import { EOL } from "os"
 import { Schema } from "effect"
 import { logo as glyphs } from "./logo"
 
+// Plain (non-TTY) marid banner: flame + wordmark, block chars only (this branch prints
+// rows verbatim, so no shadow marks). The colored TTY banner is drawn from tui/logo below.
 const wordmark = [
-  `⠀                                ▄     `,
-  `█▀▀█ █▀▀█ █▀▀█ █▀▀▄ █▀▀▀ █▀▀█ █▀▀█ █▀▀█`,
-  `█  █ █  █ █▀▀▀ █  █ █    █  █ █  █ █▀▀▀`,
-  `▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀  ▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀`,
+  `  ▟▙                          `,
+  ` ▟██▙ █▄ ▄█ ▄▀▀▄ █▀▀▄ ▀█▀ █▀▀▄`,
+  ` ▜██▛ █ ▀ █ █▄▄█ █▄▄▀  █  █  █`,
+  `  ▀▀  █   █ █  █ █ ▀▄ ▄█▄ █▄▄▀`,
 ]
 
 export class CancelledError extends Schema.TaggedErrorClass<CancelledError>()("UICancelledError", {}) {}
@@ -59,7 +61,7 @@ export function logo(pad?: string) {
   const result: string[] = []
   const reset = "\x1b[0m"
   const left = {
-    fg: "\x1b[90m",
+    fg: "\x1b[38;2;240;114;30m", // marid flame — ember orange
     shadow: "\x1b[38;5;235m",
     bg: "\x1b[48;5;235m",
   }

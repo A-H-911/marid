@@ -1,7 +1,7 @@
 ---
 status: Approved (gate 6, 2026-07-03)
 version: v1.0
-updated: 2026-07-03
+updated: 2026-07-08
 owner: operator (STK-001)
 ---
 
@@ -24,7 +24,7 @@ is used for nothing in the MVP. Rollback for any exclusion = re-add the package 
 | slack | **Exclude; pattern harvested** | One-off prototype (R-06) | Not built; marid-telegram supersedes the role | None | None | n/a |
 | containers, docs, identity | **Exclude** (CI images / upstream docs / logo assets) | None inward | Not built/shipped | None | None | Add to profile |
 | cli (`lildax` rewrite), client, sdk-next, httpapi-codegen | **Keep in repo, excluded from distribution** | v2/next-gen chain; zero current consumers of cli | Not shipped; tracked at each sync (C-4 trigger) | None | None | Ship when v2 stabilizes |
-| codemode | **Exclude** (experimental, zero consumers, churning) | None inward | Not built/shipped | None | None | Add to profile |
+| codemode (`@opencode-ai/codemode`) | **Exclude** (experimental, zero consumers, churning) | One dynamic importer `tool/code-mode.ts`, gated behind the default-off `experimentalCodeMode` flag | Not built/shipped — `external` in `marid-build.ts` keeps it out of the binary | None | Hygiene allowlist (`hygiene.test.ts` single-file exception) | **Realized in the 2026-07-07 sync (#31)**: a NEW upstream package; reconciled per ADR-0002 via `external` + single-file hygiene allowlist (no binary leak) |
 | storybook, http-recorder | **Keep as dev tooling, never shipped** | http-recorder used by tests | Dev-only | None | Existing tests | n/a |
 
 ## Capabilities (§4 classification, evidence in gate-4 assessment)
