@@ -11,6 +11,21 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-09 — Root docs Marid-ized (P-5; folded into the WBS-5.5 PR #39)
+- **Done:** Rewrote the public-repo front-door docs for Marid (patch-surface **P-5**): `CONTRIBUTING.md`
+  (Marid docs-first / Keystone feature loop as the centerpiece — pick `AC-` → failing `TEST-` → implement
+  (new pkg / `P-*`) → trackers → `validate=OK` → PR to `develop` → 17 checks → operator merge; links, not
+  duplicates, CLAUDE.md + `docs/AGENTS.md`); `SECURITY.md` (Marid auth/isolation/audit model, reports→operator,
+  keeps the honest "no tool-sandbox / redactor-deferred AC-016" caveats); `CONTEXT.md` (product-name rebrand
+  only, inherited SDK term-names kept); `STATS.md` (single-operator stub → deferred #10 for a real GitHub
+  Releases download-count mechanism); `AGENTS.md` (light Marid-precedence header + `dev`→`develop` + branch-naming
+  fix). Added the **public-repo/'private'=single-operator-usage** clarifier to README + CLAUDE.md. Registered
+  P-5 in `architecture.md` + a reconcile rule in `upstream-sync-strategy.md` (Marid wins; AGENTS = take upstream
+  body + re-apply header). No governed-ID tokens added; `validate_package.py docs/` = OK.
+- **Decisions:** "Private" clarified = single-operator *usage*, repo + releases **public** (DEC-010). Diagrams
+  (Tarseem overlay of both OpenCode + Marid) scoped to a **separate follow-up PR** (38 binary files). **Deviations:**
+  none. **Blockers:** none. **Next:** #39 CI green → operator gate-14; then the Tarseem diagram PR.
+
 ## 2026-07-09 — MS-006 MET (PH-5 complete; public v0.1.0 released; WBS-5.2 + 5.5)
 - **Done:** **Public `v0.1.0` release cut** — `release/v0.1.0` fast-forwarded to develop, #35 merged to `main`
   (merge-commit `8bf4ab61e`), tag `v0.1.0` fired `marid-release.yml`: 7 targets × (archive + `.sha256` +

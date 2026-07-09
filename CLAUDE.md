@@ -24,7 +24,8 @@ operator. The planning phase found most of the target already exists upstream, s
 keep-list without deleting anything. Guiding principle: **reuse upstream capability; anything
 Marid-specific lives in NEW packages speaking existing interfaces** (DEC-009). Attribution: Marid is a
 private downstream distribution of [OpenCode](https://github.com/anomalyco/opencode) (MIT), not
-affiliated with or endorsed by it.
+affiliated with or endorsed by it. **"Private" = single-operator _usage_, not a closed repo — the repo and
+the signed releases are public (DEC-010); it names the intended deployment, one operator on a private network.**
 
 Orient from `docs/01-executive-summary.md` and `docs/00-charter.md`.
 

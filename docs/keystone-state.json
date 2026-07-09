@@ -3471,6 +3471,11 @@
       "timestamp": "2026-07-09T05:00:00Z",
       "actor": "execution-agent",
       "action": "PH-5 close-out: PH-5 status done; AC-014 statement corrected to public/anonymous (DEC-010); FR-064 coverage full->partial (traceability); acceptance-audit AC-014 Partial->Met, AC-015 Met, summary 14/16 Met; milestones MS-006 MET; roadmap PH-5 done; work-breakdown WBS-5.2/5.5 done; status-report + progress-log regenerated; readiness report added. Validate = OK."
+    },
+    {
+      "timestamp": "2026-07-09T06:00:00Z",
+      "actor": "execution-agent",
+      "action": "Root docs Marid-ized (patch-surface P-5, folded into PR #39): CONTRIBUTING (docs-first Keystone feature loop), SECURITY (Marid auth/isolation/audit model), CONTEXT (product-name rebrand), STATS (single-operator stub -> deferred #10), AGENTS (Marid-precedence header + dev->develop). README+CLAUDE private-usage/public-repo clarifier (DEC-010). P-5 registered in architecture.md + upstream-sync-strategy reconcile rule. Tarseem diagram overlay deferred to a separate follow-up PR. validate = OK."
     }
   ]
 }
