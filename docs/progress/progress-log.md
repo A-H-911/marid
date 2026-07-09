@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-08
+updated: 2026-07-09
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,39 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-09 — Root docs Marid-ized (P-5; folded into the WBS-5.5 PR #39)
+- **Done:** Rewrote the public-repo front-door docs for Marid (patch-surface **P-5**): `CONTRIBUTING.md`
+  (Marid docs-first / Keystone feature loop as the centerpiece — pick `AC-` → failing `TEST-` → implement
+  (new pkg / `P-*`) → trackers → `validate=OK` → PR to `develop` → 17 checks → operator merge; links, not
+  duplicates, CLAUDE.md + `docs/AGENTS.md`); `SECURITY.md` (Marid auth/isolation/audit model, reports→operator,
+  keeps the honest "no tool-sandbox / redactor-deferred AC-016" caveats); `CONTEXT.md` (product-name rebrand
+  only, inherited SDK term-names kept); `STATS.md` (single-operator stub → deferred #10 for a real GitHub
+  Releases download-count mechanism); `AGENTS.md` (light Marid-precedence header + `dev`→`develop` + branch-naming
+  fix). Added the **public-repo/'private'=single-operator-usage** clarifier to README + CLAUDE.md. Registered
+  P-5 in `architecture.md` + a reconcile rule in `upstream-sync-strategy.md` (Marid wins; AGENTS = take upstream
+  body + re-apply header). No governed-ID tokens added; `validate_package.py docs/` = OK.
+- **Decisions:** "Private" clarified = single-operator *usage*, repo + releases **public** (DEC-010). Diagrams
+  (Tarseem overlay of both OpenCode + Marid) scoped to a **separate follow-up PR** (38 binary files). **Deviations:**
+  none. **Blockers:** none. **Next:** #39 CI green → operator gate-14; then the Tarseem diagram PR.
+
+## 2026-07-09 — MS-006 MET (PH-5 complete; public v0.1.0 released; WBS-5.2 + 5.5)
+- **Done:** **Public `v0.1.0` release cut** — `release/v0.1.0` fast-forwarded to develop, #35 merged to `main`
+  (merge-commit `8bf4ab61e`), tag `v0.1.0` fired `marid-release.yml`: 7 targets × (archive + `.sha256` +
+  `.minisig`) = **21 signed/checksummed public assets**. RC 17 checks green (**KPI-006**). 3-OS install-smoke
+  proves the anonymous download→`minisign -Vm`→`sha256sum -c`→run path (Linux+Windows green; macOS asset-name
+  typo `.tar.gz`→`.zip` fixed forward, PR #38). **WBS-5.2 done → AC-014 Met.** **WBS-5.5 readiness:** G-IDS
+  cleared (audit rows now *reference* the criteria definitions, `[AC-NNN](acceptance-criteria.md)`), FR-064
+  re-marked `partial` (§18 dep/secret/license scans + SBOM unbuilt — deferred, ADR-0007), AC-014 criterion text
+  corrected to public/anonymous (DEC-010); `validate_package.py docs/` = **RESULT: OK**; readiness report
+  authored. Finalize #36 also landed a **Windows CI fix** (a `site.webmanifest` symlink had been overwritten
+  with JSON, breaking Windows checkout) and the `/session/status` 403 scope fix.
+- **Decisions:** Publish `v0.1.0` now (operator, 2026-07-09). Telegram ships **beta** — replace the hand-rolled
+  gateway post-MVP with a fork (ADR-0008 / deferred #9). **Deviations:** macOS install-smoke fixed forward
+  (release integrity unaffected — asset present + signed). A stale local `v0.1.0` tag pointed at an ancient
+  commit and triggered the wrong (upstream) workflow → caught before any publish, retagged at `8bf4ab61e`.
+- **Blockers:** none. **Next:** operator **gate-14 MVP go/no-go** acceptance of the readiness report → MS-006
+  formally closed. Post-MVP: Telegram fork, egress secret-redactor (AC-016), AC-007 formal supersede.
 
 ## 2026-07-08 — WBS-5.2 prep (install/update path + 3-OS asset smoke; RC still pending)
 - **Done:** Removed the self-update footgun — dropped `UpgradeCommand` from the Marid entry

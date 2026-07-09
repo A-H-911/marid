@@ -42,6 +42,10 @@
 It is designed for **one operator on a private network** who wants to reach the same agent — the same sessions,
 the same tools — from wherever they are: the terminal, a browser, a script, or a phone.
 
+> **"Private" means single-operator _usage_, not a closed repo.** The repository and the signed releases are
+> **public** (DEC-010); "private" refers to the intended deployment — one operator, private network. Contributing?
+> See [CONTRIBUTING.md](CONTRIBUTING.md) — Marid is built **docs-first** (the `docs/` Keystone package).
+
 A single runtime exposes **four interfaces** over **one session engine**, and can run as several **fully isolated
 instances** on one machine. Marid adds only what OpenCode doesn't already provide — a bearer-token auth layer,
 isolated instance lifecycle, and a Telegram gateway — plus a distribution profile that ships a lean keep-list.

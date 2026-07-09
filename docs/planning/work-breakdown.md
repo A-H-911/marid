@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-08
+updated: 2026-07-09
 owner: operator (STK-001)
 ---
 
@@ -9,8 +9,8 @@ owner: operator (STK-001)
 
 Phase → work-item decomposition. Every leaf has a Definition of Done and traces to FRs/NFRs/ADRs/KPIs/RISKs.
 Phases and their exit milestones are in [roadmap](roadmap.md) and [milestones](milestones.md); execution
-follows TDD per [test strategy](../validation/test-strategy.md). Status `✅ done` marks completed leaves;
-the PH-5 table has no Status column yet (not started).
+follows TDD per [test strategy](../validation/test-strategy.md). Status `✅ done` marks completed leaves.
+**PH-5 complete (MS-006, 2026-07-09): all of WBS-5.1..5.5 done.**
 
 ## PH-0 Foundations — ✅ COMPLETE (MS-001 met, 2026-07-04)
 | WBS | Item | DoD | Traces | Status |
@@ -59,7 +59,7 @@ the PH-5 table has no Status column yet (not started).
 | WBS | Item | DoD | Traces | Status |
 |---|---|---|---|---|
 | WBS-5.1 | Public GitHub Releases pipeline (binaries, sha256, minisign signatures; upstream publish channels stripped) | Signed/checksummed release from tag | FR-060/064, C-6 | ✅ done — release pipeline (PR #27): `marid-release.yml` + `marid-build.ts --release` (tar/zip + sha256) + minisign signing; trust anchor wired (`minisign.pub` committed, secret `MINISIGN_SECRET_KEY`). Verified end-to-end (run 28892667716 green; throwaway prerelease signed+checksummed then deleted). AC-013 Met; AC-014 **Partial** (install path + 3-OS smoke = WBS-5.2). |
-| WBS-5.2 | Install/update path for public releases (anonymous download + verify; DEC-010) | Documented + smoke-tested on 3 OSes | ~~RISK-009~~ (dissolved, DEC-010) | — pending (RC + documented download→`minisign -Vm`→`sha256sum -c` path + 3-OS asset smoke; removes `marid upgrade` footgun) |
+| WBS-5.2 | Install/update path for public releases (anonymous download + verify; DEC-010) | Documented + smoke-tested on 3 OSes | ~~RISK-009~~ (dissolved, DEC-010) | ✅ done — public `v0.1.0` RC cut (#35→main, merge-commit `8bf4ab61e`); documented anonymous download→`minisign -Vm`→`sha256sum -c`→run path (README); 3-OS install-smoke on the published signed assets (Linux+Windows green; macOS asset-name typo fixed forward PR #38); `marid upgrade` footgun removed. AC-014 Met. |
 | WBS-5.3 | Upstream sync workflow automation (weekly check, monthly merge PR, delta report) | One real sync cycle executed | FR-061, KPI-004 | ✅ done — sync automation (PR #28): `marid-sync-upstream.yml` (weekly conflict-check + monthly merge PR, delta + migration-review + dependency-diff) **and one real 91-commit cycle merged via merge-commit (PR #31, KPI-004)**; `upstream/dev` now an ancestor of develop. AC-015 Met. Codemode reconciled per ADR-0002 (`external` + hygiene allowlist). |
 | WBS-5.4 | README + attribution/non-affiliation + logo (per branding brief) | README complete; SVG logo committed | FR-065 | ✅ done — Marid README (attribution + minisign verify + `docs/branding/` logo); flame `mark.svg` + `logo-{light,dark}.png` lockup (operator-designed via Claude Design: Pixelify-Sans "Marid", blue face + orange offset, yellow→orange→red flame); P-2 realized (TUI title + startup logo redrawn, UA dropped w/ rationale); P-3 realized (`lsp:false` distribution default, overridable). FR-065 full. |
-| WBS-5.5 | Readiness: traceability check, KPI evidence, docs validation | KPI-005/006 green; readiness report accepted | INV-008 | — pending |
+| WBS-5.5 | Readiness: traceability check, KPI evidence, docs validation | KPI-005/006 green; readiness report accepted | INV-008 | ✅ done — G-IDS fixed (audit rows now reference criteria defs), FR-064 re-marked `partial` (§18 scans/SBOM deferred, ADR-0007), AC-014 text corrected to public/anonymous (DEC-010); `validate_package.py docs/` = **RESULT: OK**; readiness report authored. Pending operator gate-14 acceptance. |

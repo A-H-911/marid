@@ -24,7 +24,8 @@ operator. The planning phase found most of the target already exists upstream, s
 keep-list without deleting anything. Guiding principle: **reuse upstream capability; anything
 Marid-specific lives in NEW packages speaking existing interfaces** (DEC-009). Attribution: Marid is a
 private downstream distribution of [OpenCode](https://github.com/anomalyco/opencode) (MIT), not
-affiliated with or endorsed by it.
+affiliated with or endorsed by it. **"Private" = single-operator _usage_, not a closed repo — the repo and
+the signed releases are public (DEC-010); it names the intended deployment, one operator on a private network.**
 
 Orient from `docs/01-executive-summary.md` and `docs/00-charter.md`.
 
@@ -121,9 +122,10 @@ last-resort upstream-file edit**. Current surface:
   release branch. Local `main` may lag; use `develop` / `origin/develop` for diffs and PR bases.
 - Feature branch → **PR into `develop`, squash-merge**. `develop → main` via a **sync PR, merge-commit**
   (this leaves benign merge nodes on `main` that `develop` lacks — the "ahead/behind 2" is normal).
-- **Branch protection** (main + develop): 14 required checks — `lint`, `typecheck`, `unit` (ubuntu +
+- **Branch protection** (main + develop): 17 required checks — `lint`, `typecheck`, `unit` (ubuntu +
   windows), `smoke` (ubuntu/macos/windows), `pr-title`, `marid-isolation` (ubuntu/macos/windows, added
-  PH-2), `marid-sync` (ubuntu/macos/windows, added PH-3). You cannot self-merge.
+  PH-2), `marid-sync` (ubuntu/macos/windows, added PH-3), `marid-telegram` (ubuntu/macos/windows, added
+  PH-4). You cannot self-merge.
 - CI is `.github/workflows/ci.yml` (**Marid-owned**; upstream workflows are stripped by
   `script/strip-upstream-workflows.ts` with a KEEP allowlist). Marid's `marid-pr-title.yml` replaces
   upstream's PR-standards check.

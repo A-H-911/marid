@@ -2,46 +2,60 @@
 
 ## IMPORTANT
 
-We do not accept AI generated security reports. We receive a large number of
-these and we absolutely do not have the resources to review them all. If you
-submit one that will be an automatic ban from the project.
+We do not accept AI-generated security reports. If you submit one it will be ignored.
 
-## Threat Model
+## What Marid is (for threat-modeling)
 
-### Overview
+**Marid** is a private, single-operator distribution built as a tracking fork of OpenCode. It runs one
+runtime serving a TUI, a token-secured HTTP+SSE API, a web UI, and a Telegram gateway — as XDG-isolated
+multiple instances, intended for **one operator on a private network**. The repository and signed releases
+are public; the *usage* is single-operator.
 
-OpenCode is an AI-powered coding assistant that runs locally on your machine. It provides an agent system with access to powerful tools including shell execution, file operations, and web access.
+Marid **adds** a security layer on top of the inherited OpenCode runtime — but it does not change the
+runtime's fundamental trust model. Read both halves below.
 
-### No Sandbox
+### What Marid adds
 
-OpenCode does **not** sandbox the agent. The permission system exists as a UX feature to help users stay aware of what actions the agent is taking - it prompts for confirmation before executing commands, writing files, etc. However, it is not designed to provide security isolation.
+- **Authentication + authorization (`marid-auth`).** The HTTP surface is fronted by a bearer-token wrapper:
+  scoped tokens (`admin` / `client` / `channel:<name>`), per-token rate limits, request-ID correlation, and
+  an append-only audit log. Unauthenticated calls get `401`; out-of-scope calls get `403`.
+- **Deny-by-default channel policy (INV-001).** Untrusted ingress (Telegram) reaches the server only through
+  a `channel:` token that is strictly weaker than a client token — it may prompt only its own bound agent,
+  on its own sessions, and can never widen tools/permissions or reach privileged routes.
+- **Instance isolation.** Each `marid instance` runs with its own XDG data/cache/config/state roots, so
+  instances do not read or write each other's data.
+- **Audit without secrets (INV-002).** The audit stream logs token *names*, never bearer values or request
+  bodies; secrets live in env / hashed stores.
 
-If you need true isolation, run OpenCode inside a Docker container or VM.
+### What Marid does **not** do (know these before relying on it)
 
-### Server Mode
+- **No agent-tool sandbox.** As with upstream OpenCode, the permission system is a human-in-the-loop UX
+  feature, **not** a security sandbox. An approved tool call runs with the privileges of the process. If you
+  need true isolation, run Marid inside a container or VM.
+- **No full secret redactor yet.** A configured-secret-value redactor across all egress/log/export surfaces
+  is **deferred post-MVP** (AC-016, ADR-0007). Today, secret-in-egress is *contained* by the authorization
+  boundary (a restricted channel agent cannot read `auth.json`), not by redaction.
+- **Provider / MCP data handling** is governed by those third parties, outside Marid's trust boundary.
 
-Server mode is opt-in only. When enabled, set `OPENCODE_SERVER_PASSWORD` to require HTTP Basic Auth. Without this, the server runs unauthenticated (with a warning). It is the end user's responsibility to secure the server - any functionality it provides is not a vulnerability.
+### Authoritative model
 
-### Out of Scope
+The full threat model, trust boundaries, and invariants (`INV-001`..`INV-008`) are in
+[`docs/architecture/security-threat-model.md`](docs/architecture/security-threat-model.md) and
+[`docs/requirements/invariant-register.md`](docs/requirements/invariant-register.md). Those are the source
+of truth; this file is a summary.
 
-| Category                        | Rationale                                                               |
-| ------------------------------- | ----------------------------------------------------------------------- |
-| **Server access when opted-in** | If you enable server mode, API access is expected behavior              |
-| **Sandbox escapes**             | The permission system is not a sandbox (see above)                      |
-| **LLM provider data handling**  | Data sent to your configured LLM provider is governed by their policies |
-| **MCP server behavior**         | External MCP servers you configure are outside our trust boundary       |
-| **Malicious config files**      | Users control their own config; modifying it is not an attack vector    |
+### Out of scope
 
----
+| Category | Rationale |
+| --- | --- |
+| **Agent-tool actions after approval** | The permission system is not a sandbox (see above). |
+| **Sandbox escapes** | Marid does not sandbox agent tools. |
+| **LLM provider data handling** | Governed by your configured provider's policies. |
+| **MCP server behavior** | External MCP servers you configure are outside the trust boundary. |
+| **Operator-controlled config** | You control your own config/instances; modifying them is not an attack vector. |
 
-# Reporting Security Issues
+## Reporting a vulnerability
 
-We appreciate your efforts to responsibly disclose your findings, and will make every effort to acknowledge your contributions.
-
-To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/anomalyco/opencode/security/advisories/new) tab.
-
-The team will send a response indicating the next steps in handling your report. After the initial reply to your report, the security team will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
-
-## Escalation
-
-If you do not receive an acknowledgement of your report within 6 business days, you may send an email to security@anoma.ly
+Report privately via this repository's GitHub **Security Advisories → "Report a vulnerability"** tab — not
+in a public issue. As a single-operator project, triage is best-effort; you'll get a response on next steps
+and be kept informed toward a fix.

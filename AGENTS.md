@@ -1,12 +1,21 @@
+<!-- MARID PRECEDENCE: For Marid's workflow and conventions (default branch, branch naming, git/CI flow,
+tracking protocol, patch-surface discipline) see CLAUDE.md and docs/AGENTS.md — Marid overrides where they
+differ. This file is the upstream OpenCode engineering style guide, kept for the codebase. -->
+
 - To regenerate the legacy JavaScript SDK, run `./packages/sdk/js/script/build.ts`.
 - After changing the public Protocol or Server `HttpApi`, run `bun run generate` from `packages/client`. Do not edit `src/generated` or `src/generated-effect` directly.
 - Keep runtime dependencies directed from Schema to Core and Protocol, then from Core and Protocol to Server. Client runtime code may depend on Schema and Protocol but never Core or Server; `sdk-next` composes Client, Core, and Server.
-- The default branch in this repo is `dev`.
-- Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
+- The default branch in this repo is **`develop`** (Marid; upstream's is `dev`). `main` is the protected
+  release branch — use `develop` / `origin/develop` for diffs and PR bases.
 
 ## Branch Names
 
-Use a short branch name of at most three words, separated by hyphens. Do not use slashes or type prefixes such as `feat/` or `fix/`.
+> **Marid:** use `feature/*` (or `fix/*`, `chore/*`, `docs/*`) branches and conventional-commit PR titles
+> (`type(scope): summary`), per CLAUDE.md. The upstream convention below (no slashes / no type prefixes) does
+> **not** apply to Marid.
+
+Upstream convention: use a short branch name of at most three words, separated by hyphens. Do not use slashes
+or type prefixes such as `feat/` or `fix/`.
 
 Examples: `session-recovery`, `fix-scroll-state`, `regenerate-sdk`.
 

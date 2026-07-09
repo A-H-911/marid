@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-05
+updated: 2026-07-09
 owner: operator (STK-001)
 generation: derived
 ---
@@ -82,7 +82,7 @@ items in [work-breakdown](../planning/work-breakdown.md); tests (TEST- families)
 | FR-061 | MVP | ADR-0001; gate-9 | WBS-5.3 | TEST-SYNCUP | RISK-005 | AC-015 | partial |
 | FR-062 | MVP | Gate-9 | WBS-0.3 | TEST-BUILD (CI-enforced) | — | — | full |
 | FR-063 | MVP | Gate-13 package | WBS-0.3 (test strategy) | TEST-BUILD | — | — | full |
-| FR-064 | MVP | Gate-9, Gate-10 | WBS-0.3, WBS-5.1 | TEST-BUILD | RISK-004 | AC-014 | full |
+| FR-064 | MVP | Gate-9, Gate-10 | WBS-0.3, WBS-5.1 | TEST-BUILD | RISK-004 | AC-014 | partial |
 | FR-065 | MVP | DEC-008; gate-3 | WBS-1.5, WBS-5.4 | TEST-BUILD (hygiene) | — | AC-013 | full |
 | NFR-001 | MVP | ADR-0001, ADR-0002; P-* register | WBS-5.3 (delta report) | TEST-SYNCUP, KPI-004 | RISK-005 | — | full |
 | NFR-002 | MVP | DEC-009 | architecture principles | Gate-5 review + phase reviews | — | — | full |
