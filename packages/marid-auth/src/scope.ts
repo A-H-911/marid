@@ -46,9 +46,17 @@ function segmentsOf(pathname: string): string[] {
 
 // The target session id of a request, or undefined for the /session root or any
 // non-session route. Segments: "/session/ses_x/message" → ["session","ses_x",...]
+//
+// Only a real session id (`ses_`-prefixed) is session-scoped. Literal sub-routes
+// like `/session/status` (a directory-status meta route the web UI hits at
+// bootstrap) are NOT a session — without this guard "status" was read as a
+// session id, hit the ownership gate, and 403'd for every non-admin token,
+// breaking the web UI on connect. Non-id second segments fall through to the
+// non-session allow path, exactly like `GET /session`.
 export function sessionFromPathname(pathname: string): string | undefined {
   const segments = segmentsOf(pathname)
-  return segments[0] === "session" && segments.length >= 2 ? segments[1] : undefined
+  if (segments[0] !== "session" || segments.length < 2) return undefined
+  return segments[1].startsWith("ses_") ? segments[1] : undefined
 }
 
 // The two session-*creating* ops in SessionPaths: create (POST /session) and

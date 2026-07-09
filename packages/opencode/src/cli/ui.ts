@@ -5,10 +5,10 @@ import { logo as glyphs } from "./logo"
 // Plain (non-TTY) marid banner: flame + wordmark, block chars only (this branch prints
 // rows verbatim, so no shadow marks). The colored TTY banner is drawn from tui/logo below.
 const wordmark = [
-  `  ▟▙                      `,
-  ` ▟██▙ █▄ ▄█ █▀█ █▀█ █ █▀▀▄`,
-  ` ▜██▛ █ ▀ █ █▀█ █▀▄ █ █  █`,
-  `  ▀▀  ▀   ▀ ▀ ▀ ▀ ▀▀ ▀ ▀▀▀`,
+  `  ▟▙                          `,
+  ` ▟██▙ █▄ ▄█ ▄▀▀▄ █▀▀▄ ▀█▀ █▀▀▄`,
+  ` ▜██▛ █ ▀ █ █▄▄█ █▄▄▀  █  █  █`,
+  `  ▀▀  █   █ █  █ █ ▀▄ ▄█▄ █▄▄▀`,
 ]
 
 export class CancelledError extends Schema.TaggedErrorClass<CancelledError>()("UICancelledError", {}) {}

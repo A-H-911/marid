@@ -1583,7 +1583,7 @@ export function LegacyHome() {
 
   return (
     <div class="mx-auto mt-55 w-full md:w-auto px-4">
-      <Logo class="md:w-xl opacity-12" />
+      <Logo class="md:w-md" />
       <Button
         size="large"
         variant="ghost"
