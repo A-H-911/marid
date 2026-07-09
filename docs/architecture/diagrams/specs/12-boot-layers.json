@@ -3,13 +3,58 @@
   "diagramType": "flowchart",
   "direction": "TB",
   "meta": {
-    "title": "Boot & Effect Layer Composition - where to inject"
+    "title": "Marid on OpenCode - Boot & Effect Layers (reused as-is)"
   },
   "styles": {
     "hook": {
       "fill": "#FFF7E0",
       "border": {
         "color": "#B7950B"
+      }
+    },
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
       }
     }
   },

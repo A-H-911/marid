@@ -1,7 +1,24 @@
-# opencode — Architecture Diagrams
+# Marid on OpenCode — Architecture Diagrams
 
-Newcomer-oriented diagrams of the opencode monorepo. Each has a **`.png`** (open it) and a
-**`.svg`** (crisp zoom); the editable Tarseem spec lives in **`specs/`**.
+Newcomer-oriented diagrams of the monorepo, showing **both the upstream OpenCode runtime and Marid's
+additions**. Each has a **`.png`** (open it) and a **`.svg`** (crisp zoom); the editable Tarseem spec lives
+in **`specs/`** (rendered with [Tarseem](#regenerate), not Mermaid).
+
+**Marid colour legend** (the README palette, applied across every diagram):
+
+| Colour | Meaning |
+|---|---|
+| 🟥 **red** | `marid-auth` — the bearer-token auth / deny-by-default boundary |
+| 🟧 **orange** | `marid-telegram` — the channel gateway (separate process, untrusted ingress) |
+| ⬛ **dark** | `marid-instance` / the session engine + runtime (reused from OpenCode) |
+| 🟦 **blue** | client/access surfaces (TUI, Web, API) |
+| ⬜ neutral | upstream OpenCode internals, **reused as-is** |
+
+Marid adds only four things as **new packages speaking existing interfaces** (`marid-auth`,
+`marid-instance`, `marid-telegram`, a distribution profile), so most diagrams are upstream internals with
+a legend note; the overlay-bearing ones (01, 02, 05, 13, 14, 17, 18) show the Marid nodes in colour.
+Diagrams **20** (topology) and **21** (deny-by-default channel policy) are the Marid-specific views embedded
+in the root `README.md`.
 
 Suggested reading order:
 

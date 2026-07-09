@@ -3,7 +3,7 @@
   "diagramType": "swimlane",
   "direction": "LR",
   "meta": {
-    "title": "Contributor Workflow (opencode repo)"
+    "title": "Contributor Workflow (Marid)"
   },
   "lanes": [
     {
@@ -79,21 +79,21 @@
       "id": "pr",
       "lane": "gh",
       "label": {
-        "text": "PR -> dev branch"
+        "text": "PR -> develop branch"
       }
     },
     {
       "id": "ci",
       "lane": "gh",
       "label": {
-        "text": "CI checks + review"
+        "text": "17 required checks"
       }
     },
     {
       "id": "merge",
       "lane": "gh",
       "label": {
-        "text": "merge"
+        "text": "operator merge (approval-gated)"
       }
     }
   ],
@@ -143,5 +143,52 @@
       "source": "ci",
       "target": "merge"
     }
-  ]
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
 }

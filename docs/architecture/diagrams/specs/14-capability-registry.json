@@ -3,7 +3,7 @@
   "diagramType": "mindmap",
   "direction": "LR",
   "meta": {
-    "title": "Add a Capability - extension points"
+    "title": "Marid on OpenCode - Add a Capability (+ Marid channel policy)"
   },
   "nodes": [
     {
@@ -95,6 +95,26 @@
       "label": {
         "text": "command/ + skill/"
       }
+    },
+    {
+      "id": "mchan",
+      "shape": "rect",
+      "label": {
+        "text": "channel capability policy"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "mchanhow",
+      "shape": "rect",
+      "label": {
+        "text": "deny-by-default: bound agent + owned sessions only"
+      },
+      "styleRefs": [
+        "auth"
+      ]
     }
   ],
   "edges": [
@@ -153,6 +173,63 @@
     {
       "source": "cmd",
       "target": "cmdhow"
+    },
+    {
+      "id": "m_root_mchan",
+      "source": "root",
+      "target": "mchan"
+    },
+    {
+      "id": "m_mchan_mchanhow",
+      "source": "mchan",
+      "target": "mchanhow"
     }
-  ]
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
 }

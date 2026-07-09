@@ -3,7 +3,7 @@
   "diagramType": "activity",
   "direction": "TB",
   "meta": {
-    "title": "Permission + Question Flow (permission/, question/)"
+    "title": "Marid on OpenCode - Permission Flow (+ Marid channel scope gate)"
   },
   "nodes": [
     {
@@ -69,6 +69,16 @@
       "label": {
         "text": ""
       }
+    },
+    {
+      "id": "mgate",
+      "shape": "rect",
+      "label": {
+        "text": "marid-auth channel scope gate (deny-by-default)"
+      },
+      "styleRefs": [
+        "auth"
+      ]
     }
   ],
   "edges": [
@@ -76,11 +86,6 @@
       "id": "a1",
       "source": "start",
       "target": "req"
-    },
-    {
-      "id": "a2",
-      "source": "req",
-      "target": "eval"
     },
     {
       "id": "a3",
@@ -154,6 +159,66 @@
       "id": "a13",
       "source": "reject",
       "target": "end"
+    },
+    {
+      "id": "m_req_mgate",
+      "source": "req",
+      "target": "mgate"
+    },
+    {
+      "id": "m_mgate_eval",
+      "source": "mgate",
+      "target": "eval",
+      "label": {
+        "text": "in scope"
+      }
     }
-  ]
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
 }

@@ -3,7 +3,7 @@
   "diagramType": "dependency",
   "direction": "LR",
   "meta": {
-    "title": "opencode - Package Dependency Graph"
+    "title": "Marid on OpenCode - Package Dependency Graph (@marid/* added)"
   },
   "nodes": [
     {
@@ -118,6 +118,43 @@
       "id": "enterprise",
       "label": {
         "text": "enterprise"
+      }
+    },
+    {
+      "id": "mauth",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/auth"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "minst",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/instance"
+      },
+      "styleRefs": [
+        "core"
+      ]
+    },
+    {
+      "id": "mtg",
+      "shape": "rect",
+      "label": {
+        "text": "marid-telegram"
+      },
+      "styleRefs": [
+        "channel"
+      ]
+    },
+    {
+      "id": "mlegend",
+      "shape": "rect",
+      "label": {
+        "text": "Marid-added: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
       }
     }
   ],
@@ -296,6 +333,77 @@
       "id": "d35",
       "source": "plugin",
       "target": "sdk"
+    },
+    {
+      "id": "m_mauth_server",
+      "source": "mauth",
+      "target": "server",
+      "label": {
+        "text": "wraps app.fetch"
+      }
+    },
+    {
+      "id": "m_minst_server",
+      "source": "minst",
+      "target": "server",
+      "label": {
+        "text": "spawns instances"
+      }
+    },
+    {
+      "id": "m_mtg_sdk",
+      "source": "mtg",
+      "target": "sdk",
+      "label": {
+        "text": "official SDK"
+      }
     }
-  ]
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
 }

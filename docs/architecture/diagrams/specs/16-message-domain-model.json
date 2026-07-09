@@ -2,7 +2,7 @@
   "specVersion": "1.0",
   "diagramType": "class",
   "meta": {
-    "title": "Message / Part Domain Model (session/message-v2.ts)"
+    "title": "Marid on OpenCode - Message / Part Domain Model (reused as-is)"
   },
   "nodes": [
     {
@@ -153,5 +153,52 @@
         "text": "variant"
       }
     }
-  ]
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
 }

@@ -60,52 +60,17 @@ One runtime, one session engine, four interfaces. The **only** authenticated bou
 (`marid serve`); the local TUI talks to the engine in-process. Untrusted ingress (Telegram) is bridged by a
 gateway **outside** the core and speaks to the server with a restricted `channel:` token.
 
-```mermaid
-graph TB
-    subgraph ops["single operator · private network"]
-      TUI["🖥️ TUI<br/><b>marid</b>"]:::local
-      WEB["🌐 Web UI"]:::client
-      API["🔌 HTTP + SSE API / SDK"]:::client
-      TG["✈️ Telegram"]:::channel
-    end
-
-    GW["marid-telegram gateway<br/><i>outside the core · holds no provider keys</i>"]:::channel
-    AUTH["🔐 marid-auth<br/>bearer tokens · scopes · rate-limit · audit"]:::auth
-    ENGINE["⚙️ session engine<br/><i>one runtime, reused from OpenCode</i>"]:::core
-    INST["📦 isolated instances<br/><i>per-instance data · cache · config · state</i>"]:::core
-
-    TUI -. "in-process · no token" .-> ENGINE
-    WEB -- "client token" --> AUTH
-    API -- "client / admin token" --> AUTH
-    TG --> GW
-    GW -- "channel: token (restricted)" --> AUTH
-    AUTH -- "authorized request" --> ENGINE
-    ENGINE --> INST
-
-    classDef local fill:#2F6BFF,stroke:#1E4FD0,color:#ffffff;
-    classDef client fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
-    classDef channel fill:#F0731F,stroke:#D9611A,color:#ffffff;
-    classDef auth fill:#DC2A16,stroke:#A81f10,color:#ffffff;
-    classDef core fill:#1C1714,stroke:#000000,color:#F4F1EA;
-```
+<p align="center">
+  <img src="docs/architecture/diagrams/20-marid-topology.png" alt="Marid topology — one runtime, four interfaces (TUI, Web, API, Telegram) reaching one session engine through marid-auth, as isolated instances" width="960">
+</p>
 
 **Untrusted ingress is deny-by-default** (INV-001): a `channel:` token is strictly weaker than a client token —
 it may only prompt *its own bound agent*, on *its own sessions*, and can never widen tools or permissions or
 reach privileged routes.
 
-```mermaid
-graph LR
-    U["Telegram user"]:::ext -->|message| GW["gateway"]:::channel
-    GW -->|"POST session/:id/message<br/>Bearer channel: token"| G{"marid-auth<br/>scope gate"}:::auth
-    G -->|"allowed: bound agent,<br/>owned session only"| OK["✅ prompt runs"]:::core
-    G -->|"denied: /shell, /command,<br/>tool/permission override,<br/>other agents"| NO["⛔ 403"]:::deny
-
-    classDef ext fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
-    classDef channel fill:#F0731F,stroke:#D9611A,color:#ffffff;
-    classDef auth fill:#DC2A16,stroke:#A81f10,color:#ffffff;
-    classDef core fill:#1C1714,stroke:#000,color:#F4F1EA;
-    classDef deny fill:#3a1512,stroke:#DC2A16,color:#ffd9d0;
-```
+<p align="center">
+  <img src="docs/architecture/diagrams/21-marid-inv001-deny.png" alt="Deny-by-default channel policy — a channel token routes through the marid-auth scope gate; allowed only for its bound agent on owned sessions, otherwise 403" width="820">
+</p>
 
 ## Install & verify
 

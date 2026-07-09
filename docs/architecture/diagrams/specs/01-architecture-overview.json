@@ -8,68 +8,282 @@
   "styles": {
     "datastore": {
       "fill": "#E8F0FF",
-      "border": { "color": "#1976D2" }
+      "border": {
+        "color": "#1976D2"
+      }
     },
     "ext": {
       "fill": "#FFF4E5",
-      "border": { "color": "#E67E22" }
+      "border": {
+        "color": "#E67E22"
+      }
     },
     "local": {
       "fill": "#2F6BFF",
-      "border": { "color": "#1E4FD0" },
-      "text": { "color": "#ffffff" }
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
     },
     "client": {
       "fill": "#5C93FF",
-      "border": { "color": "#2F6BFF" },
-      "text": { "color": "#0B1220" }
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
     },
     "channel": {
       "fill": "#F0731F",
-      "border": { "color": "#D9611A" },
-      "text": { "color": "#ffffff" }
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
     },
     "auth": {
       "fill": "#DC2A16",
-      "border": { "color": "#A81F10" },
-      "text": { "color": "#ffffff" }
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
     },
     "core": {
       "fill": "#1C1714",
-      "border": { "color": "#000000" },
-      "text": { "color": "#F4F1EA" }
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
     }
   },
   "nodes": [
-    { "id": "tui", "shape": "rect", "styleRefs": ["local"], "label": { "text": "TUI (@opencode-ai/tui)" } },
-    { "id": "web", "shape": "rect", "styleRefs": ["client"], "label": { "text": "Web / Desktop (app + ui)" } },
-    { "id": "cli", "shape": "rect", "styleRefs": ["local"], "label": { "text": "opencode CLI (bin + orchestrator)" } },
-    { "id": "mauth", "shape": "rect", "styleRefs": ["auth"], "label": { "text": "marid-auth (bearer tokens - scopes - rate-limit - audit)" } },
-    { "id": "api", "shape": "rect", "label": { "text": "HTTP API :4096 (protocol + server)" } },
-    { "id": "minst", "shape": "rect", "styleRefs": ["core"], "label": { "text": "marid-instance (XDG-isolated runtimes)" } },
-    { "id": "mtg", "shape": "rect", "styleRefs": ["channel"], "label": { "text": "marid-telegram gateway (separate process - no provider keys)" } },
-    { "id": "core", "shape": "rect", "label": { "text": "core (runtime + config)" } },
-    { "id": "session", "shape": "rect", "label": { "text": "Session engine (run loop)" } },
-    { "id": "llm", "shape": "rect", "label": { "text": "LLM core (@opencode-ai/llm)" } },
-    { "id": "providers", "shape": "rect", "styleRefs": ["ext"], "label": { "text": "15+ LLM providers" } },
-    { "id": "tools", "shape": "rect", "label": { "text": "Tools (read/write/shell/grep)" } },
-    { "id": "mcp", "shape": "rect", "styleRefs": ["ext"], "label": { "text": "MCP / LSP / ACP" } },
-    { "id": "db", "shape": "cylinder", "styleRefs": ["datastore"], "label": { "text": "SQLite via Drizzle (core/database)" } },
-    { "id": "legend", "shape": "rect", "label": { "text": "Marid-added packages: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is (DEC-009)." } }
+    {
+      "id": "tui",
+      "shape": "rect",
+      "styleRefs": [
+        "local"
+      ],
+      "label": {
+        "text": "TUI (@opencode-ai/tui)"
+      }
+    },
+    {
+      "id": "web",
+      "shape": "rect",
+      "styleRefs": [
+        "client"
+      ],
+      "label": {
+        "text": "Web / Desktop (app + ui)"
+      }
+    },
+    {
+      "id": "cli",
+      "shape": "rect",
+      "styleRefs": [
+        "local"
+      ],
+      "label": {
+        "text": "opencode CLI (bin + orchestrator)"
+      }
+    },
+    {
+      "id": "mauth",
+      "shape": "rect",
+      "styleRefs": [
+        "auth"
+      ],
+      "label": {
+        "text": "marid-auth (bearer tokens - scopes - rate-limit - audit)"
+      }
+    },
+    {
+      "id": "api",
+      "shape": "rect",
+      "label": {
+        "text": "HTTP API :4096 (protocol + server)"
+      }
+    },
+    {
+      "id": "minst",
+      "shape": "rect",
+      "styleRefs": [
+        "core"
+      ],
+      "label": {
+        "text": "marid-instance (XDG-isolated runtimes)"
+      }
+    },
+    {
+      "id": "mtg",
+      "shape": "rect",
+      "styleRefs": [
+        "channel"
+      ],
+      "label": {
+        "text": "marid-telegram gateway (separate process - no provider keys)"
+      }
+    },
+    {
+      "id": "core",
+      "shape": "rect",
+      "label": {
+        "text": "core (runtime + config)"
+      }
+    },
+    {
+      "id": "session",
+      "shape": "rect",
+      "label": {
+        "text": "Session engine (run loop)"
+      }
+    },
+    {
+      "id": "llm",
+      "shape": "rect",
+      "label": {
+        "text": "LLM core (@opencode-ai/llm)"
+      }
+    },
+    {
+      "id": "providers",
+      "shape": "rect",
+      "styleRefs": [
+        "ext"
+      ],
+      "label": {
+        "text": "15+ LLM providers"
+      }
+    },
+    {
+      "id": "tools",
+      "shape": "rect",
+      "label": {
+        "text": "Tools (read/write/shell/grep)"
+      }
+    },
+    {
+      "id": "mcp",
+      "shape": "rect",
+      "styleRefs": [
+        "ext"
+      ],
+      "label": {
+        "text": "MCP / LSP / ACP"
+      }
+    },
+    {
+      "id": "db",
+      "shape": "cylinder",
+      "styleRefs": [
+        "datastore"
+      ],
+      "label": {
+        "text": "SQLite via Drizzle (core/database)"
+      }
+    },
+    {
+      "id": "legend",
+      "shape": "rect",
+      "label": {
+        "text": "Marid-added packages: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+      }
+    }
   ],
   "edges": [
-    { "id": "e1", "source": "tui", "target": "cli" },
-    { "id": "e2", "source": "cli", "target": "session", "label": { "text": "in-process - no token" } },
-    { "id": "e3", "source": "web", "target": "mauth", "label": { "text": "client token" } },
-    { "id": "e3b", "source": "mauth", "target": "api", "label": { "text": "authorized" } },
-    { "id": "e3c", "source": "mtg", "target": "mauth", "label": { "text": "channel: token" } },
-    { "id": "e3d", "source": "minst", "target": "api", "label": { "text": "spawns N instances" } },
-    { "id": "e4", "source": "api", "target": "session" },
-    { "id": "e5", "source": "session", "target": "core" },
-    { "id": "e6", "source": "session", "target": "llm" },
-    { "id": "e7", "source": "llm", "target": "providers", "label": { "text": "AI SDK" } },
-    { "id": "e8", "source": "session", "target": "tools" },
-    { "id": "e9", "source": "tools", "target": "mcp" },
-    { "id": "e10", "source": "session", "target": "db", "label": { "text": "persist" } }
+    {
+      "id": "e1",
+      "source": "tui",
+      "target": "cli"
+    },
+    {
+      "id": "e2",
+      "source": "cli",
+      "target": "session",
+      "label": {
+        "text": "in-process - no token"
+      }
+    },
+    {
+      "id": "e3",
+      "source": "web",
+      "target": "mauth",
+      "label": {
+        "text": "client token"
+      }
+    },
+    {
+      "id": "e3b",
+      "source": "mauth",
+      "target": "api",
+      "label": {
+        "text": "authorized"
+      }
+    },
+    {
+      "id": "e3c",
+      "source": "mtg",
+      "target": "mauth",
+      "label": {
+        "text": "channel: token"
+      }
+    },
+    {
+      "id": "e3d",
+      "source": "minst",
+      "target": "api",
+      "label": {
+        "text": "spawns N instances"
+      }
+    },
+    {
+      "id": "e4",
+      "source": "api",
+      "target": "session"
+    },
+    {
+      "id": "e5",
+      "source": "session",
+      "target": "core"
+    },
+    {
+      "id": "e6",
+      "source": "session",
+      "target": "llm"
+    },
+    {
+      "id": "e7",
+      "source": "llm",
+      "target": "providers",
+      "label": {
+        "text": "AI SDK"
+      }
+    },
+    {
+      "id": "e8",
+      "source": "session",
+      "target": "tools"
+    },
+    {
+      "id": "e9",
+      "source": "tools",
+      "target": "mcp"
+    },
+    {
+      "id": "e10",
+      "source": "session",
+      "target": "db",
+      "label": {
+        "text": "persist"
+      }
+    }
   ]
 }

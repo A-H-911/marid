@@ -3,7 +3,7 @@
   "diagramType": "flowchart",
   "direction": "LR",
   "meta": {
-    "title": "opencode - Runtime Data Flow"
+    "title": "Marid on OpenCode - Runtime Data Flow (marid-auth in the request path)"
   },
   "nodes": [
     {
@@ -82,6 +82,23 @@
       "label": {
         "text": "Render to UI"
       }
+    },
+    {
+      "id": "mauth",
+      "shape": "rect",
+      "label": {
+        "text": "marid-auth (authN / authZ)"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "mlegend",
+      "shape": "rect",
+      "label": {
+        "text": "Marid-added: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+      }
     }
   ],
   "edges": [
@@ -89,11 +106,6 @@
       "id": "f1",
       "source": "start",
       "target": "ui"
-    },
-    {
-      "id": "f2",
-      "source": "ui",
-      "target": "api"
     },
     {
       "id": "f3",
@@ -156,6 +168,69 @@
       "label": {
         "text": "stream"
       }
+    },
+    {
+      "id": "m_ui_mauth",
+      "source": "ui",
+      "target": "mauth",
+      "label": {
+        "text": "client token"
+      }
+    },
+    {
+      "id": "m_mauth_api",
+      "source": "mauth",
+      "target": "api",
+      "label": {
+        "text": "authorized"
+      }
     }
-  ]
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
 }

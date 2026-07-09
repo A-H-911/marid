@@ -3,7 +3,7 @@
   "diagramType": "architecture",
   "direction": "LR",
   "meta": {
-    "title": "Process & Telemetry View"
+    "title": "Marid on OpenCode - Process & Telemetry (Marid instances + telegram)"
   },
   "styles": {
     "ext": {
@@ -16,6 +16,51 @@
       "fill": "#E8F0FF",
       "border": {
         "color": "#1976D2"
+      }
+    },
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
       }
     }
   },
@@ -78,7 +123,7 @@
         "store"
       ],
       "label": {
-        "text": "SQLite (per workspace)"
+        "text": "SQLite (one global file per machine)"
       }
     },
     {
@@ -90,6 +135,43 @@
       "label": {
         "text": "OTLP collector (traces/spans)"
       }
+    },
+    {
+      "id": "mauth",
+      "shape": "rect",
+      "label": {
+        "text": "marid-auth"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "mtg",
+      "shape": "rect",
+      "label": {
+        "text": "marid-telegram gateway (separate process)"
+      },
+      "styleRefs": [
+        "channel"
+      ]
+    },
+    {
+      "id": "minst",
+      "shape": "rect",
+      "label": {
+        "text": "marid-instance (N XDG-isolated servers)"
+      },
+      "styleRefs": [
+        "core"
+      ]
+    },
+    {
+      "id": "mlegend",
+      "shape": "rect",
+      "label": {
+        "text": "Marid-added: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+      }
     }
   ],
   "edges": [
@@ -99,14 +181,6 @@
       "target": "server",
       "label": {
         "text": "in-process / HTTP"
-      }
-    },
-    {
-      "id": "p2",
-      "source": "web",
-      "target": "server",
-      "label": {
-        "text": "HTTP + SSE"
       }
     },
     {
@@ -155,6 +229,38 @@
       "target": "otlp",
       "label": {
         "text": "spans"
+      }
+    },
+    {
+      "id": "m_web_mauth",
+      "source": "web",
+      "target": "mauth",
+      "label": {
+        "text": "client token"
+      }
+    },
+    {
+      "id": "m_mauth_server",
+      "source": "mauth",
+      "target": "server",
+      "label": {
+        "text": "authorized"
+      }
+    },
+    {
+      "id": "m_mtg_mauth",
+      "source": "mtg",
+      "target": "mauth",
+      "label": {
+        "text": "channel token"
+      }
+    },
+    {
+      "id": "m_minst_server",
+      "source": "minst",
+      "target": "server",
+      "label": {
+        "text": "spawns N"
       }
     }
   ]

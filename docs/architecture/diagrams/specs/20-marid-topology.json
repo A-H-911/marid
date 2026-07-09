@@ -1,0 +1,198 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "architecture",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid - one runtime, four interfaces, single operator"
+  },
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    },
+    "deny": {
+      "fill": "#3A1512",
+      "border": {
+        "color": "#DC2A16"
+      },
+      "text": {
+        "color": "#FFD9D0"
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "tui",
+      "shape": "rect",
+      "styleRefs": [
+        "local"
+      ],
+      "label": {
+        "text": "TUI (marid)"
+      }
+    },
+    {
+      "id": "web",
+      "shape": "rect",
+      "styleRefs": [
+        "client"
+      ],
+      "label": {
+        "text": "Web UI"
+      }
+    },
+    {
+      "id": "api",
+      "shape": "rect",
+      "styleRefs": [
+        "client"
+      ],
+      "label": {
+        "text": "HTTP + SSE API / SDK"
+      }
+    },
+    {
+      "id": "tg",
+      "shape": "rect",
+      "styleRefs": [
+        "channel"
+      ],
+      "label": {
+        "text": "Telegram"
+      }
+    },
+    {
+      "id": "gw",
+      "shape": "rect",
+      "styleRefs": [
+        "channel"
+      ],
+      "label": {
+        "text": "marid-telegram gateway (outside the core - holds no provider keys)"
+      }
+    },
+    {
+      "id": "auth",
+      "shape": "rect",
+      "styleRefs": [
+        "auth"
+      ],
+      "label": {
+        "text": "marid-auth (bearer tokens - scopes - rate-limit - audit)"
+      }
+    },
+    {
+      "id": "engine",
+      "shape": "rect",
+      "styleRefs": [
+        "core"
+      ],
+      "label": {
+        "text": "session engine (one runtime, reused from OpenCode)"
+      }
+    },
+    {
+      "id": "inst",
+      "shape": "rect",
+      "styleRefs": [
+        "core"
+      ],
+      "label": {
+        "text": "isolated instances (per-instance data - cache - config - state)"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "t1",
+      "source": "tui",
+      "target": "engine",
+      "label": {
+        "text": "in-process - no token"
+      }
+    },
+    {
+      "id": "t2",
+      "source": "web",
+      "target": "auth",
+      "label": {
+        "text": "client token"
+      }
+    },
+    {
+      "id": "t3",
+      "source": "api",
+      "target": "auth",
+      "label": {
+        "text": "client / admin token"
+      }
+    },
+    {
+      "id": "t4",
+      "source": "tg",
+      "target": "gw"
+    },
+    {
+      "id": "t5",
+      "source": "gw",
+      "target": "auth",
+      "label": {
+        "text": "channel: token (restricted)"
+      }
+    },
+    {
+      "id": "t6",
+      "source": "auth",
+      "target": "engine",
+      "label": {
+        "text": "authorized request"
+      }
+    },
+    {
+      "id": "t7",
+      "source": "engine",
+      "target": "inst"
+    }
+  ]
+}
