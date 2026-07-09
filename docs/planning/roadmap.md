@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: v1.0
-updated: 2026-07-07
+updated: 2026-07-09
 owner: operator (STK-001)
 ---
 
@@ -21,7 +21,7 @@ each phase ends at a review checkpoint with the operator (see [checkpoints](../e
 | PH-2 Instances ✅ | marid-instance CLI + isolation | **MS-003 MET (2026-07-05)**: KPI-003 — 3-OS `marid-isolation` green (2 consecutive all-green runs incl. announced unit-windows re-run). Shipped PR #17. | PH-1 |
 | PH-3 Cross-interface ✅ | TUI-as-client default + §7 flow verified | **MS-004 MET (2026-07-05)**: KPI-001 demo repeatable — 3-OS `marid-sync` green; concurrency semantics documented (contract v1.1). Shipped PR #19. | PH-1 (parallel with PH-2) |
 | PH-4 Telegram ✅ | marid-telegram + capability policy | **MS-005 MET (2026-07-07)**: KPI-002 — 3-OS `marid-telegram` green; Telegram round trip + policy-denial paths verified. Shipped PR #23. | PH-1; PH-3 for live-update assertions |
-| PH-5 Release & sync | Private distribution + one real upstream sync + docs | MS-006 = MVP: KPI-004, KPI-005, KPI-006 green; readiness report accepted (gate 14 of execution) | PH-2..4 |
+| PH-5 Release & sync ✅ | Public distribution + one real upstream sync + docs | **MS-006 MET (2026-07-09)**: public `v0.1.0` release (7 signed targets), KPI-004 (sync #31) / KPI-005 (clean G-TRACE) / KPI-006 (RC 17 checks green); readiness report — pending operator gate-14 acceptance | PH-2..4 |
 
 Per-phase goal/scope/deliverables/validation/exit detail is carried in the milestone criteria
 ([milestones](milestones.md)) and the phase-grouped work items ([work-breakdown](work-breakdown.md)); this
