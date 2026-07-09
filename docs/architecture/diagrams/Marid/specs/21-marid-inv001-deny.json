@@ -127,7 +127,7 @@
       "source": "gw",
       "target": "g",
       "label": {
-        "text": "POST session/:id/message - Bearer channel: token"
+        "text": "channel: token"
       }
     },
     {
@@ -135,7 +135,7 @@
       "source": "g",
       "target": "ok",
       "label": {
-        "text": "allowed: bound agent, owned session only"
+        "text": "allowed: bound agent + owned session"
       }
     },
     {
@@ -143,7 +143,7 @@
       "source": "g",
       "target": "no",
       "label": {
-        "text": "denied: shell / command, tool or permission override, other agents"
+        "text": "denied: shell/command, overrides, other agents"
       }
     }
   ]

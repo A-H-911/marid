@@ -190,5 +190,8 @@
         "color": "#F4F1EA"
       }
     }
+  },
+  "theme": {
+    "ref": "corporate"
   }
 }

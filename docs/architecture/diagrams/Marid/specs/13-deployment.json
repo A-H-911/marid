@@ -236,23 +236,20 @@
       "source": "web",
       "target": "mauth",
       "label": {
-        "text": "client token"
+        "text": "client"
       }
     },
     {
       "id": "m_mauth_server",
       "source": "mauth",
-      "target": "server",
-      "label": {
-        "text": "authorized"
-      }
+      "target": "server"
     },
     {
       "id": "m_mtg_mauth",
       "source": "mtg",
       "target": "mauth",
       "label": {
-        "text": "channel token"
+        "text": "channel"
       }
     },
     {

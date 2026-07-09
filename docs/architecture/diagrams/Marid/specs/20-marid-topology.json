@@ -149,7 +149,7 @@
       "source": "tui",
       "target": "engine",
       "label": {
-        "text": "in-process - no token"
+        "text": "in-process"
       }
     },
     {
@@ -157,7 +157,7 @@
       "source": "web",
       "target": "auth",
       "label": {
-        "text": "client token"
+        "text": "client"
       }
     },
     {
@@ -165,7 +165,7 @@
       "source": "api",
       "target": "auth",
       "label": {
-        "text": "client / admin token"
+        "text": "admin / client"
       }
     },
     {
@@ -178,16 +178,13 @@
       "source": "gw",
       "target": "auth",
       "label": {
-        "text": "channel: token (restricted)"
+        "text": "channel token"
       }
     },
     {
       "id": "t6",
       "source": "auth",
-      "target": "engine",
-      "label": {
-        "text": "authorized request"
-      }
+      "target": "engine"
     },
     {
       "id": "t7",

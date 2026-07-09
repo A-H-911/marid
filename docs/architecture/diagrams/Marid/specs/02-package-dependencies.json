@@ -337,26 +337,17 @@
     {
       "id": "m_mauth_server",
       "source": "mauth",
-      "target": "server",
-      "label": {
-        "text": "wraps app.fetch"
-      }
+      "target": "server"
     },
     {
       "id": "m_minst_server",
       "source": "minst",
-      "target": "server",
-      "label": {
-        "text": "spawns instances"
-      }
+      "target": "server"
     },
     {
       "id": "m_mtg_sdk",
       "source": "mtg",
-      "target": "sdk",
-      "label": {
-        "text": "official SDK"
-      }
+      "target": "sdk"
     }
   ],
   "styles": {

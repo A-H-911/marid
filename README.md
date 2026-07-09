@@ -61,7 +61,7 @@ One runtime, one session engine, four interfaces. The **only** authenticated bou
 gateway **outside** the core and speaks to the server with a restricted `channel:` token.
 
 <p align="center">
-  <img src="docs/architecture/diagrams/20-marid-topology.png" alt="Marid topology — one runtime, four interfaces (TUI, Web, API, Telegram) reaching one session engine through marid-auth, as isolated instances" width="960">
+  <img src="docs/architecture/diagrams/Marid/20-marid-topology.png" alt="Marid topology — one runtime, four interfaces (TUI, Web, API, Telegram) reaching one session engine through marid-auth, as isolated instances" width="960">
 </p>
 
 **Untrusted ingress is deny-by-default** (INV-001): a `channel:` token is strictly weaker than a client token —
@@ -69,7 +69,7 @@ it may only prompt *its own bound agent*, on *its own sessions*, and can never w
 reach privileged routes.
 
 <p align="center">
-  <img src="docs/architecture/diagrams/21-marid-inv001-deny.png" alt="Deny-by-default channel policy — a channel token routes through the marid-auth scope gate; allowed only for its bound agent on owned sessions, otherwise 403" width="820">
+  <img src="docs/architecture/diagrams/Marid/21-marid-inv001-deny.png" alt="Deny-by-default channel policy — a channel token routes through the marid-auth scope gate; allowed only for its bound agent on owned sessions, otherwise 403" width="820">
 </p>
 
 ## Install & verify

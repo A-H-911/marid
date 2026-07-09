@@ -174,16 +174,13 @@
       "source": "ui",
       "target": "mauth",
       "label": {
-        "text": "client token"
+        "text": "client"
       }
     },
     {
       "id": "m_mauth_api",
       "source": "mauth",
-      "target": "api",
-      "label": {
-        "text": "authorized"
-      }
+      "target": "api"
     }
   ],
   "styles": {

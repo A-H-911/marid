@@ -209,7 +209,7 @@
       "source": "cli",
       "target": "session",
       "label": {
-        "text": "in-process - no token"
+        "text": "in-process"
       }
     },
     {
@@ -217,23 +217,20 @@
       "source": "web",
       "target": "mauth",
       "label": {
-        "text": "client token"
+        "text": "client"
       }
     },
     {
       "id": "e3b",
       "source": "mauth",
-      "target": "api",
-      "label": {
-        "text": "authorized"
-      }
+      "target": "api"
     },
     {
       "id": "e3c",
       "source": "mtg",
       "target": "mauth",
       "label": {
-        "text": "channel: token"
+        "text": "channel"
       }
     },
     {
@@ -241,7 +238,7 @@
       "source": "minst",
       "target": "api",
       "label": {
-        "text": "spawns N instances"
+        "text": "spawns N"
       }
     },
     {
