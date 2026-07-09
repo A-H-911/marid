@@ -17,9 +17,9 @@ generation: derived
 |---|---|
 | Reporting date | 2026-07-09 |
 | Current phase | **PH-5 (Release & sync) complete** — WBS-5.1..5.5 done; awaiting operator gate-14 acceptance |
-| Overall status | **All six phases done.** Public `v0.1.0` released (7 signed targets); KPI-004∧005∧006 green; docs `validate = OK` |
+| Overall status | **COMPLETE — MVP accepted (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK` |
 | Last milestone met | **MS-006 (2026-07-09)** — public `v0.1.0` release, MVP release-ready |
-| Next milestone | — (final) — operator **gate-14 MVP go/no-go** acceptance of the readiness report |
+| Next milestone | — **none: gate-14 ACCEPTED 2026-07-09, MS-006 met, MVP plan complete** |
 
 ## Phase progress
 
@@ -50,7 +50,7 @@ the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `par
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-Nothing open in PH-5. Awaiting the operator's **gate-14 MVP go/no-go** acceptance of the readiness report.
+Nothing open in PH-5. **Gate 14 ACCEPTED (2026-07-09) — MS-006 met, the Marid MVP plan (PH-0..5) is complete.** Post-MVP backlog only.
 
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18

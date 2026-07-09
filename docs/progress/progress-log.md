@@ -11,6 +11,17 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-09 — GATE 14 ACCEPTED — MS-006 met, Marid MVP plan complete
+- **Done:** Operator (STK-001) accepted the [MVP readiness report](../validation/mvp-readiness-report.md) →
+  **execution gate 14 = GO**. MS-006 formally MET: KPI-004 (sync #31) ∧ KPI-005 (clean G-TRACE) ∧ KPI-006
+  (RC 17 checks green, public `v0.1.0`). **The Marid MVP plan (PH-0..PH-5) is complete.** Readiness report
+  status → Approved; `checkpoints.md` Gate 14 → passed; `milestones.md` MS-006 → accepted.
+- **Accepted residuals (post-MVP, Approved dispositions):** AC-016 egress secret-redactor (ADR-0007), AC-007
+  formal supersede (re-fetch recovery delivered), Telegram gateway beta → fork (ADR-0008 / deferred #9),
+  FR-064 §18 scans/SBOM (ADR-0007), stats mechanism (deferred #10).
+- **Decisions:** gate-14 GO (operator, 2026-07-09). **Deviations:** none. **Blockers:** none.
+  **Next:** post-MVP backlog (Telegram fork, egress redactor, AC-007 supersede, upstream sync cadence).
+
 ## 2026-07-09 — Root docs Marid-ized (P-5; folded into the WBS-5.5 PR #39)
 - **Done:** Rewrote the public-repo front-door docs for Marid (patch-surface **P-5**): `CONTRIBUTING.md`
   (Marid docs-first / Keystone feature loop as the centerpiece — pick `AC-` → failing `TEST-` → implement
