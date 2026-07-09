@@ -16,10 +16,10 @@ in **`specs/`** (rendered with [Tarseem](#regenerate), not Mermaid).
 
 Marid adds only four things as **new packages speaking existing interfaces** (`marid-auth`,
 `marid-instance`, `marid-telegram`, a distribution profile). Diagrams are split into two folders:
-**`Marid/`** — the overlay-bearing views (01, 02, 05, 13, 14, 17, 18) plus the Marid-specific **20**
-(topology) and **21** (deny-by-default channel policy) embedded in the root `README.md`; and **`OpenCode/`**
-— the upstream internals Marid reuses as-is. The swimlane (18) uses the `corporate` theme so its lane colours
-don't collide with the semantic Marid palette above.
+**`Marid/`** — the overlay-bearing views (01, 02, 05, 13, 14, 17, 18); and **`OpenCode/`** — the upstream
+internals Marid reuses as-is. The swimlane (18) uses the `corporate` theme so its lane colours don't collide
+with the semantic Marid palette above. (The root `README.md` keeps its own inline **Mermaid** topology +
+channel-policy diagrams, rendered by GitHub.)
 
 Suggested reading order:
 

@@ -534,16 +534,6 @@
       "title": "Keystone normalized state",
       "kind": "schema-instance",
       "status": "Approved"
-    },
-    {
-      "path": "architecture/diagrams/Marid/specs/20-marid-topology.json",
-      "title": "Marid topology (one runtime, four interfaces)",
-      "kind": "schema-instance"
-    },
-    {
-      "path": "architecture/diagrams/Marid/specs/21-marid-inv001-deny.json",
-      "title": "Deny-by-default channel policy",
-      "kind": "schema-instance"
     }
   ],
   "omitted_artifacts": [
