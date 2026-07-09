@@ -1092,6 +1092,15 @@
         "context": "PH-4 threat-model audit found the B7 'redaction filters on channel egress' control unimplemented: only the Telegram bot-token literal is masked (gateway logs); channel egress, general logs/errors, and marid export (raw by default) have no configured-secret-value redactor; AC-016's cited evidence tests 0600+field-shape, not redaction. Provider keys in auth.json sit outside the restricted channel agent's workspace roots, so secret-in-egress is effectively contained by the B2/B4 authorization boundary.",
         "decision": "Adopt authorization-boundary containment as the accepted MVP posture and defer a configured-secret-value redactor (logs/errors/export/channel-egress) + secret registry to PH-5/WBS-5.1. Interim (now): correct threat model/acceptance-audit to fact (B7 not-implemented; AC-016 Partial), pin explicit loopback bind (B3 drift guard), correct RISK-007/RISK-004. Open sub-decision (operator to confirm): marid export raw-default fix - (a) global default-flip [P-4, upstream edit], (b) provenance-aware sanitize, (c) interim doc guardrail + defer to PH-5 [chosen pending confirmation]. export is a local CLI command a channel token cannot reach.",
         "consequences": "Threat model no longer over-claims a missing control; acceptance surface honest (AC-016 Partial). Residual 'secret relayed to channel' accepted for MVP under containment, redactor tracked to PH-5. If operator picks (a), P-4 activates; else it stays reserved/deferred."
+      },
+      {
+        "id": "ADR-0008",
+        "title": "Post-MVP: replace the hand-rolled marid-telegram gateway with a fork of grinev/opencode-telegram-bot",
+        "status": "Approved",
+        "date": "2026-07-09",
+        "context": "PH-5 live Telegram E2E surfaced outbound UX defects the mock provider (EXP-003, model big-pickle) never exercised: Markdown un-rendered (stream.ts HTML-escapes then sends parse_mode:HTML, no md->TG-HTML convert), inbound media not landed into the agent workspace, slash commands not routed, multi-part replies concatenated (currentText=parts.join()); web->Telegram not mirrored (request/response bridge, by design). The round-trip and the INV-001 security (channel token + marid-auth deny-by-default/bound-agent) are both verified working; the defects are all outbound formatting/media/command handling - what a mature TG framework + real markdown parser solve off the shelf.",
+        "decision": "Post-MVP, replace the hand-rolled UX layer with a fork/port of grinev/opencode-telegram-bot (MIT, ~897 stars; grammy + @grammyjs/menu + remark-parse/gfm + official @opencode-ai/sdk). INV-001 preserved by CONFIGURATION not rewrite: the fork authenticates to a running Marid instance with a channel: bearer token, so marid-auth enforces deny-by-default + bound-agent server-side; the fork's own allowlist (TELEGRAM_ALLOWED_USER_ID) is kept as defense-in-depth. Stays a separate process holding no provider keys - ADR-0005 unchanged (not superseded).",
+        "consequences": "v0.1.0 ships Telegram BETA on the current hand-rolled gateway with the 5 issues documented as known issues (deferred-work #9); round-trip works, security holds, UX is rough. Fork is a scheduled post-MVP phase (license attribution, channel-token wiring, media->workspace landing, slash mapping, INV-001 parity tests vs a real provider). MIT-compatible with Marid's downstream MIT distribution. Hand-rolled marid-telegram retired once the fork lands + verifies. Rejected: (1) fix-in-place (re-implements grammy/remark, more sync surface, against reuse-first DEC-009); (2) do-nothing/undocumented (tracker defect); (3) broad multi-channel bot (more surface than one operator+Telegram needs)."
       }
     ],
     "risks": [
@@ -3446,6 +3455,12 @@
       "actor": "execution-agent",
       "action": "WBS-5.4 branding done: README rewritten (Marid); logo committed (docs/branding/mark.svg + logo-light/dark.png, operator-designed via Claude Design); P-2 realized (TUI title + startup logo redrawn, UA dropped w/ rationale, package.json bin untouched); P-3 realized (lsp:false distribution default, overridable). Trackers flipped: work-breakdown WBS-5.4 done, traceability FR-065 partial->full, architecture P-2/P-3 -> done + branding.md realized. No merge without operator approval (INV-005).",
       "target": "README+docs/branding/*+packages(tui/logo.ts,app.tsx;opencode/cli/ui.ts;marid-instance/paths.ts,lifecycle.ts)+planning/work-breakdown+validation/traceability-matrix+architecture/architecture+progress/*+keystone-state"
+    },
+    {
+      "timestamp": "2026-07-09T00:00:00Z",
+      "actor": "operator (STK-001)",
+      "action": "Telegram gateway fork decision (operator-approved 2026-07-09): PH-5 live E2E surfaced hand-rolled gateway UX defects (markdown un-rendered, media not landed, slash unrouted, replies concatenated; web->TG mirroring is by-design). Scheduled POST-MVP as ADR-0008 + deferred-work #9: replace with a fork of grinev/opencode-telegram-bot (MIT, grammy + remark + official SDK), preserving INV-001 via a server-enforced channel: token. v0.1.0 ships Telegram BETA with the issues documented; the round-trip + security are verified working. Recorded on branch docs/defer-telegram-fork; no merge without operator approval (INV-005).",
+      "target": "adrs/adr-0008-telegram-gateway-fork+execution/deferred-work-register+keystone-state"
     }
   ]
 }
