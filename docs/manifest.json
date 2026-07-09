@@ -130,97 +130,97 @@
       "status": "Approved"
     },
     {
-      "path": "architecture/diagrams/specs/01-architecture-overview.json",
+      "path": "architecture/diagrams/Marid/specs/01-architecture-overview.json",
       "title": "01-architecture-overview",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/02-package-dependencies.json",
+      "path": "architecture/diagrams/Marid/specs/02-package-dependencies.json",
       "title": "02-package-dependencies",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/03-tech-stack.json",
+      "path": "architecture/diagrams/OpenCode/specs/03-tech-stack.json",
       "title": "03-tech-stack",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/04-modules-map.json",
+      "path": "architecture/diagrams/OpenCode/specs/04-modules-map.json",
       "title": "04-modules-map",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/05-data-flow.json",
+      "path": "architecture/diagrams/Marid/specs/05-data-flow.json",
       "title": "05-data-flow",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/06-session-sequence.json",
+      "path": "architecture/diagrams/OpenCode/specs/06-session-sequence.json",
       "title": "06-session-sequence",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/07-database-er.json",
+      "path": "architecture/diagrams/OpenCode/specs/07-database-er.json",
       "title": "07-database-er",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/08-tui-seam.json",
+      "path": "architecture/diagrams/OpenCode/specs/08-tui-seam.json",
       "title": "08-tui-seam",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/09-tui-blast-radius.json",
+      "path": "architecture/diagrams/OpenCode/specs/09-tui-blast-radius.json",
       "title": "09-tui-blast-radius",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/10-streaming-pipeline.json",
+      "path": "architecture/diagrams/OpenCode/specs/10-streaming-pipeline.json",
       "title": "10-streaming-pipeline",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/11-streaming-sequence.json",
+      "path": "architecture/diagrams/OpenCode/specs/11-streaming-sequence.json",
       "title": "11-streaming-sequence",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/12-boot-layers.json",
+      "path": "architecture/diagrams/OpenCode/specs/12-boot-layers.json",
       "title": "12-boot-layers",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/13-deployment.json",
+      "path": "architecture/diagrams/Marid/specs/13-deployment.json",
       "title": "13-deployment",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/14-capability-registry.json",
+      "path": "architecture/diagrams/Marid/specs/14-capability-registry.json",
       "title": "14-capability-registry",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/15-session-lifecycle.json",
+      "path": "architecture/diagrams/OpenCode/specs/15-session-lifecycle.json",
       "title": "15-session-lifecycle",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/16-message-domain-model.json",
+      "path": "architecture/diagrams/OpenCode/specs/16-message-domain-model.json",
       "title": "16-message-domain-model",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/17-permission-flow.json",
+      "path": "architecture/diagrams/Marid/specs/17-permission-flow.json",
       "title": "17-permission-flow",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/18-contributor-workflow.json",
+      "path": "architecture/diagrams/Marid/specs/18-contributor-workflow.json",
       "title": "18-contributor-workflow",
       "kind": "schema-instance"
     },
     {
-      "path": "architecture/diagrams/specs/19-codegen-pipeline.json",
+      "path": "architecture/diagrams/OpenCode/specs/19-codegen-pipeline.json",
       "title": "19-codegen-pipeline",
       "kind": "schema-instance"
     },
@@ -543,7 +543,7 @@
     },
     {
       "path": "stakeholder-register.md",
-      "reason": "Single-operator project; the 3 stakeholders (STK-001..003) live in 00-charter.md \u2014 a standalone register would only restate them."
+      "reason": "Single-operator project; the 3 stakeholders (STK-001..003) live in 00-charter.md — a standalone register would only restate them."
     },
     {
       "path": "scripts/init_repo.sh",

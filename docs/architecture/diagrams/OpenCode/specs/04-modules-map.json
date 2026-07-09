@@ -1,0 +1,375 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "mindmap",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Module Map (opencode/src, reused as-is)"
+  },
+  "nodes": [
+    {
+      "id": "root",
+      "label": {
+        "text": "opencode/src"
+      }
+    },
+    {
+      "id": "agentloop",
+      "label": {
+        "text": "Agent loop"
+      }
+    },
+    {
+      "id": "session",
+      "label": {
+        "text": "session"
+      }
+    },
+    {
+      "id": "agent",
+      "label": {
+        "text": "agent"
+      }
+    },
+    {
+      "id": "command",
+      "label": {
+        "text": "command"
+      }
+    },
+    {
+      "id": "background",
+      "label": {
+        "text": "background"
+      }
+    },
+    {
+      "id": "prov",
+      "label": {
+        "text": "Providers + LLM"
+      }
+    },
+    {
+      "id": "provider",
+      "label": {
+        "text": "provider / models / auth"
+      }
+    },
+    {
+      "id": "llm",
+      "label": {
+        "text": "llm (cache policy)"
+      }
+    },
+    {
+      "id": "tools",
+      "label": {
+        "text": "Tools"
+      }
+    },
+    {
+      "id": "fileio",
+      "label": {
+        "text": "read/write/edit"
+      }
+    },
+    {
+      "id": "sh",
+      "label": {
+        "text": "shell / grep / glob"
+      }
+    },
+    {
+      "id": "lsp",
+      "label": {
+        "text": "lsp"
+      }
+    },
+    {
+      "id": "mcpt",
+      "label": {
+        "text": "mcp-websearch"
+      }
+    },
+    {
+      "id": "skill",
+      "label": {
+        "text": "skill / task / todo / plan"
+      }
+    },
+    {
+      "id": "srv",
+      "label": {
+        "text": "Server"
+      }
+    },
+    {
+      "id": "server",
+      "label": {
+        "text": "server / routes"
+      }
+    },
+    {
+      "id": "sync",
+      "label": {
+        "text": "sync / share"
+      }
+    },
+    {
+      "id": "integ",
+      "label": {
+        "text": "Integrations"
+      }
+    },
+    {
+      "id": "mcp",
+      "label": {
+        "text": "mcp"
+      }
+    },
+    {
+      "id": "ide",
+      "label": {
+        "text": "ide / lsp"
+      }
+    },
+    {
+      "id": "git",
+      "label": {
+        "text": "git / worktree"
+      }
+    },
+    {
+      "id": "store",
+      "label": {
+        "text": "Storage"
+      }
+    },
+    {
+      "id": "storage",
+      "label": {
+        "text": "storage -> core/db"
+      }
+    },
+    {
+      "id": "snapshot",
+      "label": {
+        "text": "snapshot"
+      }
+    },
+    {
+      "id": "project",
+      "label": {
+        "text": "project"
+      }
+    },
+    {
+      "id": "plumb",
+      "label": {
+        "text": "Plumbing"
+      }
+    },
+    {
+      "id": "config",
+      "label": {
+        "text": "config"
+      }
+    },
+    {
+      "id": "plugin",
+      "label": {
+        "text": "plugin"
+      }
+    },
+    {
+      "id": "perm",
+      "label": {
+        "text": "permission"
+      }
+    },
+    {
+      "id": "acp",
+      "label": {
+        "text": "acp"
+      }
+    },
+    {
+      "id": "install",
+      "label": {
+        "text": "installation"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "root",
+      "target": "agentloop"
+    },
+    {
+      "source": "agentloop",
+      "target": "session"
+    },
+    {
+      "source": "agentloop",
+      "target": "agent"
+    },
+    {
+      "source": "agentloop",
+      "target": "command"
+    },
+    {
+      "source": "agentloop",
+      "target": "background"
+    },
+    {
+      "source": "root",
+      "target": "prov"
+    },
+    {
+      "source": "prov",
+      "target": "provider"
+    },
+    {
+      "source": "prov",
+      "target": "llm"
+    },
+    {
+      "source": "root",
+      "target": "tools"
+    },
+    {
+      "source": "tools",
+      "target": "fileio"
+    },
+    {
+      "source": "tools",
+      "target": "sh"
+    },
+    {
+      "source": "tools",
+      "target": "lsp"
+    },
+    {
+      "source": "tools",
+      "target": "mcpt"
+    },
+    {
+      "source": "tools",
+      "target": "skill"
+    },
+    {
+      "source": "root",
+      "target": "srv"
+    },
+    {
+      "source": "srv",
+      "target": "server"
+    },
+    {
+      "source": "srv",
+      "target": "sync"
+    },
+    {
+      "source": "root",
+      "target": "integ"
+    },
+    {
+      "source": "integ",
+      "target": "mcp"
+    },
+    {
+      "source": "integ",
+      "target": "ide"
+    },
+    {
+      "source": "integ",
+      "target": "git"
+    },
+    {
+      "source": "root",
+      "target": "store"
+    },
+    {
+      "source": "store",
+      "target": "storage"
+    },
+    {
+      "source": "store",
+      "target": "snapshot"
+    },
+    {
+      "source": "store",
+      "target": "project"
+    },
+    {
+      "source": "root",
+      "target": "plumb"
+    },
+    {
+      "source": "plumb",
+      "target": "config"
+    },
+    {
+      "source": "plumb",
+      "target": "plugin"
+    },
+    {
+      "source": "plumb",
+      "target": "perm"
+    },
+    {
+      "source": "plumb",
+      "target": "acp"
+    },
+    {
+      "source": "plumb",
+      "target": "install"
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

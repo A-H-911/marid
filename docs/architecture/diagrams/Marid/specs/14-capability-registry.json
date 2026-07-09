@@ -1,0 +1,235 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "mindmap",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Add a Capability (+ Marid channel policy)"
+  },
+  "nodes": [
+    {
+      "id": "root",
+      "label": {
+        "text": "Add a capability"
+      }
+    },
+    {
+      "id": "tool",
+      "label": {
+        "text": "Tool"
+      }
+    },
+    {
+      "id": "toolhow",
+      "label": {
+        "text": "tool/registry.ts (ToolRegistry)"
+      }
+    },
+    {
+      "id": "toolfile",
+      "label": {
+        "text": "add tool/<name>.ts"
+      }
+    },
+    {
+      "id": "prov",
+      "label": {
+        "text": "Provider"
+      }
+    },
+    {
+      "id": "provhow",
+      "label": {
+        "text": "provider/provider.ts (Provider.Service)"
+      }
+    },
+    {
+      "id": "provfile",
+      "label": {
+        "text": "models.dev + auth.ts"
+      }
+    },
+    {
+      "id": "mcp",
+      "label": {
+        "text": "MCP server"
+      }
+    },
+    {
+      "id": "mcphow",
+      "label": {
+        "text": "mcp/index.ts"
+      }
+    },
+    {
+      "id": "mcpt",
+      "label": {
+        "text": "stdio OR HTTP/SSE transport"
+      }
+    },
+    {
+      "id": "plug",
+      "label": {
+        "text": "Plugin"
+      }
+    },
+    {
+      "id": "plughow",
+      "label": {
+        "text": "@opencode-ai/plugin"
+      }
+    },
+    {
+      "id": "plugwhat",
+      "label": {
+        "text": "custom tools + TUI keybinds"
+      }
+    },
+    {
+      "id": "cmd",
+      "label": {
+        "text": "Command / Skill"
+      }
+    },
+    {
+      "id": "cmdhow",
+      "label": {
+        "text": "command/ + skill/"
+      }
+    },
+    {
+      "id": "mchan",
+      "shape": "rect",
+      "label": {
+        "text": "channel capability policy"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "mchanhow",
+      "shape": "rect",
+      "label": {
+        "text": "deny-by-default: bound agent + owned sessions only"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "root",
+      "target": "tool"
+    },
+    {
+      "source": "tool",
+      "target": "toolhow"
+    },
+    {
+      "source": "toolhow",
+      "target": "toolfile"
+    },
+    {
+      "source": "root",
+      "target": "prov"
+    },
+    {
+      "source": "prov",
+      "target": "provhow"
+    },
+    {
+      "source": "provhow",
+      "target": "provfile"
+    },
+    {
+      "source": "root",
+      "target": "mcp"
+    },
+    {
+      "source": "mcp",
+      "target": "mcphow"
+    },
+    {
+      "source": "mcphow",
+      "target": "mcpt"
+    },
+    {
+      "source": "root",
+      "target": "plug"
+    },
+    {
+      "source": "plug",
+      "target": "plughow"
+    },
+    {
+      "source": "plughow",
+      "target": "plugwhat"
+    },
+    {
+      "source": "root",
+      "target": "cmd"
+    },
+    {
+      "source": "cmd",
+      "target": "cmdhow"
+    },
+    {
+      "id": "m_root_mchan",
+      "source": "root",
+      "target": "mchan"
+    },
+    {
+      "id": "m_mchan_mchanhow",
+      "source": "mchan",
+      "target": "mchanhow"
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}
