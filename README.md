@@ -49,22 +49,10 @@ Everything else is upstream capability, reused as-is.
 
 ## Screenshots
 
-> Real captures — added on the first release. If you're reading this before then, the images below are placeholders.
-
 <p align="center">
-  <img src="docs/branding/screenshots/tui.png" alt="Marid TUI — an active session" width="820">
+  <img src="docs/branding/screenshots/web.png" alt="Marid web UI — a new session" width="820">
 </p>
-<p align="center"><em>The TUI (<code>marid</code>) — the local terminal client.</em></p>
-
-<p align="center">
-  <img src="docs/branding/screenshots/web.png" alt="Marid web UI" width="820">
-</p>
-<p align="center"><em>The web UI, served by <code>marid serve</code>.</em></p>
-
-<p align="center">
-  <img src="docs/branding/screenshots/telegram.png" alt="Marid over Telegram" width="360">
-</p>
-<p align="center"><em>Telegram — the same agent, from your phone, over a restricted channel token.</em></p>
+<p align="center"><em>The web UI, served by <code>marid serve</code> — a new session (flame wordmark, model picker, composer). The TUI and Telegram captures follow in a later pass.</em></p>
 
 ## Architecture
 
