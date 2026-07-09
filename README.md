@@ -208,14 +208,28 @@ The same agent, from your phone. A **gateway process outside the core** bridges 
 come from the environment (never flags, per INV-002).
 
 ```sh
-# 1. mint a channel token bound to a restricted agent
-marid token create tg --scope channel:tg --agent restricted
+# 1. create + start an isolated instance for the bot (the gateway attaches to a
+#    running instance, not to bare `marid serve`)
+marid instance add tgbot
+marid instance start tgbot                          # binds an authenticated server on an auto port
 
-# 2. provide the bot token + user allowlist via env, then run the gateway
-export TELEGRAM_BOT_TOKEN=123456:AA...            # from @BotFather
-export MARID_TG_ALLOW=<your-telegram-user-id>     # allowlisted senders
-marid telegram start work --token <tg-token> --agent restricted
+# 2. mint a channel token INTO THAT INSTANCE's store, bound to a restricted agent.
+#    Instances are XDG-isolated, so the token must be created with the instance's
+#    XDG_DATA_HOME or the gateway's requests will 401. The secret prints once.
+XDG_DATA_HOME="$(marid instance path tgbot)/data" \
+  marid token create tg --scope channel:tg --agent build
+
+# 3. provide the bot token (from @BotFather) + the numeric user allowlist via env
+#    (never flags — INV-002), then run the gateway against the instance
+export TELEGRAM_BOT_TOKEN=123456:AA...              # from @BotFather
+export MARID_TG_ALLOW=<your-telegram-user-id>       # comma-separated; from @userinfobot
+marid telegram start tgbot --token <the mar_… secret> --agent build
 ```
+
+Notes: `--agent` must name an agent that exists in the instance and can reach a
+configured model provider (the instance is isolated from your default store, so
+configure a provider in it if the agent should reply). Senders not in
+`MARID_TG_ALLOW` are silently ignored (deny-by-default, INV-001).
 
 ### What needs a token?
 
