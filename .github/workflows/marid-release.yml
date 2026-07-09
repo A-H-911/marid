@@ -117,7 +117,7 @@ jobs:
           - os: ubuntu-latest
             asset: marid-linux-x64.tar.gz
           - os: macos-latest
-            asset: marid-darwin-arm64.tar.gz
+            asset: marid-darwin-arm64.zip
           - os: windows-latest
             asset: marid-windows-x64.zip
     runs-on: ${{ matrix.os }}
