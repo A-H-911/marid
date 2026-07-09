@@ -2095,7 +2095,7 @@
       },
       {
         "id": "AC-014",
-        "statement": "Given a tagged release, when CI completes, then binaries and checksums exist as a private GitHub Release and install/update works via the documented gh-authenticated path on all 3 OSes",
+        "statement": "Given a tagged release, when CI completes, then signed binaries and checksums exist as a public GitHub Release (DEC-010) and install/update works via the documented anonymous download->verify path on all 3 OSes",
         "status": "Approved"
       },
       {
@@ -2247,8 +2247,8 @@
       {
         "id": "PH-5",
         "name": "Release & sync",
-        "goal": "Private distribution + one real upstream sync + docs",
-        "status": "in-progress",
+        "goal": "Public distribution + one real upstream sync + docs",
+        "status": "done",
         "depends_on": [
           "PH-2",
           "PH-3",
@@ -3405,6 +3405,11 @@
       "date": "2026-07-08",
       "author": "execution-agent",
       "summary": "WBS-5.4 branding done (FR-065 full). README rewritten (Marid identity + interfaces + minisign-verify quick-start + attribution/non-affiliation + security model). Logo operator-designed via Claude Design: flame + Marid in OpenCode block style, Pixelify Sans 700, blue face #2F6BFF + orange offset #F0731F, yellow-orange-red flame; committed docs/branding/mark.svg + logo-light.png + logo-dark.png (PNG lockup because GitHub does not render web-font SVG text). P-2 realized: TUI window title (app.tsx) + TUI/CLI startup logo redrawn (tui/src/logo.ts + cli/ui.ts, flame + Marid; terminal M opened so it no longer reads as H). P-3 realized: lsp:false distribution default via OPENCODE_CONFIG_CONTENT at instance spawn (marid-instance paths.ts instanceConfigEnv + lifecycle.ts), operator-overridable, +2 tests. Scope decisions (documented): User-Agent DROPPED from P-2 (hardcoded opencode/version at ~15 sites -> NFR-001 + breaks provider tests; provider-facing), package.json bin untouched, index.ts scriptName/help-snapshot left upstream. Verify: hygiene 10/10, marid-instance paths 18/18, opencode+tui typecheck clean. Next: WBS-5.2 RC v0.1.0 + install smoke -> WBS-5.5 readiness -> gate 14."
+    },
+    {
+      "date": "2026-07-09",
+      "author": "execution-agent",
+      "summary": "MS-006 MET / PH-5 complete. Public v0.1.0 release cut: #35 (release/v0.1.0) merged to main (merge-commit 8bf4ab61e), tag v0.1.0 fired marid-release.yml -> 7 targets x (archive + .sha256 + .minisig) = 21 signed public assets; RC 17 checks green (KPI-006); 3-OS install-smoke (Linux+Windows green, macOS asset-name typo .tar.gz->.zip fixed forward PR #38). WBS-5.2 done -> AC-014 Met. WBS-5.5 readiness: G-IDS fixed (audit rows reference criteria defs), FR-064 re-marked partial (SS18 scans/SBOM deferred, ADR-0007), AC-014 text corrected public/anonymous (DEC-010); validate_package.py docs/ = RESULT: OK; readiness report authored. Finalize #36 also fixed Windows CI (site.webmanifest symlink overwritten with JSON broke Windows checkout) + /session/status 403 scope. Awaiting operator gate-14 acceptance."
     }
   ],
   "change_log": [
@@ -3461,6 +3466,11 @@
       "actor": "operator (STK-001)",
       "action": "Telegram gateway fork decision (operator-approved 2026-07-09): PH-5 live E2E surfaced hand-rolled gateway UX defects (markdown un-rendered, media not landed, slash unrouted, replies concatenated; web->TG mirroring is by-design). Scheduled POST-MVP as ADR-0008 + deferred-work #9: replace with a fork of grinev/opencode-telegram-bot (MIT, grammy + remark + official SDK), preserving INV-001 via a server-enforced channel: token. v0.1.0 ships Telegram BETA with the issues documented; the round-trip + security are verified working. Recorded on branch docs/defer-telegram-fork; no merge without operator approval (INV-005).",
       "target": "adrs/adr-0008-telegram-gateway-fork+execution/deferred-work-register+keystone-state"
+    },
+    {
+      "timestamp": "2026-07-09T05:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-5 close-out: PH-5 status done; AC-014 statement corrected to public/anonymous (DEC-010); FR-064 coverage full->partial (traceability); acceptance-audit AC-014 Partial->Met, AC-015 Met, summary 14/16 Met; milestones MS-006 MET; roadmap PH-5 done; work-breakdown WBS-5.2/5.5 done; status-report + progress-log regenerated; readiness report added. Validate = OK."
     }
   ]
 }

@@ -1,7 +1,7 @@
 ---
 status: Proposed (approved with gate 13 handoff)
 version: v0.1
-updated: 2026-07-03
+updated: 2026-07-09
 owner: operator (STK-001)
 ---
 
@@ -24,6 +24,6 @@ Given/When/Then form; each AC is verified by the TEST- family named and rolls up
 | AC-011 | Given the allowlisted operator asks the bot a question, when the agent streams its answer, then the Telegram message updates progressively (≥2 s cadence), respects the 4096-char split, and finishes with the complete text | FR-046/048, KPI-002 | TEST-TG |
 | AC-012 | Given the channel agent's policy denies a tool, when the model requests it, then a permission prompt appears as an inline keyboard; Deny (or timeout) blocks the tool; Approve allows exactly once | FR-028/052, INV-001 | TEST-TG |
 | AC-013 | Given the `marid` profile build, when the binary is inspected/run, then excluded surfaces (desktop, console, cloud, slack, docs-site) are absent and a grep-based hygiene test passes | ADR-0002, FR-060 | TEST-BUILD |
-| AC-014 | Given a tagged release, when CI completes, then binaries+checksums exist as a private GitHub Release and install/update works via the documented gh-authenticated path on all 3 OSes | FR-060/064, KPI-006 | TEST-BUILD |
+| AC-014 | Given a tagged release, when CI completes, then signed binaries+checksums exist as a **public** GitHub Release (DEC-010) and install/update works via the documented **anonymous** download→verify path on all 3 OSes | FR-060/064, KPI-006 | TEST-BUILD |
 | AC-015 | Given an upstream sync PR, when CI runs, then contract tests, migration review, dependency diff, and the delta report are all present; and one real sync cycle has been merged | FR-061, KPI-004 | TEST-SYNCUP |
 | AC-016 | Given any log, error output, session export, or channel message, when a configured secret value would appear, then it is redacted. **Scope (ADR-0007):** MVP delivers only (a) the audit/config never storing the secret and (b) the Telegram bot-token masked in gateway logs; the general configured-secret-value redactor across all four surfaces is the **PH-5** target. Secret-in-egress is contained in the MVP by the B2/B4 authorization boundary. | FR-055/059, RISK-007 | TEST-SEC |
