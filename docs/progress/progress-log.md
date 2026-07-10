@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-10
+updated: 2026-07-11
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,36 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-11 — WBS-6.1 slice a `@marid/channel-client` extracted (slice; unmerged, gated)
+- **Done:** **First slice of WBS-6.1 (ADR-0011): a new additive package `@marid/channel-client`** holding the
+  channel-agnostic half of the Telegram gateway — firehose subscribe/pump, cross-generation event interpretation
+  (`TEXT/DONE/ASK` families + `parseAskEvent`), and per-part streamer coordination. `marid-telegram/gateway.ts`
+  now consumes it (`createChannelClient` + `beginTurn` + `start()`), keeping only Telegram specifics (chat↔session
+  binding, the Telegram rendering sink, inline-keyboard permission surfacing); `parseAskEvent` re-exported so the
+  committed public API is unchanged. gateway.ts nets **−87 lines**. New package: 10 tests (parseAskEvent + pump
+  coordination), typecheck+lint clean. **Behavior-preserving (RISK-017):** subscription stays on `global.event`,
+  no server/auth path touched — **marid-auth 101 / marid-telegram 89 both unchanged & green** (TEST-AUTH/TEST-SEC/
+  channel-binding intact). Additive envelope intact (NFR-001): new package + one Marid-owned CI step; **zero
+  upstream edit, no P-\***. On `feat/ph6-gateway`, unmerged (INV-003/005).
+- **Decisions:** slice WBS-6.1 into **6.1a** (this — the safe channel-client extraction) and **6.1b** (the
+  decision-gated AC-019/AC-024 trio), advisor-confirmed. Reconnect/backoff/SSE-resume deliberately **not** built
+  (WBS-6.5 owns it); the pump *structure* is extracted so recovery slots in later (YAGNI).
+- **Findings (for 6.1b, not fixed here):** (1) **INV-001 boundary gap** — `middleware.ts` filters only
+  `url.pathname === "/event"`, so `/global/event` hands the *unfiltered* firehose to any channel token that
+  requests it (Telegram currently suppresses non-owned frames client-side via `if (!state) return`, so nothing is
+  *surfaced*, but the data reaches the process). The real fix is at the boundary (filter `/global/event`), and it
+  is **not** a one-liner: `/global/event` frames are `{payload:{…}}`-wrapped, so `filterSseStream`/`pickSessionId`
+  likely won't extract `sessionID` from the wrapped shape — verify before assuming cheap. (2) **Mirroring can't
+  reach Telegram** until the channel-client subscribes via the filtered `/event` (or `isVisible` is extended to
+  `/global/event`) **and** consumes operator-attached bound sessions — both are 6.1b. (3) **AC-024 P-\* question:**
+  the attach endpoint's OpenAPI/health/contract coverage may force an upstream `api.ts` edit (a `P-*`) unless a
+  group composes additively into `PublicApi` from a Marid-owned file — **verify additivity first; if it forces an
+  upstream edit, STOP for operator approval** (patch-surface + INV-005). De-risk with an EXP.
+- **Deviations:** none. **Blockers:** operator gate — push/PR/merge are operator-only (INV-005); 6.1b scope
+  (fold the `/event` switch + bound-consume + attach endpoint, or split further / EXP the additive-group path)
+  is an operator decision. **Next:** operator reviews/merges 6.1a; then scope 6.1b (the two verifications above
+  gate any subscription switch or boundary fix).
 
 ## 2026-07-10 — WBS-6.4 cross-surface permission + concurrency (verification; unmerged, gated)
 - **Done:** **WBS-6.4 — cross-surface permission surfacing + concurrency, verified.** Code-light by design (the DoD is

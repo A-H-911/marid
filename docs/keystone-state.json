@@ -4185,6 +4185,17 @@
         "WBS-6.4: concurrency (FR-040/041) = EXP-001 one-Runner join/steer (PASS); cross-surface acting is same-owner multi-connection (act-via-ownership) - not rebuilt (advisor-confirmed)",
         "WBS-6.4 SCOPE MOVE: admin-gated /attach HTTP endpoint -> WBS-6.1 (OpenAPI derives from Effect HttpApi OpenApi.fromApi(PublicApi); a marid-auth-wrapper route gets no OpenAPI/health/contract coverage AC-024 requires). Reconciliation: channel token can't self-attach (INV-001), so ADR-0012 'operator attaches' = admin-surface action, not Telegram /attach"
       ]
+    },
+    {
+      "date": "2026-07-11",
+      "author": "execution-agent",
+      "summary": "WBS-6.1 slice a: new additive package @marid/channel-client (ADR-0011) extracted from marid-telegram/gateway.ts - the channel-agnostic firehose subscribe/pump + cross-generation event interpretation (TEXT/DONE/ASK + parseAskEvent) + per-part streamer coordination. gateway consumes via createChannelClient/beginTurn/start(), keeps Telegram specifics only; parseAskEvent re-exported (public API unchanged); gateway.ts -87 lines. Behavior-preserving (subscription stays on global.event, no server/auth edit - RISK-017): marid-auth 101 / marid-telegram 89 unchanged & green; channel-client +10 tests; typecheck+lint clean; +1 Marid-owned CI step; ZERO upstream edit, no P-*. WBS-6.1 split (advisor-confirmed) into slice a (this) + slice b (attach endpoint + /event routing + bound-consume; AC-019/AC-024, decision-gated). Reconnect deferred to WBS-6.5. On feat/ph6-gateway, unmerged (INV-003/005).",
+      "items_completed": [
+        "WBS-6.1 slice a: created packages/marid-channel-client (@marid/channel-client) - createChannelClient (event pump: global.event subscribe + frame-unwrap + abort loop), event interpretation, parseAskEvent, Streamer sink interface; 10 tests",
+        "WBS-6.1 slice a: rewired marid-telegram/gateway.ts to consume the client (createStreamer sink + onAsk); removed the duplicated pump/onEvent/session-state; parseAskEvent re-exported; -87 lines",
+        "WBS-6.1 slice a: marid-telegram package.json depends @marid/channel-client workspace:*; bun.lock updated; +1 ci.yml step (Marid-owned, sync-durable)",
+        "WBS-6.1 slice a VERIFIED: marid-auth 101 green (unchanged, TEST-AUTH/TEST-SEC/channel-binding intact), marid-telegram 89 green (unchanged), channel-client 10 green; typecheck+lint 0 errors; additive envelope intact (NFR-001), zero upstream edit"
+      ]
     }
   ],
   "change_log": [
@@ -4304,6 +4315,12 @@
       "actor": "operator (STK-001) + execution-agent",
       "action": "WBS-6.3 merged to develop (PR #44 squash, 47b64e1eb; 20 checks green) on explicit operator instruction. THEN WBS-6.4 cross-surface permission + concurrency VERIFIED (code-light; DoD = tests green). first-responder-wins/no-double-approve is a server invariant: Permission.reply get-check-pending.delete has no yield* between get and delete -> atomic on one instance, 2nd reply -> NotFoundError (new permission/next.test.ts test). permission.asked mirrors to a bound surface (view-via-binding covers permission events; new mirroring.test.ts test). act-via-ownership deny already proven (6.3). Concurrency = EXP-001 (one-Runner join/steer; act limited to owners, so cross-surface acting is same-owner multi-connection - not rebuilt). marid-auth ->101, opencode permission 79->80 green; typecheck clean; ZERO upstream edit. Admin-gated /attach endpoint MOVED to WBS-6.1 (AC-024: OpenAPI derives from Effect HttpApi, so a marid-auth-wrapper route gets no OpenAPI/health/contract coverage). Reconciliation: channel token can't self-attach (INV-001), so ADR-0012 'operator attaches' = admin-surface action. WBS-6.4 -> done; AC-019 stays Partial (operator-reachable attach + live path = WBS-6.1/6.5). On feat/ph6-cross-surface-permission, NOT merged (INV-003/005). validate_package.py docs/ = RESULT: OK.",
       "target": "packages/opencode/test/permission/next.test.ts+packages/marid-auth/test/mirroring.test.ts+planning/work-breakdown+validation/acceptance-audit+progress/{progress-log,status-report}+keystone-state(progress/change_log)"
+    },
+    {
+      "timestamp": "2026-07-11T01:00:00Z",
+      "actor": "execution-agent",
+      "action": "WBS-6.1 slice a: extracted @marid/channel-client (ADR-0011) from the Telegram gateway - channel-agnostic firehose subscribe/pump + event interpretation + parseAskEvent + per-part streamer coordination. marid-telegram consumes it (createChannelClient/beginTurn/start), keeps Telegram specifics; parseAskEvent re-exported (public API unchanged). Behavior-preserving: subscription stays on global.event, no server/auth path touched (RISK-017); marid-auth 101 / marid-telegram 89 unchanged & green; +10 channel-client tests; typecheck+lint clean; +1 Marid-owned CI step; ZERO upstream edit, no P-*. WBS-6.1 split (advisor-confirmed): slice a done (this), slice b carried (attach endpoint AC-024 P-* question + switch subscription to filtered /event + consume operator-attached bound sessions + close /global/event INV-001 boundary gap; all decision-gated, verifications required). Reconnect deferred to WBS-6.5. WBS-6.1 stays in-progress; AC-019/AC-024 unchanged. On feat/ph6-gateway, NOT merged (INV-003/005).",
+      "target": "packages/marid-channel-client/*+packages/marid-telegram/{package.json,src/gateway.ts}+.github/workflows/ci.yml+bun.lock+planning/work-breakdown+progress/{progress-log,status-report}+keystone-state(progress/change_log)"
     }
   ]
 }
