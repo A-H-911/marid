@@ -718,6 +718,42 @@ it.instance(
 )
 
 it.instance(
+  // WBS-6.4 / AC-019 — cross-surface first-responder-wins, no double-approve. The
+  // permission is a single-use server resource: the first reply consumes it
+  // (pending.delete), so a SECOND reply — from any other bound/owning surface — finds
+  // nothing and fails NotFound. The get-check-delete in Permission.reply has no yield*
+  // between the get and the delete, so on one instance it is atomic (fibers cannot
+  // interleave at a non-suspension point). This is the server invariant that makes
+  // "a permission mirrored to N surfaces is answered exactly once" hold for free.
+  "reply - a second reply to an already-answered permission fails NotFound (first-responder-wins)",
+  () =>
+    Effect.gen(function* () {
+      const fiber = yield* ask({
+        id: PermissionV1.ID.make("per_once_only"),
+        sessionID: SessionID.make("session_test"),
+        permission: "bash",
+        patterns: ["ls"],
+        metadata: {},
+        always: [],
+        ruleset: [],
+      }).pipe(Effect.forkScoped)
+
+      yield* waitForPending(1)
+      yield* reply({ requestID: PermissionV1.ID.make("per_once_only"), reply: "once" }) // surface A wins
+      yield* Fiber.join(fiber)
+
+      // surface B's later reply to the same permission is a no-op that fails NotFound
+      const exit = yield* reply({ requestID: PermissionV1.ID.make("per_once_only"), reply: "once" }).pipe(Effect.exit)
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        expect(Cause.squash(exit.cause)).toMatchObject({ _tag: "Permission.NotFoundError", requestID: "per_once_only" })
+      }
+      expect(yield* list()).toHaveLength(0)
+    }),
+  { git: true },
+)
+
+it.instance(
   "reply - reject throws RejectedError",
   () =>
     Effect.gen(function* () {

@@ -4173,6 +4173,18 @@
         "WBS-6.3: binding.test.ts (durable round-trip/detach/0600) + mirroring.test.ts (mirror-in/out, explicit-attach invisibility, act-via-ownership deny, blast-radius no-op, registry-fault degradation) drive the real middleware+store+filter",
         "WBS-6.3 CARRIED (documented split, not dropped): admin-gated /attach HTTP endpoint + cross-surface permission first-responder-wins -> WBS-6.4; channel-client-consume -> WBS-6.1; seq->id fan-out + attach-triggers-reconnect -> WBS-6.5"
       ]
+    },
+    {
+      "date": "2026-07-10",
+      "author": "operator (STK-001) + execution-agent",
+      "summary": "WBS-6.4 cross-surface permission + concurrency VERIFIED (code-light; DoD is 'tests green'). first-responder-wins is a server invariant (Permission.reply consumes atomically -> second reply NotFound); permission.asked mirrors to a bound surface (view); act-via-ownership deny already proven (6.3); concurrency = EXP-001. Admin-gated /attach endpoint MOVED to WBS-6.1 (AC-024/OpenAPI). marid-auth ->101, opencode permission 79->80 green; zero upstream edit. AC-019 stays Partial. On feat/ph6-cross-surface-permission, unmerged (INV-003/005).",
+      "items_completed": [
+        "WBS-6.4: first-responder-wins/no-double-approve = server invariant (Permission.reply get-check-pending.delete has no yield* between get and delete -> atomic on one instance; 2nd reply -> NotFoundError). New permission/next.test.ts test pins it",
+        "WBS-6.4: permission.asked on a bound session mirrors to the attached surface (view-via-binding covers permission events too) - new mirroring.test.ts test",
+        "WBS-6.4: act-via-ownership (bound-but-not-owner DENIED reply/prompt) already proven in mirroring.test.ts (WBS-6.3); no privilege escalation via mirroring",
+        "WBS-6.4: concurrency (FR-040/041) = EXP-001 one-Runner join/steer (PASS); cross-surface acting is same-owner multi-connection (act-via-ownership) - not rebuilt (advisor-confirmed)",
+        "WBS-6.4 SCOPE MOVE: admin-gated /attach HTTP endpoint -> WBS-6.1 (OpenAPI derives from Effect HttpApi OpenApi.fromApi(PublicApi); a marid-auth-wrapper route gets no OpenAPI/health/contract coverage AC-024 requires). Reconciliation: channel token can't self-attach (INV-001), so ADR-0012 'operator attaches' = admin-surface action, not Telegram /attach"
+      ]
     }
   ],
   "change_log": [
@@ -4286,6 +4298,12 @@
       "actor": "operator (STK-001) + execution-agent",
       "action": "WBS-6.3 bidirectional mirroring MECHANISM implemented (ADR-0012; production successor to EXP-008). New @marid/auth/binding.ts durable BindingStore (binding.json 0600; attach/detach/list). middleware.ts /event predicate owns -> isVisible = owns OR bound (VIEW-via-binding), confined to the /event subscribe, degrade-safe .catch (RISK-024). ACT-via-ownership preserved: authorize/scope.ts + list routes stay on owns (INV-001 by construction; mirroring opens view, never act). event-filter.ts UNTOUCHED (filterSseStream already takes an arbitrary predicate; DoD '(edit event-filter.ts)' stale, EXP-008 governs). createBindingStore wired into serve.ts (Marid-owned). binding.test + mirroring.test (real middleware+store+filter): marid-auth 87->100 green, typecheck+lint clean, ZERO upstream edit. Advisor-confirmed scope cut to the mechanism; carried (documented, not dropped): admin-gated /attach endpoint + cross-surface permission first-responder-wins -> WBS-6.4, channel-client-consume -> WBS-6.1, seq->id fan-out + attach-triggers-reconnect -> WBS-6.5. INV-001 landmine avoided (no self-serve HTTP attach). WBS-6.3 -> done; AC-019 -> Partial; PH-6 phase -> in-progress. On feat/ph6-mirroring, NOT merged (INV-003/005). validate_package.py docs/ = RESULT: OK.",
       "target": "packages/marid-auth/src/{binding.ts,middleware.ts,index.ts}+packages/marid-auth/test/{binding.test.ts,mirroring.test.ts,middleware.test.ts,channel-binding.test.ts}+packages/opencode/src/marid/serve.ts+planning/work-breakdown+validation/acceptance-audit+progress/{progress-log,status-report}+keystone-state(phases/progress/change_log)"
+    },
+    {
+      "timestamp": "2026-07-11T00:30:00Z",
+      "actor": "operator (STK-001) + execution-agent",
+      "action": "WBS-6.3 merged to develop (PR #44 squash, 47b64e1eb; 20 checks green) on explicit operator instruction. THEN WBS-6.4 cross-surface permission + concurrency VERIFIED (code-light; DoD = tests green). first-responder-wins/no-double-approve is a server invariant: Permission.reply get-check-pending.delete has no yield* between get and delete -> atomic on one instance, 2nd reply -> NotFoundError (new permission/next.test.ts test). permission.asked mirrors to a bound surface (view-via-binding covers permission events; new mirroring.test.ts test). act-via-ownership deny already proven (6.3). Concurrency = EXP-001 (one-Runner join/steer; act limited to owners, so cross-surface acting is same-owner multi-connection - not rebuilt). marid-auth ->101, opencode permission 79->80 green; typecheck clean; ZERO upstream edit. Admin-gated /attach endpoint MOVED to WBS-6.1 (AC-024: OpenAPI derives from Effect HttpApi, so a marid-auth-wrapper route gets no OpenAPI/health/contract coverage). Reconciliation: channel token can't self-attach (INV-001), so ADR-0012 'operator attaches' = admin-surface action. WBS-6.4 -> done; AC-019 stays Partial (operator-reachable attach + live path = WBS-6.1/6.5). On feat/ph6-cross-surface-permission, NOT merged (INV-003/005). validate_package.py docs/ = RESULT: OK.",
+      "target": "packages/opencode/test/permission/next.test.ts+packages/marid-auth/test/mirroring.test.ts+planning/work-breakdown+validation/acceptance-audit+progress/{progress-log,status-report}+keystone-state(progress/change_log)"
     }
   ]
 }

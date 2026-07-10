@@ -91,6 +91,22 @@ describe("WBS-6.3 · view-via-binding — an attached session mirrors, an unatta
     expect(out).toContain("ses_tg") // still sees its own
   })
 
+  test("a permission.asked on a bound session mirrors to the attached surface (WBS-6.4 view)", async () => {
+    // The cross-surface permission story: the ask EVENT is visible on every bound
+    // surface (view-via-binding, same predicate as any session frame); only the OWNER
+    // may reply (act-via-ownership, asserted below). Here the channel, attached to
+    // ses_web, receives the permission.asked frame so its inline keyboard can render.
+    const { auth, tokens, ownership, bindings } = await build()
+    const { secret } = await tokens.create("tg", "channel:tg")
+    await ownership.record("tg", "ses_tg")
+    await bindings.attach("tg", "ses_web")
+    const out = await subscribe(auth, secret, [
+      frame("permission.asked", { id: "per_x", sessionID: "ses_web", permission: "bash" }),
+    ])
+    expect(out).toContain("per_x") // the ask reaches the bound surface
+    expect(out).toContain("ses_web")
+  })
+
   test("bidirectional: a web dashboard token attached to the channel session sees channel turns", async () => {
     const { auth, tokens, bindings } = await build()
     const { secret } = await tokens.create("dash", "client")

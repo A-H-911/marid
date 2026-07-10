@@ -16,10 +16,10 @@ generation: derived
 | | |
 |---|---|
 | Reporting date | 2026-07-10 |
-| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005/007/008 PASS**. **WBS-6.2 done** (4 Telegram UX defects fixed in place; marid-telegram **68→89 green**). **WBS-6.3 done** — bidirectional mirroring **mechanism**: durable `BindingStore` + binding-aware `isVisible` at the `/event` site (view-via-binding, act-via-ownership, degrade-safe; additive, zero upstream edit); marid-auth **87→100 green**. On `feat/ph6-mirroring`, **unmerged** (INV-003/005). Next: WBS-6.4 (cross-surface permission + admin-gated `/attach`) / WBS-6.1 (channel-client) |
-| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 + WBS-6.3 done, unmerged) |
+| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005/007/008 PASS**. **WBS-6.2 done** (4 Telegram UX defects; marid-telegram **68→89 green**). **WBS-6.3 done** (mirroring mechanism: durable `BindingStore` + binding-aware `isVisible`; marid-auth **87→100**, merged #44). **WBS-6.4 done** (cross-surface permission verified: first-responder-wins server invariant, ask-mirrors-to-bound-surface, act-via-ownership; concurrency = EXP-001; opencode permission **79→80**, marid-auth **→101**). On `feat/ph6-cross-surface-permission`, **unmerged** (INV-003/005). Next: **WBS-6.1** (gateway + `@marid/channel-client` + admin-gated `/attach` endpoint + `/global/event` routing — makes mirroring operator-reachable) |
+| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 + 6.3 merged/done, 6.4 done unmerged) |
 | Last milestone met | **MS-006 (2026-07-09)** — public `v0.1.0` release, MVP release-ready |
-| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2 + 6.3 impl done + EXP-005/007/008 PASS; live E2E + remaining WBS (6.1/6.4/6.5/6.6) outstanding. AC-019 Partial (mirroring mechanism proven; cross-surface permission = WBS-6.4) |
+| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2/6.3/6.4 done + EXP-005/007/008 PASS; live E2E + remaining WBS (6.1/6.5/6.6) outstanding. AC-019 Partial (mirroring + cross-surface permission properties proven; operator-reachable attach + live path = WBS-6.1/6.5) |
 
 ## Phase progress
 
