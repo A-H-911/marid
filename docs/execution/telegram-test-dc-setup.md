@@ -1,6 +1,6 @@
 ---
 status: Draft
-version: v1.5
+version: v1.6
 updated: 2026-07-10
 owner: operator (STK-001)
 ---
@@ -134,11 +134,35 @@ Press **Enter** at each prompt to accept the test defaults:
 It prints the session string between `==== TELEGRAM_TEST_SESSION ====` markers — **paste that line into
 `.env`** as `TELEGRAM_TEST_SESSION=…`. Later runs are then non‑interactive.
 
-> **⚠️ Currently blocked (verified 2026‑07‑10):** this returns `PHONE_CODE_INVALID` on every DC/config
-> (see the VERIFIED BLOCKER box at the top). The script itself is correct — the fault is GramJS's stale
-> test‑DC endpoints not reaching Telegram's reserved‑test‑number path. Do **not** burn time re‑running it;
-> the userbot tier is on hold pending an operator decision on the fallbacks listed above. The fake‑server
-> E2E remains the blocking gate regardless.
+> **⚠️ Synthetic test‑DC login is blocked (verified 2026‑07‑10)** — see the VERIFIED BLOCKER box at the top.
+> The path below is the **real‑account mode** instead.
+
+### Step 2 (chosen path) — a REAL dedicated throwaway account
+
+The userbot tier works with a **real account** because the login code for a new third‑party session is
+delivered **in‑app** (to your existing official session), bypassing the SMS restriction that breaks the
+synthetic numbers. The same script handles it (production mode auto‑detected from the number).
+
+**Ban‑risk guardrails (important):** use a **dedicated throwaway number, never your personal account**;
+keep automated traffic gentle and the CI job **non‑gating / occasional** (ADR‑0013 already mandates this);
+the resulting session is a **real login — guard it like a password** (INV‑002).
+
+1. Get a **dedicated throwaway phone number** (cheap second SIM / virtual number that can receive one code).
+2. **Sign it into an official Telegram app once** (phone or Desktop) — this is what lets the login code
+   arrive **in‑app** rather than via (restricted) SMS.
+3. With `TELEGRAM_API_ID`/`TELEGRAM_API_HASH` in `.env`, run the script **in a terminal** and enter your
+   real number at the prompt:
+   ```bash
+   cd packages/marid-telegram
+   node scripts/tg-test-login.mjs
+   # Phone: +<countrycode><number>   → it auto-selects PRODUCTION DC
+   # Login code: read it from your Telegram app (NOT SMS) and type it
+   # 2FA: enter it if the account has one
+   ```
+   On success it writes `TELEGRAM_TEST_SESSION` into the root `.env` (value hidden). Done.
+
+> If you ever revisit the synthetic test‑DC path, the interactive prompt still defaults to `9996621234` /
+> `22222` — but it is server‑side blocked today (top box).
 
 ## Step 3 — a bot in the test environment
 
