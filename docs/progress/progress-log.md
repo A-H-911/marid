@@ -11,6 +11,27 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-11 — WBS-6.1 slice b part 1: admin-gated attach endpoint + /doc OpenAPI merge (unmerged, gated)
+- **Done:** the **operator-reachable attach surface** (ADR-0012), served entirely by the marid-auth wrapper
+  (never reaches upstream): `POST /marid/attach`, `POST /marid/detach`, `GET /marid/bindings`, writing the
+  durable `BindingStore` (WBS-6.3). **Admin-scope ONLY** — a `channel:` token self-attaching is the INV-001
+  self-attach landmine, so attach is an admin-surface action (401 unauth, 403 non-admin, 400 bad body).
+  **OpenAPI-documented (AC-024) additively per EXP-014:** marid-auth intercepts `GET /doc`, strips
+  `accept-encoding` (the >1KB spec is gzipped → opaque to the merge, like the list routes), and merges a
+  hand-authored Marid fragment (inline schemas → no component collision; **no effect dep** — marid-auth stays
+  dependency-free). Health-covered by existing `/global/health`. New `gateway.ts` + shared `http.ts`
+  (`errorResponse` extracted from middleware + `jsonResponse`); middleware gains a `/marid/*` short-circuit
+  (before ownership/authorize) + the `/doc` augment. **Zero upstream edit, no `P-*`.** marid-auth **101→109**
+  (8 new gateway/TEST-CONTRACT tests), typecheck+lint clean, `index.ts` public API unchanged (consumer
+  unaffected). On `feat/ph6-gateway`, unmerged (INV-003/005).
+- **Decisions:** hand-authored static OpenAPI fragment (not `OpenApi.fromApi` at runtime) — keeps marid-auth
+  dependency-free; EXP-014 already de-risked the merge mechanics, and TEST-CONTRACT pins the fragment against
+  the served handlers. Attach body = `{token, session}` (channel-token NAME + session id).
+- **Deviations:** none. **Blockers:** operator gate (push/PR/merge). AC-024 endpoints delivered; formal AC-024
+  verdict flip held until the full slice b lands (with the blast-radius/degradation coverage). **Next:** 6.1b
+  part 2 (fine-filter `/global/event` → INV-001 + mirroring, AC-019) then part 3 (channel-client consumes
+  bound sessions).
+
 ## 2026-07-11 — EXP-014 PASS: attach-endpoint OpenAPI is additive (no P-*); WBS-6.1 slice b scoped
 - **Done:** **EXP-014 (HYP-014) — PASS.** De-risked the AC-024 endpoint-location `P-*` question for WBS-6.1
   slice b. `/doc` is served from `OpenApi.fromApi(PublicApi)` (`server httpapi/server.ts:188`), wired in

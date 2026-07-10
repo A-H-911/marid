@@ -4220,6 +4220,16 @@
         "Verdict: attach endpoint = marid-auth wrapper serve + GET /doc-merge (both additive) -> NO P-*; rejected compose-into-PublicApi path characterized in the report",
         "HYP-014 + EXP-014 added to hypothesis-register.md and keystone-state registers; exp-014-report.md authored; spike removed (throwaway - production TEST-CONTRACT lands in slice b)"
       ]
+    },
+    {
+      "date": "2026-07-11",
+      "author": "execution-agent",
+      "summary": "WBS-6.1 slice b part 1: admin-gated attach endpoint (POST /marid/attach, /marid/detach, GET /marid/bindings) served entirely by the marid-auth wrapper writing the durable BindingStore (WBS-6.3). Admin-scope ONLY (channel self-attach = INV-001 landmine). OpenAPI-documented additively per EXP-014: marid-auth intercepts GET /doc, strips accept-encoding (gzip gotcha), merges a hand-authored Marid fragment (inline schemas, no effect dep - marid-auth stays dependency-free). Health-covered by existing /global/health. New gateway.ts + shared http.ts (errorResponse extracted + jsonResponse); middleware /marid/* short-circuit + /doc augment. Zero upstream edit, no P-*. marid-auth 101->109 (8 new tests), typecheck+lint clean, index.ts public API unchanged. On feat/ph6-gateway, unmerged (INV-003/005).",
+      "items_completed": [
+        "6.1b-1: POST /marid/attach|/marid/detach + GET /marid/bindings served in marid-auth wrapper (never reaches upstream), writing BindingStore; admin-only (401 unauth/403 non-admin/400 bad body); idempotent attach, detach removes",
+        "6.1b-1: GET /doc augmented additively (EXP-014) - strip accept-encoding then merge a hand-authored Marid OpenAPI fragment (inline schemas, no collision, no effect dependency)",
+        "6.1b-1: extracted errorResponse to shared http.ts (+ jsonResponse); marid-auth 101->109 green incl. 8 new gateway/TEST-CONTRACT tests; typecheck+lint clean; zero upstream edit"
+      ]
     }
   ],
   "change_log": [
@@ -4351,6 +4361,12 @@
       "actor": "execution-agent",
       "action": "EXP-014 (HYP-014) PASS: attach-endpoint OpenAPI is additive, no P-*. marid-auth intercepts GET /doc and merges a Marid-owned OpenApi.fromApi(HttpApiGroup) fragment into the upstream OpenApi.fromApi(PublicApi) spec - proven collision-free + serializable by a 3/3 spike; endpoint served by the wrapper. Rejected: compose-into-PublicApi (would edit upstream api.ts = one P-*). WBS-6.1 slice b endpoint-location decision resolved -> no operator P-* gate needed. Added HYP-014/EXP-014 registers + exp-014-report; progress-log/status trackers updated; spike removed (production TEST-CONTRACT lands in slice b). docs-only; no product code; validate = OK.",
       "target": "experiments/exp-014-report+research/hypothesis-register+keystone-state(registers/progress/change_log)+progress/{progress-log,status-report}+planning/work-breakdown"
+    },
+    {
+      "timestamp": "2026-07-11T03:00:00Z",
+      "actor": "execution-agent",
+      "action": "WBS-6.1 slice b PART 1 implemented: admin-gated attach endpoint (POST /marid/attach, /marid/detach, GET /marid/bindings) served entirely by the marid-auth wrapper, writing the durable BindingStore; admin-scope only (channel self-attach = INV-001 landmine). OpenAPI-documented additively (EXP-014): intercept GET /doc, strip accept-encoding (gzip), merge a hand-authored Marid fragment (inline schemas, no effect dep). Health = existing /global/health. New gateway.ts + shared http.ts; middleware /marid/* short-circuit + /doc augment. Zero upstream edit, no P-*. marid-auth 101->109 green, typecheck+lint clean, public API unchanged. AC-024 endpoints delivered (formal verdict flip held for full slice b). Next: 6.1b part 2 (fine-filter /global/event -> INV-001 + mirroring, AC-019) + part 3 (channel-client consumes bound sessions). On feat/ph6-gateway, NOT merged (INV-003/005). validate = OK.",
+      "target": "packages/marid-auth/src/{gateway.ts,http.ts,middleware.ts}+packages/marid-auth/test/gateway.test.ts+progress/{progress-log,status-report}+planning/work-breakdown+keystone-state(progress/change_log)"
     }
   ]
 }
