@@ -16,10 +16,10 @@ generation: derived
 | | |
 |---|---|
 | Reporting date | 2026-07-10 |
-| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005 PASS** (fix-in-place), **EXP-008 PASS** (mirroring additive), **EXP-007 PASS** (GramJS userbot ↔ real bot round-trip). **WBS-6.2 implemented** — all 4 Telegram UX defects fixed in place (MarkdownV2, files both ways, slash whitelist, multi-part), marid-telegram **68→89 green**. On `feat/ph6-marid-gateway`, **unmerged** (INV-003/005). Next: WBS-6.6 (live E2E/CI) or WBS-6.1 (gateway extraction) |
-| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 done, unmerged) |
+| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005/007/008 PASS**. **WBS-6.2 done** (4 Telegram UX defects fixed in place; marid-telegram **68→89 green**). **WBS-6.3 done** — bidirectional mirroring **mechanism**: durable `BindingStore` + binding-aware `isVisible` at the `/event` site (view-via-binding, act-via-ownership, degrade-safe; additive, zero upstream edit); marid-auth **87→100 green**. On `feat/ph6-mirroring`, **unmerged** (INV-003/005). Next: WBS-6.4 (cross-surface permission + admin-gated `/attach`) / WBS-6.1 (channel-client) |
+| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 + WBS-6.3 done, unmerged) |
 | Last milestone met | **MS-006 (2026-07-09)** — public `v0.1.0` release, MVP release-ready |
-| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2 impl done + EXP-005/007/008 PASS; live E2E + remaining WBS (6.1/6.3/6.4/6.5/6.6) outstanding |
+| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2 + 6.3 impl done + EXP-005/007/008 PASS; live E2E + remaining WBS (6.1/6.4/6.5/6.6) outstanding. AC-019 Partial (mirroring mechanism proven; cross-surface permission = WBS-6.4) |
 
 ## Phase progress
 

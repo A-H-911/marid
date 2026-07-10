@@ -1,4 +1,5 @@
 import type { AuditLog, Decision } from "./audit"
+import type { BindingStore } from "./binding"
 import type { OwnershipStore } from "./ownership"
 import type { RateLimiter } from "./ratelimit"
 import { authorize, sessionFromPathname } from "./scope"
@@ -15,6 +16,7 @@ export interface MaridAuth {
 export interface MaridAuthDeps {
   tokens: TokenStore
   ownership: OwnershipStore
+  bindings: BindingStore
   audit: AuditLog
   limiter: RateLimiter
 }
@@ -262,14 +264,23 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
       await record(token.name, "allow")
 
       if (stream) {
-        const filtered =
-          isolate && url.pathname === "/event" && response.body
-            ? new Response(filterSseStream(response.body, owns), {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers,
-              })
-            : response
+        // Full bidirectional mirroring (WBS-6.3, ADR-0012): a token sees frames of
+        // sessions it OWNS plus sessions the operator has explicitly ATTACHED it to
+        // (the binding registry). VIEW-via-binding lives here, on the /event firehose;
+        // the ACTING gate (authorize/scope.ts) and the list routes stay on `owns`
+        // alone, so a bound surface can view but never approve/prompt a session it does
+        // not own (act-via-ownership, INV-001 — EXP-008). Binding I/O is confined to the
+        // /event subscribe, and a registry fault degrades to owns-only (RISK-024).
+        let filtered = response
+        if (isolate && url.pathname === "/event" && response.body) {
+          const bound = await deps.bindings.list(token.name).catch(() => new Set<string>())
+          const isVisible = (id: string): boolean => owns(id) || bound.has(id)
+          filtered = new Response(filterSseStream(response.body, isVisible), {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          })
+        }
         return withRequestId(trackStream(filtered, releaseStream, request.signal), requestId)
       }
 
