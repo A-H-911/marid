@@ -11,6 +11,31 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-10 — WBS-6.4 cross-surface permission + concurrency (verification; unmerged, gated)
+- **Done:** **WBS-6.4 — cross-surface permission surfacing + concurrency, verified.** Code-light by design (the DoD is
+  "tests green"; the properties already hold — this WBS proves them). (1) **first-responder-wins / no-double-approve** is a
+  server invariant: `Permission.reply` (`packages/opencode/src/permission/index.ts:110-114`) does get-check-`pending.delete`
+  with **no `yield*` between the get and the delete**, so on one instance it is atomic (Effect fibers can't interleave at a
+  non-suspension point) — the first reply consumes the permission, a second reply from any other surface fails
+  `NotFoundError`. New `permission/next.test.ts` test (+ the pre-existing "reply - fails for unknown requestID") pins it.
+  (2) **view-via-binding of the ask** — a `permission.asked` frame on a bound session mirrors to the attached surface (new
+  `mirroring.test.ts` test), so a bound surface's inline keyboard can render. (3) **act-via-ownership** — a bound-but-not-
+  owner surface is DENIED replying/prompting: already proven in `mirroring.test.ts` (WBS-6.3). (4) **Concurrency (FR-040/041)**
+  — the one-Runner join/steer is **EXP-001 (PASS)**; a channel can only *act* on sessions it owns, so cross-surface acting is
+  same-owner multi-connection, covered by EXP-001 — not rebuilt. marid-auth **100→101 green**, opencode permission
+  **79→80 green**, typecheck clean, **zero upstream edit**.
+- **Decisions:** **The admin-gated `/attach` HTTP endpoint moved to WBS-6.1** (AC-024 constraint, advisor-caught): OpenAPI
+  derives from the Effect HttpApi (`OpenApi.fromApi(PublicApi)`, `server.ts:68`), so a marid-auth-wrapper-intercepted route
+  gets **no** OpenAPI/health/contract coverage AC-024 requires — the endpoint belongs inside the HttpApi hook (6.1). Bindings
+  written in-test via `BindingStore` directly (same altitude as `mirroring.test`). **Reconciliation** (state now, don't
+  surprise 6.1): a `channel:` token can't call an admin-gated attach (INV-001 self-attach landmine), so ADR-0012's "operator
+  explicitly attaches" is an **admin-surface** action (TUI/CLI/web), not a Telegram `/attach` typed by the channel token.
+- **Deviations:** **AC-019 stays Partial** (not Met) — the *properties* (mirror both ways, first-responder-wins,
+  act-via-ownership, ask-mirror) are proven at integration altitude, but operator-reachable attach (WBS-6.1) and the live
+  Telegram path (`/global/event` routing = 6.1; reconnect = 6.5) are not yet built. My earlier "6.4 flips AC-019 → Met" note
+  was corrected. **Blockers:** none. **Next:** operator gate for PR into `develop`; then **WBS-6.1** (gateway + `@marid/channel-client`
+  + the admin-gated attach endpoint + `/global/event` routing — the item that makes mirroring operator-reachable and flips AC-019).
+
 ## 2026-07-10 — WBS-6.3 bidirectional mirroring mechanism (unmerged, gated)
 - **Done:** **WBS-6.3 — the additive mirroring core (ADR-0012), the production successor to the EXP-008 spike.**
   New durable `@marid/auth/binding.ts` — a session↔surface `BindingStore` (`binding.json`, 0600 sidecar;
