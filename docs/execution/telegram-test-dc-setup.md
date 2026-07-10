@@ -1,6 +1,6 @@
 ---
 status: Draft
-version: v1.3
+version: v1.4
 updated: 2026-07-10
 owner: operator (STK-001)
 ---
@@ -24,17 +24,23 @@ build work (the EXP‑007/009 harness that *consumes* `.env`) — the operator d
 > code — no SMS, no real account, zero ban risk** — which is what makes an *automated* real‑protocol login
 > possible at all. It is a completely separate instance (separate users, chats, bots) from production.
 
-> ⚠️ **VERIFIED BLOCKER (2026‑07‑10) — GramJS test‑DC login is currently non‑functional.** An exhaustive
-> spike (Node, all three DCs, low‑level `sendCode`+`signIn`, explicit DC pinning to `149.154.167.40:443`,
-> 5‑ and 6‑digit codes) returns **`PHONE_CODE_INVALID` on every path**. `sendCode` succeeds but returns
-> `SentCodeTypeSms` (not a test‑code type) — the synthetic numbers are not hitting Telegram's reserved
-> test‑number logic through GramJS's (stale, ~18mo) test‑DC endpoints. This is the **EXP‑007 FAIL branch**
-> (GramJS issue #70, unresolved): **the deterministic fake‑server E2E remains the blocking gate; the GramJS
-> userbot tier is best‑effort and currently blocked.** Fallbacks (operator decision): (a) a real throwaway
-> account on production (ban‑exposed, needs a real phone — plan's noted fallback), (b) evaluate an
-> alternative MTProto lib (mtcute/Telethon) as a separate gated comparison, (c) accept fake‑server + the
-> Telegram‑Web GUI tier (EXP‑009) as the real‑client coverage. Steps 1–3 below are still correct for if/when
-> a working userbot path exists; Step 4 (harness) is paused on the userbot tier only.
+> ⚠️ **VERIFIED BLOCKER (2026‑07‑10) — automated test‑DC userbot login is non‑functional, and it is NOT a
+> library issue.** Two independent MTProto libraries were spiked against the operator's real api credentials:
+> - **GramJS** (stale, ~18mo): all three DCs, low‑level `sendCode`+`signIn`, explicit pin to
+>   `149.154.167.40:443`, 5‑ and 6‑digit codes → **`PHONE_CODE_INVALID` on every path**; `sendCode` returns
+>   `SentCodeTypeSms`.
+> - **mtcute** (modern, actively maintained, `testMode:true`): **identical failure** — *"confirmation code
+>   sent via sms"* then *"Provided code was invalid"* for `22222`.
+>
+> Because a *current* library reproduces it exactly, the cause is **upstream of the client**: the synthetic
+> `99966XYYYY` numbers are being handled as **real numbers ("sms" delivery), so Telegram's reserved‑test‑number
+> fixed‑code logic never engages** — no typed code can validate. This is the **EXP‑007 FAIL branch**. **The
+> deterministic fake‑server E2E remains the blocking gate; the userbot tier is blocked.** Narrowed options
+> (operator decision): (a) **EXP‑009 Telegram‑Web** (`web.telegram.org/?test=1`) — the *official* client hits
+> the real test env directly and is the definitive test of whether these creds/numbers work at all; (b) a
+> **real throwaway account on production** (ban‑exposed, needs a real phone — plan's noted fallback); (c)
+> accept **fake‑server as the sole gate** and build on. Steps 1–3 below remain correct for if/when a working
+> path exists; Step 4 (harness) is paused on the userbot tier only.
 
 ## What you provision (three secrets)
 
