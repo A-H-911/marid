@@ -19,4 +19,17 @@ describe("restrictedPrompt", () => {
     expect("tools" in body).toBe(false)
     expect("permission" in body).toBe(false)
   })
+
+  test("inbound file parts ride along after the text part (defect 2)", () => {
+    const withFile = restrictedPrompt({
+      sessionID: "ses_1",
+      text: "see attached",
+      agent: "telegram-channel",
+      files: [{ type: "file", mime: "application/pdf", filename: "report.pdf", url: "https://x/y" }],
+    })
+    expect(withFile.parts).toEqual([
+      { type: "text", text: "see attached" },
+      { type: "file", mime: "application/pdf", filename: "report.pdf", url: "https://x/y" },
+    ])
+  })
 })

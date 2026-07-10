@@ -9,7 +9,7 @@ interface Recorded {
   sleeps: number[]
 }
 
-function harness(opts?: { cadenceMs?: number; limit?: number; editBehavior?: () => void }) {
+function harness(opts?: { cadenceMs?: number; limit?: number; editBehavior?: () => void; sendBehavior?: () => void }) {
   const rec: Recorded = { sends: [], edits: [], typing: 0, sleeps: [] }
   let nextId = 500
   let t = 0
@@ -21,6 +21,7 @@ function harness(opts?: { cadenceMs?: number; limit?: number; editBehavior?: () 
     limit: opts?.limit,
     bot: {
       sendMessage: async (_c, text, o) => {
+        opts?.sendBehavior?.()
         rec.sends.push({ text, parseMode: o?.parse_mode })
         return { message_id: ++nextId, chat: { id: 7, type: "private" } }
       },
@@ -40,7 +41,7 @@ describe("createStreamer (AC-011)", () => {
     await h.streamer.push("hello")
     expect(h.rec.sends).toHaveLength(1)
     expect(h.rec.sends[0]!.text).toBe("hello")
-    expect(h.rec.sends[0]!.parseMode).toBe("HTML")
+    expect(h.rec.sends[0]!.parseMode).toBe("MarkdownV2") // WBS-6.2: assistant text renders as MarkdownV2
     expect(h.rec.typing).toBe(1)
   })
 
@@ -77,6 +78,29 @@ describe("createStreamer (AC-011)", () => {
     await h.streamer.push("0123456789ABCDEFGHIJ") // 20 chars, limit 10 → 2 messages
     expect(h.rec.sends.length).toBeGreaterThanOrEqual(2)
     expect(h.rec.sends.map((s) => s.text).join("")).toContain("ABCDEFGHIJ")
+  })
+
+  test("assistant Markdown renders as MarkdownV2, not literal markup (defect 1)", async () => {
+    const h = harness()
+    await h.streamer.push("Here is **bold**")
+    expect(h.rec.sends[0]!.text).toBe("Here is *bold*") // **bold** -> *bold* (MarkdownV2)
+    expect(h.rec.sends[0]!.parseMode).toBe("MarkdownV2")
+  })
+
+  test("a 400 parse error falls back to clean plain text (no escape backslashes)", async () => {
+    let thrown = false
+    const h = harness({
+      sendBehavior: () => {
+        if (!thrown) {
+          thrown = true
+          throw new TelegramError(400, "can't parse entities")
+        }
+      },
+    })
+    await h.streamer.push("Done.") // MarkdownV2 would be "Done\\." → 400 → resend plain
+    expect(h.rec.sends).toHaveLength(1) // only the successful fallback send is recorded
+    expect(h.rec.sends[0]!.text).toBe("Done.") // clean plain, not "Done\\."
+    expect(h.rec.sends[0]!.parseMode).toBeUndefined()
   })
 
   test("a 429 on edit honors retry_after and retries", async () => {

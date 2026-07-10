@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-09
+updated: 2026-07-10
 owner: operator (STK-001)
 generation: derived
 ---
@@ -16,10 +16,10 @@ generation: derived
 | | |
 |---|---|
 | Reporting date | 2026-07-10 |
-| Current phase | **PH-5 complete + gate-14 ACCEPTED 2026-07-09.** Channels package **PH-6 + PH-7 gates APPROVED 2026-07-10** — PH-6 (gateway + full Telegram + mirroring + 4-tier tests; ADR-0009/0011/0012/0013) + PH-7 (WhatsApp: fake-WA gate + token-text permission; ADR-0010/0014/0015); ADR-0008 Superseded; FR-047 amended. **Implementation authorized** (each phase starts with its experiments); no code yet |
-| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. Post-MVP channel plan authored (no product code) |
+| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005 PASS** (fix-in-place), **EXP-008 PASS** (mirroring additive), **EXP-007 PASS** (GramJS userbot ↔ real bot round-trip). **WBS-6.2 implemented** — all 4 Telegram UX defects fixed in place (MarkdownV2, files both ways, slash whitelist, multi-part), marid-telegram **68→89 green**. On `feat/ph6-marid-gateway`, **unmerged** (INV-003/005). Next: WBS-6.6 (live E2E/CI) or WBS-6.1 (gateway extraction) |
+| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 done, unmerged) |
 | Last milestone met | **MS-006 (2026-07-09)** — public `v0.1.0` release, MVP release-ready |
-| Next milestone | **MS-007 (PH-6 Telegram remediation)** — planned; ADR-0009 Proposed, awaiting operator gate |
+| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2 impl done + EXP-005/007/008 PASS; live E2E + remaining WBS (6.1/6.3/6.4/6.5/6.6) outstanding |
 
 ## Phase progress
 
@@ -50,7 +50,10 @@ the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `par
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-Nothing open in PH-5. **Gate 14 ACCEPTED (2026-07-09) — MS-006 met, the Marid MVP plan (PH-0..5) is complete.** Post-MVP backlog only.
+**PH-6 (Telegram-first).** MVP (PH-0..5) complete since gate 14. **WBS-6.2 implemented** (all 4 Telegram UX defects fixed
+in place; marid-telegram 89 green, typecheck clean) + **EXP-005/007/008 PASS** — all on `feat/ph6-marid-gateway`,
+**unmerged** (awaiting operator merge, INV-003/005). Outstanding: WBS-6.6 (live 3-OS/E2E + CI), WBS-6.1 (Marid Gateway +
+`@marid/channel-client`), WBS-6.3/6.4 (mirroring + cross-surface permission), WBS-6.5 (SSE reconnect), WBS-6.7 (docs).
 
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18
