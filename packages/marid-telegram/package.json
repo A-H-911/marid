@@ -18,5 +18,8 @@
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:"
+  },
+  "dependencies": {
+    "telegramify-markdown": "1.3.3"
   }
 }
