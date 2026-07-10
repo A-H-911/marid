@@ -52,6 +52,37 @@ continuing. Each assumes a fresh session: the agent must re-read the files it na
 > logo per `docs/branding/branding.md`, then regenerate `docs/validation/traceability-matrix.md` and assemble
 > readiness evidence for the operator's MVP go/no-go. Exit: MS-006.
 
+## PH-6 → start (post-MVP, all-in-one; after gate approval of ADR-0009/0011/0012/0013 + DEC-014/017/018/019)
+
+> MS-006 is accepted and the operator approved starting PH-6 (Telegram-first, all-in-one). Build WBS-6.1..6.6 per
+> `docs/adrs/{adr-0011-marid-gateway,adr-0012-cross-client-mirroring,adr-0013-telegram-test-strategy,adr-0009-telegram-channel-remediation}.md`
+> + `docs/research/findings/telegram-options.md`: (6.1) evolve **marid-auth into the Marid Gateway** (marid-auth =
+> a module) + extract **`@marid/channel-client`** — keep TEST-AUTH/TEST-SEC/channel-binding green (INV-001
+> unbroken); (6.2) **full Telegram** fix-in-place (`telegramify-markdown`; files both ways; whitelisted slash;
+> inline kbd; multipart); (6.3) **bidirectional mirroring** — session↔surface binding registry (explicit-attach
+> `/attach`) + binding-aware `isVisible` in `event-filter.ts` + channel-client consumes bound sessions (additive,
+> no upstream edit); (6.4) **cross-surface permission/concurrency** (view-via-binding, act-via-ownership); (6.5)
+> SSE reconnect + re-fetch; (6.6) **4-tier tests** — fake-server (blocking PR gate) + userbot test-DC
+> (TEST-TG-E2E) + Web-Playwright (TEST-TG-UI) [local-pre-PR + GitHub-on-demand] + native mobilewright
+> (TEST-TG-MOBILE, manual) + mirroring TEST-SYNC. **Run EXP-007/008/009 first** (write reports); INV-001 is
+> server-enforced — never weaken the `channel:` scope. On approval flip ADR-0008 → Superseded and
+> ADR-0009/0011/0012/0013 → Approved. Exit: MS-007.
+
+## PH-7 → start (post-MVP; after gate approval of ADR-0010 / DEC-015 / DEC-016)
+
+> PH-6 accepted; operator approved starting PH-7, and DEC-015/016 (unofficial client + FR-047 amendment) are
+> Approved. Build `@marid/whatsapp` per `docs/adrs/adr-0010-whatsapp-adapter.md` +
+> `docs/research/findings/whatsapp-options.md`: WBS-7.1..7.5 — a **separate process holding only a `channel:`
+> token** (ADR-0005), unofficial client (WAHA-NOWEB-WS primary / hardened Baileys-direct alt), **outbound-only**
+> (OQ-004). **Reuse the PH-6 gateway + `@marid/channel-client` + ADR-0012 mirroring** (WhatsApp = "just another
+> channel"; `/attach` + view-via-binding/act-via-ownership). Design per **ADR-0014** (test strategy — build the
+> **fake at the WAHA WebSocket boundary** as the deterministic **blocking gate**, keep the WAHA client behind a
+> **narrow interface**; burner + native probes are manual, never gates) and **ADR-0015** (permission UX =
+> **token-bound text reply** `APPROVE <token>`, strict server-side parse + scope re-check — **no interactive
+> buttons**). Run **EXP-006/011** against the fake-WA harness (write reports); **pin + provenance-check** WhatsApp
+> deps (RISK-014); the manual burner real-protocol probe (EXP-012) is ban-exposed. INV-001 + the approval-parser +
+> policy-denial tests before the happy path. Exit: MS-008.
+
 ## Situational
 
 - **Fresh-session refresher:** "Read docs/01-executive-summary.md, docs/planning/roadmap.md, and

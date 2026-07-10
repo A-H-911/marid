@@ -20,8 +20,12 @@ after measuring the upstream baseline (NFR-011) — do not invent a number first
 | TEST-AUTH | marid-auth: tokens, scopes, 401/403/429, audit lines, redaction | unit + integration vs real server | every PR |
 | TEST-CONTRACT | Pinned v1 routes/events (the gate-7 contract): route shapes, event taxonomy, seq/replay semantics | contract suite vs real server | every PR + **blocking on sync PRs** |
 | TEST-INST | marid-instance: lifecycle commands, port/PID, isolation suite (full R-05 conflict inventory) | integration, 2+ real instances | PR (fast subset) + nightly full |
-| TEST-SYNC | Cross-interface: §7 flow, reconnect/replay, restart recovery, concurrency semantics | integration/E2E, SDK+TUI headless | PR subset + nightly |
-| TEST-TG | Telegram gateway: dedup, allowlist, formatting/split, cadence, inline-keyboard permissions; Bot API faked locally via recorded fixtures (http-recorder), one manual live probe per release | unit + integration (fixtures) | every PR; live probe at release |
+| TEST-SYNC | Cross-interface: §7 flow, reconnect/replay, restart recovery, concurrency semantics; **+ cross-client channel mirroring (attach, bidirectional, view-via-binding/act-via-ownership, cross-surface permission/concurrency)** (PH-6) | integration/E2E, SDK+TUI headless | PR subset + nightly |
+| TEST-TG | Telegram gateway: dedup, allowlist, formatting/split, cadence, inline-keyboard permissions; Bot API faked locally via recorded fixtures (http-recorder) — **the deterministic blocking PR gate** | unit + integration (fixtures) | **every PR (blocking gate)** |
+| TEST-TG-E2E | Telegram **real-protocol** E2E — GramJS userbot on the **test DC** (text/files/slash/inline-keyboard) (PH-6, ADR-0013) | E2E vs real MTProto (test DC) | **local pre-PR (always) + GitHub on-demand (non-gating)** |
+| TEST-TG-UI | Telegram **Web** rendered-UX via Playwright (Markdown/media rendering, `?test=1`) (PH-6, ADR-0013) | E2E headless browser | **local pre-PR (always) + GitHub on-demand (non-gating)** |
+| TEST-TG-MOBILE | Native **Telegram Android app** via mobilewright/mobile-mcp (emulator/device) (PH-6, ADR-0013) | E2E native app | **manual/occasional (never a gate)** |
+| TEST-WA | WhatsApp gateway: allowlist, dedup, streaming-sim, media, INV-001; fake-WA server locally (PH-7) | unit + integration (fake-WA) | PH-7: PR (fake) + manual live probe |
 | TEST-BUILD | Profile build, binary smoke (`--version`, serve+health), hygiene grep, install-script smoke | build/E2E | release + nightly |
 | TEST-SYNCUP | Sync workflow: delta report generation, migration flagging | workflow test | on sync PRs |
 | TEST-SEC | Secret redaction, permission policy denial paths, injection containment probes (channel content attempting tool abuse) | integration | PR subset + release |
@@ -29,6 +33,7 @@ after measuring the upstream baseline (NFR-011) — do not invent a number first
 ## Tiers (§17/§18 mapping)
 
 - **PR:** TEST-UP + TEST-AUTH + TEST-CONTRACT + fast subsets — target < 15 min.
+- **Telegram real-client (PH-6, ADR-0013):** TEST-TG (fake-server) is the **blocking PR gate**; TEST-TG-E2E (userbot) + TEST-TG-UI (Web-Playwright) run **local-pre-PR (always) + GitHub on-demand (non-gating)**; TEST-TG-MOBILE is **manual/occasional (never a gate)**.
 - **Nightly:** full TEST-INST + TEST-SYNC + TEST-BUILD on Linux; 3-OS weekly.
 - **Release:** everything on 3 OSes (x64), plus live Telegram probe and install smoke.
 - **Post-sync:** PR tier + TEST-SYNCUP + full TEST-CONTRACT (blocking).

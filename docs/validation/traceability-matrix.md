@@ -64,8 +64,9 @@ items in [work-breakdown](../planning/work-breakdown.md); tests (TEST- families)
 | FR-043 | MVP | ADR-0004; R-03 gap | WBS-3.2 | TEST-SYNC | — | AC-008 | full |
 | FR-044 | Full | Deferred (Full) | — | — | — | — | gap |
 | FR-045 | MVP | ADR-0005 | WBS-4.1, WBS-4.5 | TEST-TG | — | — | full |
-| FR-046 | MVP | ADR-0005; R-09 | WBS-4.1, WBS-4.2 | TEST-TG | — | AC-011 | full |
-| FR-047 | Full | Deferred (Full; contract-compatible) | — | — | — | — | gap |
+| FR-046 | MVP | ADR-0005; ADR-0009; DEC-014; R-09/R-11 | WBS-4.1, WBS-4.2, WBS-6.1..6.6 | TEST-TG | RISK-006 | AC-011, AC-017 | full |
+| FR-047 | Full | ADR-0005; ADR-0010; DEC-015/016; R-12 | WBS-7.1..7.5 | TEST-WA | RISK-013, RISK-014 | AC-018 | partial (designed; PH-7) |
+| FR-066 | Full | ADR-0011; ADR-0012; DEC-017/018 | WBS-6.1, WBS-6.3, WBS-6.4 | TEST-SYNC | RISK-015, RISK-019 | AC-019 | partial (designed; PH-6) |
 | FR-048 | MVP | R-09 cadence; EXP-003 | WBS-4.2 | TEST-TG | — | AC-011 | full |
 | FR-049 | MVP | R-09 caps | WBS-4.5 | TEST-TG | — | — | full |
 | FR-050 | MVP | Gate-8 B1 | WBS-4.1 | TEST-TG | RISK-003 | AC-010 | full |
@@ -97,6 +98,7 @@ items in [work-breakdown](../planning/work-breakdown.md); tests (TEST- families)
 | NFR-011 | MVP | Gate-13 test strategy | WBS-0.3 | TEST-BUILD (coverage) | — | — | partial |
 | NFR-012 | MVP | DEC-009; governance | all artifacts | Gate reviews (ongoing) | — | — | full |
 
-**Gaps:** none for MVP-priority requirements (KPI-005 precondition). The four `Scope: Full` rows
-(FR-037, FR-044, FR-047, FR-058) are intentionally deferred post-MVP and live in
-[functional](../requirements/functional.md) with triggers.
+**Gaps:** none for MVP-priority requirements (KPI-005 precondition). The three `Scope: Full` rows
+(FR-037, FR-044, FR-058) are intentionally deferred post-MVP and live in
+[functional](../requirements/functional.md) with triggers. **FR-047 (WhatsApp) is now scheduled as PH-7**
+(ADR-0010, DEC-015/016, R-12) — designed and traced, build pending the operator gate.

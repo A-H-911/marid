@@ -11,6 +11,53 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-10 — PH-6 scope expansion: Marid Gateway + full cross-client mirroring + real-app test strategy (Proposed, gated)
+- **Done:** Operator-directed **scope expansion** of PH-6 (Telegram-first, all-in-one; decision-support only, NO code).
+  Authored **ADR-0011** (Marid Gateway — marid-auth becomes a component), **ADR-0012** (full bidirectional mirroring,
+  explicit-attach), **ADR-0013** (four-tier Telegram test strategy); **DEC-017/018/019**; **C-10/11/12**;
+  **HYP-007..010 + EXP-007..010**; **FR-066**; **RISK-015..020**; **DEP-014..017**; **AC-019/020/021** + expanded
+  **AC-017**; revised **PH-6 WBS-6.1..6.6** + MS-007 + roadmap + **test-strategy** (TEST-TG-E2E/UI/MOBILE, TEST-SYNC
+  spans channels) + handoff PH-6 start. keystone-state reconciled; `validate_package.py docs/` = **RESULT: OK**.
+- **Key source verifications:** mirroring is **additive at `event-filter.ts`** (the firehose already fans out;
+  binding-aware `isVisible` + binding registry + channel-client — no new bus, zero upstream edit → **RISK-019
+  downgraded**); **INV-001-safe by construction** (view-via-binding, act-via-ownership via `scope.ts:109`); gateway
+  design derived from **OpenClaw** (MIT verified — reference-only, **no code port**; nodes-not-channels analog) +
+  **Shaheen** (separate-process + one `Server.extend` hook); real-client testing = **GramJS userbot on the test DC**
+  + Telegram-Web-Playwright (local-pre-PR + GitHub-on-demand) + native mobilewright (manual); fake-server stays the
+  blocking PR gate.
+- **Decisions:** all **Proposed** (ADR-0011/0012/0013, DEC-017/018/019) — operator-gated, none Approved (INV-005).
+  Three devil's-advocate passes corrected: OpenClaw (suspicious metrics → reference-only), GramJS test-DC caveats
+  (`PHONE_CODE_INVALID`/stale/`/test`-bot → EXP-007 de-risks first), and the always-GUI-gate tension (→ local-pre-PR
+  + GitHub-on-demand, non-gating). **Deviations:** none. **Blockers:** operator gate — approve ADR-0011/0012/0013 +
+  DEC-017/018/019 + the expanded PH-6 before implementation. **Next:** on approval, PH-6 WBS-6.1..6.6 (run
+  EXP-007/008/009).
+
+## 2026-07-09 — Post-MVP channels homework: PH-6 Telegram + PH-7 WhatsApp planned (Proposed, gated)
+- **Done:** Ran a Keystone update-mode research/evaluation cycle for the two post-MVP channel items (deferred #9
+  Telegram, FR-047 WhatsApp) — **decision-support only, no product code**. Deep R-11/R-12 research (cited findings
+  `research/findings/{telegram,whatsapp}-options.md`), comparisons **C-8/C-9**, experiment plans **HYP-005/006 +
+  EXP-005/006**, ADRs **ADR-0009** (Telegram) / **ADR-0010** (WhatsApp), decisions **DEC-014/015/016**, risks
+  **RISK-013/014**, deps **DEP-012/013**, acceptance **AC-017/018**, phases **PH-6/MS-007 + PH-7/MS-008** with
+  WBS-6.1..6.6 / 7.1..7.5, and handoff PH-6/PH-7 start + channel-review prompts. Traceability + acceptance-audit regenerated;
+  `validate_package.py docs/` = **RESULT: OK**.
+- **Findings that changed the plan:** (1) **Telegram → fix-in-place** (not the ADR-0008 fork): `marid-telegram`
+  is zero-dep hand-rolled and already has the streaming machinery; the only gap is one MIT md library
+  (`telegramify-markdown`) — ADR-0008's "re-implements grammy/remark" premise is false; ADR-0009 supersedes
+  ADR-0008 on approval. (2) grinev is Basic-auth + admin-features the `channel:` scope denies (403) — reference
+  only. (3) **WhatsApp → unofficial client, isolated behind pinned WAHA** (or hardened Baileys-direct); official
+  Cloud API needs public ingress (excluded, OQ-004); ban risk (RISK-013) + lotusbail-class supply-chain
+  (RISK-014) surfaced and mitigated.
+- **Decisions:** all **Proposed** (DEC-014/015/016; ADR-0009/0010) — **operator-gated, none Approved** (INV-005).
+  DEC-016 is a Proposed **FR-047 amendment** (official→unofficial-under-containment); FR-047 text stands until
+  approved. **Deviations:** experiment *report* files deferred to PH-6/7 execution per keystone convention
+  ("experiments run in execution phase"); reframed EXP-006 to a reproducible fake-WA
+  probe (Planned; runs at PH-7 start) instead of a live real-number probe, after a devil's-advocate re-check (no
+  unofficial-WhatsApp sandbox exists). **Both experiments are Planned — neither ran this cycle** (running them is
+  PH-6/PH-7 product code, which this homework scoped out); the recommendations are research-reasoned and the ADRs
+  stay Proposed-pending-EXP.
+- **Blockers:** operator decision gate — approve DEC-014/015/016 + ADR-0009/0010 + PH-6/PH-7 before any
+  implementation. **Next:** on approval, PH-6 (WBS-6.1..6.6, run EXP-005) then PH-7 (WBS-7.1..7.5, run EXP-006).
+
 ## 2026-07-09 — GATE 14 ACCEPTED — MS-006 met, Marid MVP plan complete
 - **Done:** Operator (STK-001) accepted the [MVP readiness report](../validation/mvp-readiness-report.md) →
   **execution gate 14 = GO**. MS-006 formally MET: KPI-004 (sync #31) ∧ KPI-005 (clean G-TRACE) ∧ KPI-006

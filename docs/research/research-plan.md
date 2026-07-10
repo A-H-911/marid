@@ -26,10 +26,12 @@ reserved for external platforms and practices. Every finding must cite `path:lin
 | R-08 Diagram validation | Are the 19 `docs/diagrams` accurate against HEAD? Corrections/flags per §3 | Cross-check specs vs code + R-01..R-06 outputs | Light | 1 agent-run, after R-01..06 | Gate 4 |
 | R-09 Telegram platform research | Bot API: webhook vs polling, formatting/rate limits, streaming simulation (message editing), media, threading, secret handling | Web research (Firecrawl/official docs) | Standard | 1 agent-run | FR-046..052, gate 5 |
 | R-10 Fork maintenance, agent security, OTel GenAI | Practices for downstream forks (merge/rebase/patch-stack); OWASP LLM Top-10 / prompt-injection mitigations; OTel GenAI semantic conventions | Web research (primary/spec sources) | Standard | 1 agent-run | DEC-003, gate 8, FR-056 |
+| R-11 Telegram remediation options | Fix-in-place vs fork grinev vs adopt-other for the deferred-#9 UX defects; md→Telegram libraries; per-defect minimal fix | Web + GitHub research + repo source read | Standard | 1 agent-run (PH-6 prep) | C-8, DEC-014, ADR-0009, FR-046/048/049 |
+| R-12 WhatsApp unofficial-client options | Baileys vs whatsapp-web.js vs wppconnect vs WAHA/Evolution; license/maintenance/ban/supply-chain/stack-fit/private-network fit | Web + GitHub research | Standard | 1 agent-run (PH-7 prep) | C-9, DEC-015/016, ADR-0010, FR-047, RISK-013/014 |
 
 ## Explicitly not researched (YAGNI per NFR-002)
 
-- WhatsApp API details — deferred with FR-047; researched when that phase starts.
+- ~~WhatsApp API details — deferred with FR-047~~ — now researched in **R-12** (post-MVP PH-7 prep, 2026-07-09).
 - Multi-node coordination, horizontal scaling — out of scope (charter non-goal).
 - Alternative runtimes/stacks — CON-003 fixes the stack.
 - Exhaustive secret-backend survey — §10 only requires the minimum guarantees for MVP.
