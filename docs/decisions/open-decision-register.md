@@ -26,6 +26,14 @@ governance: Proposed / Approved / Rejected / Superseded / Deferred. Nothing here
 | DEC-011 | `client`-scope session ownership: durable store vs in-memory map | durable 0600 sidecar (`ownership.json`) · in-memory map | — | PH-1 (execution) | Approved | 2026-07-04; durable sidecar chosen; detail below |
 | DEC-012 | marid binary entry: additive new `src/marid.ts` vs parameterizing edit to upstream `index.ts` | additive entry (P-ENTRY) · edit index.ts | — | PH-1 (execution) | Approved | 2026-07-04; additive entry chosen; detail below |
 | DEC-013 | Branding split: land CLI identity in PH-1, defer cosmetic (README/TUI/UA/logo) to PH-5 vs all-at-once | identity-now + cosmetic-later · all-at-once | — | PH-1 (execution) | Approved | 2026-07-04; split chosen; detail below |
+| DEC-014 | Telegram remediation approach | fix-in-place (`telegramify-markdown` + wire seams) · port grinev render modules · fork grinev wholesale · adopt another bridge | reuse-first + fewest changes (DEC-009, NFR-001) | PH-6 | Approved | fix-in-place (C-8 / ADR-0009); **ADR-0008 SUPERSEDED 2026-07-10 gate**; EXP-005 validates at build |
+| DEC-015 | WhatsApp unofficial-client approach | Baileys-behind-WAHA-WS · Baileys-direct-hardened · Evolution API · Puppeteer libs · (official Cloud API — rejected) | minimal supply-chain exposure + outbound-only (OQ-004) | PH-7 | Approved | recommend WAHA-NOWEB-WS (C-9 / ADR-0010), Baileys-direct alt; confirmed by EXP-006 |
+| DEC-016 | Amend FR-047 "official Business/Cloud APIs" → permit an unofficial client under private-network containment | keep "official" (needs public ingress) · permit unofficial (OQ-004 fit; ban/ToS + supply-chain risk accepted) | OQ-004 favors outbound/unofficial | PH-7 | Approved | operator-gated requirement amendment; official kept as rejected-with-reason (INV-006) |
+| DEC-017 | Gateway shape | server-side Marid Gateway (marid-auth = a component) + `@marid/channel-client` · client-lib-only · standalone proxy · both | operator: "expand marid-auth server-side; marid-auth is a component in the gateway" | PH-6 | Approved | C-11 front-runner A / ADR-0011 |
+| DEC-018 | Cross-client sync model, scope + recovery | **full bidirectional mirroring, explicit-attach scope, re-fetch-recovery** · continuity-only · broad-auto · durable-replay | operator: full bidirectional mirroring; explicit-attach (INV-001-safe) | PH-6 | Approved | C-12 A / ADR-0012; view-via-binding, act-via-ownership |
+| DEC-019 | Telegram real-client test strategy | **four tiers** (fake-server=gate + userbot + Web-Playwright local/on-demand + native-mobile manual) · fake-server-only · GUI-as-required-gate | operator: real automated testing incl. the native app | PH-6 | Approved | C-10 / ADR-0013 |
+| DEC-020 | WhatsApp real-client test strategy | fake-WA-at-WAHA-boundary = gate + burner real-protocol probe (manual) + native-app (manual); **NO deterministic real-protocol tier** · second-account-as-gate · official-Cloud-API-sandbox | WhatsApp has no test DC/sandbox; Baileys mock is private (R-12) | PH-7 | Approved | C-13 / ADR-0014 |
+| DEC-021 | WhatsApp permission-approval UX | **token-bound text reply** · interactive buttons · WAHA-Plus lists · polls | buttons dead/deprecated on unofficial WhatsApp; lists paid/fragile (R-12) | PH-7 | Approved | C-14 / ADR-0015 |
 
 ## Tensions logged at Stage 6 (contradiction/dependency detection)
 
@@ -127,3 +135,56 @@ creates mid-stream on another request appears only after reconnect — acceptabl
 (`event-filter.ts` + `middleware.ts`); tested by `event-filter.test.ts` (13) + 3 middleware integration tests;
 relates to FR-024/025 (events) and the `client` scope in `api-event-contract.md`. No new `P-*` row (additive,
 Marid-owned).
+
+## DEC-014 · DEC-015 · DEC-016 detail — post-MVP channels homework (2026-07-09, all Proposed)
+
+Product of the R-11/R-12 research cycle (findings under `../research/findings/`), comparisons C-8/C-9, and the
+devil's-advocate re-check. **All three are Proposed — the operator flips them at the gate (INV-005); nothing is
+Approved here.**
+
+**DEC-014 — Telegram remediation = fix-in-place.** Re-evaluates the Approved ADR-0008 (fork grinev) on new
+evidence: `packages/marid-telegram` is zero-dep hand-rolled (not grammy) and already has streaming/coalescing/
+429/400-fallback; the only gap is Markdown→Telegram conversion (one MIT dep, `telegramify-markdown`); grinev is
+Basic-auth + admin-features that the `channel:` scope denies (403). C-8 scores fix-in-place 42/42. On approval:
+**ADR-0009 → Approved, ADR-0008 → Superseded.** Confirmation: EXP-005 (PH-6 start).
+
+**DEC-015 — WhatsApp client = unofficial, isolated.** C-9 front-runner is **Baileys behind a pinned WAHA
+(NOWEB) container consumed over WebSocket** — Marid pulls no WhatsApp dependency (contains the lotusbail-class
+supply-chain risk, RISK-014), WAHA Core is free Apache-2.0, and the connection is outbound-only (OQ-004). The
+documented alternative is **hardened Baileys-direct** (best stack/streaming fit, MIT, but Baileys in Marid's
+tree). Puppeteer libraries rejected (Chromium footprint). Confirmation: EXP-006 (reproducible fake-WA at PH-7
+start; real-number live probe later in PH-7). Realized by ADR-0010.
+
+**DEC-016 — FR-047 amendment (official → unofficial-under-containment).** FR-047's text says "official
+Business/Cloud APIs," but the official Cloud API is webhook-push (needs a **public inbound endpoint**),
+contradicting OQ-004 (private-network, outbound-only), with business-account/approval overhead disproportionate
+to one operator. The operator chose an unofficial client (DEC-015), so FR-047's text must be amended. This is an
+**operator-gated requirement amendment**: the official option is preserved as rejected-with-reason (INV-006), and
+the accepted trade-off is the ToS/ban reality (RISK-013) + supply-chain exposure (RISK-014), both mitigated per
+ADR-0010. Until Approved, FR-047's text stands (the amendment is noted, not applied).
+
+## DEC-017 · DEC-018 · DEC-019 detail — Telegram-first gateway/mirroring/testing expansion (2026-07-10, all Proposed)
+
+Product of the operator's scope expansion + the OpenClaw/Shaheen gateway study + source verification of
+`event-filter.ts`. All Proposed — operator flips at the gate (INV-005).
+
+**DEC-017 — Gateway shape = server-side Marid Gateway (marid-auth is a component).** Per operator: evolve
+`marid-auth` (the additive HTTP-ingress wrapper) into a **Marid Gateway** with marid-auth as one module, unified
+with the HTTP+SSE surface, plus a thin client-side `@marid/channel-client` all channels consume. Design derived
+from OpenClaw (nodes model, device-token scope-binding, server-side allowlist, event fan-out) + Shaheen (separate-
+process-over-public-API, one `Server.extend` hook). Additive; the new server-side surface is contained behind one
+hook (RISK-019). C-11 scores A 32/33. Realized ADR-0011.
+
+**DEC-018 — Cross-client sync = full bidirectional mirroring, explicit-attach scope, re-fetch recovery.** Every
+turn of a session mirrors live to every **bound** surface, bidirectionally; scope is **explicit-attach** (a
+channel sees its own + operator-attached sessions — a fresh web/TUI session never auto-appears in a channel;
+INV-001-safe). Verified additive at `event-filter.ts` (binding registry + binding-aware `isVisible` + channel-
+client; no new bus, no upstream edit — RISK-019 downgraded). Authorization = **view-via-binding, act-via-
+ownership** (a channel can view a mirrored session but only owns→approve). Recovery = re-fetch-on-reconnect
+(additive default; durable replay = flagged escape hatch). C-12 scores A 26/30. Realized ADR-0012.
+
+**DEC-019 — Telegram test strategy = four tiers.** Deterministic **fake-server E2E = blocking GitHub PR gate**;
+**GramJS userbot (test DC) + Telegram-Web-Playwright** run local-pre-PR every time + GitHub on-demand (non-gating);
+**native mobile app (mobilewright)** = operator-requested manual/occasional check (never a gate). Honors "always
+executed" without flaky remote gates. C-10 front-runners A+B (complementary) + fake-server gate + C manual.
+Realized ADR-0013; feasibility gated by EXP-007/009/010.

@@ -85,12 +85,20 @@ requirements to *preserve or provide equivalent support*.
 |---|---|---|---|---|
 | FR-045 | Channel-adapter mechanism **outside the agent core** with stable ingress, egress, identity, attachment, and event contracts | §8 | MVP | Draft |
 | FR-046 | Telegram adapter (Bot API) | §8 | MVP | Draft |
-| FR-047 | WhatsApp adapter (official Business/Cloud APIs) | §8 | Full | Draft |
+| FR-047 | WhatsApp adapter — an **unofficial client under private-network containment** (amended from "official Business/Cloud APIs" per DEC-016, approved 2026-07-10; official excluded: it needs public inbound ingress vs OQ-004) | §8, DEC-016 | Full | Draft |
 | FR-048 | Streaming simulation for platforms without token streaming; message formatting within platform limits | §8 | MVP | Draft |
 | FR-049 | Attachments/media, replies/threads/conversation mapping, and commands on channels | §8 | MVP | Draft |
 | FR-050 | User identity linking, channel allowlists, and administrative approval | §8 | MVP | Draft |
 | FR-051 | Webhook signature validation, replay protection, retry and dead-letter handling, rate limits | §8 | MVP | Draft |
 | FR-052 | Channel capability policy restricting: available agents, tools, projects/workspaces, filesystem boundaries, models/providers, token+cost limits, session retention, admin operations | §8 | MVP | Draft |
+| FR-066 | Live **bidirectional session mirroring** across all clients (TUI/Web/API/Telegram/WhatsApp): a session the operator **attaches** to a surface streams every turn to every bound surface and vice-versa, with defined cross-surface permission-surfacing (view-via-binding, act-via-ownership) and concurrency; explicit-attach scope (a fresh session does not auto-appear on a channel) | operator directive 2026-07-10 (extends FR-038/042) | Full | Draft |
+
+> **PH-6 / PH-7 (post-MVP, 2026-07-09).** FR-046 remediation is scheduled as **PH-6** (fix-in-place, ADR-0009 /
+> DEC-014 / R-11). **FR-047:** a **Proposed, operator-gated amendment (DEC-016)** would change "official
+> Business/Cloud APIs" to permit an **unofficial client under private-network containment** — the official Cloud
+> API needs a public inbound webhook, contradicting OQ-004; see ADR-0010 / DEC-015 / R-12. **DEC-016 APPROVED
+> 2026-07-10 — the FR-047 statement above is amended accordingly** (unofficial client under containment; official
+> kept as rejected-with-reason, INV-006).
 
 ## E. Multi-instance operation (§9) — MVP block per OQ-002
 

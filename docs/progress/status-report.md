@@ -15,11 +15,11 @@ generation: derived
 
 | | |
 |---|---|
-| Reporting date | 2026-07-09 |
-| Current phase | **PH-5 (Release & sync) complete** — WBS-5.1..5.5 done; awaiting operator gate-14 acceptance |
-| Overall status | **COMPLETE — MVP accepted (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK` |
+| Reporting date | 2026-07-10 |
+| Current phase | **PH-5 complete + gate-14 ACCEPTED 2026-07-09.** Channels package **PH-6 + PH-7 gates APPROVED 2026-07-10** — PH-6 (gateway + full Telegram + mirroring + 4-tier tests; ADR-0009/0011/0012/0013) + PH-7 (WhatsApp: fake-WA gate + token-text permission; ADR-0010/0014/0015); ADR-0008 Superseded; FR-047 amended. **Implementation authorized** (each phase starts with its experiments); no code yet |
+| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. Post-MVP channel plan authored (no product code) |
 | Last milestone met | **MS-006 (2026-07-09)** — public `v0.1.0` release, MVP release-ready |
-| Next milestone | — **none: gate-14 ACCEPTED 2026-07-09, MS-006 met, MVP plan complete** |
+| Next milestone | **MS-007 (PH-6 Telegram remediation)** — planned; ADR-0009 Proposed, awaiting operator gate |
 
 ## Phase progress
 
@@ -30,7 +30,7 @@ generation: derived
 | PH-2 Instances | done | yes | MS-003 (PR #17) | 3-OS `marid-isolation` |
 | PH-3 Cross-interface | done | yes | MS-004 (PR #19) | 3-OS `marid-sync`; contract v1.1 |
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
-| PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Pending operator gate-14 acceptance |
+| PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
 
 ## Acceptance snapshot
 
@@ -67,6 +67,11 @@ spec). First RC → **`v0.1.0`** on an independent `0.x` line (package.json stay
 release↔upstream mapping is the baseline SHA per sync).
 
 ## Upcoming
-**Operator gate-14 MVP go/no-go** (accept the readiness report → MS-006 formally closed). Post-MVP backlog:
-Telegram gateway fork (ADR-0008 / deferred #9), egress secret-redactor (ADR-0007 / AC-016), AC-007 formal
-supersede, upstream sync cadence.
+Gate-14 accepted (2026-07-09) — MS-006 formally closed. **Post-MVP channels package (Proposed, awaiting operator
+gate):** **PH-6 (expanded 2026-07-10, all-in-one)** = **Marid Gateway** (marid-auth as a component, ADR-0011) +
+**full Telegram experience** (fix-in-place, ADR-0009) + **full bidirectional cross-client mirroring**
+(explicit-attach, ADR-0012) + **four-tier real-client test strategy** (ADR-0013); DEC-014/017/018/019. **PH-7
+WhatsApp** = unofficial client behind pinned WAHA (ADR-0010 / DEC-015/016). All **Proposed — awaiting operator gate**
+before any code; mirroring verified **additive** (`event-filter.ts`), INV-001-safe (view-via-binding/act-via-
+ownership). Remaining backlog: egress secret-redactor (ADR-0007 / AC-016), AC-007 formal supersede, stats
+mechanism (deferred #10), upstream sync cadence.

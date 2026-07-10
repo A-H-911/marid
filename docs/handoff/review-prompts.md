@@ -23,6 +23,16 @@ owner: operator (STK-001)
 > TEST-SEC; confirm plugins/providers pinning; check no secret appears in logs, audit lines, session
 > exports, or Telegram egress. Report residual-risk deltas against the accepted list.
 
+## Channel-adapter review (PH-6 Telegram remediation / PH-7 WhatsApp)
+
+> For a channel PR: verify it stays a **separate process speaking ONLY the public API with a `channel:` token**
+> (ADR-0005) — no in-core imports, no provider keys; **INV-001 is server-enforced** — the adapter must not
+> re-implement or widen policy (confirm stranger-ignored + bound-agent + no tool/permission widening). Check new
+> runtime deps are **pinned + provenance-checked** (RISK-014 — especially WhatsApp/Baileys; prefer the WAHA
+> sidecar so Marid pulls no WhatsApp dep) and license-clean (MIT/Apache). For WhatsApp: **outbound-only, no
+> public inbound endpoint** (OQ-004). Run AC-017 (Telegram) / AC-018 (WhatsApp) + the injection/policy-denial
+> suite. Block on INV-001, contract, or unpinned-dep breaks.
+
 ## Sync-PR review (each upstream merge)
 
 > For sync PR #<n>: confirm the delta report is attached and matches the P-* register; contract tests
