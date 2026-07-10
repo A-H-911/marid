@@ -11,6 +11,37 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-10 — WBS-6.3 bidirectional mirroring mechanism (unmerged, gated)
+- **Done:** **WBS-6.3 — the additive mirroring core (ADR-0012), the production successor to the EXP-008 spike.**
+  New durable `@marid/auth/binding.ts` — a session↔surface `BindingStore` (`binding.json`, 0600 sidecar;
+  `attach`/`detach`/`list`; mutable per ADR-0012 rebinding; mirrors `ownership.ts`). `middleware.ts` swaps the
+  `/event` filter predicate `owns` → binding-aware **`isVisible` = `owns(id) ∪ bound.has(id)`** — **VIEW-via-binding**
+  on the firehose only; the acting gate (`authorize`/`scope.ts`) and the `GET /session`+`GET /permission` list
+  routes stay on `owns` alone → **ACT-via-ownership** (a bound surface sees a mirrored session but cannot
+  approve/prompt one it does not own, INV-001, by construction). Binding I/O confined to the `/event` subscribe;
+  degrade-safe `.catch` (a throwing registry collapses to owns-only — RISK-024/AC-024). Wired `createBindingStore(dir)`
+  into `serve.ts` (Marid-owned `src/marid/`). **`event-filter.ts` UNTOUCHED** — `filterSseStream` already accepts an
+  arbitrary predicate, so the change is a one-site call swap (the WBS "(edit event-filter.ts)" text was stale; EXP-008
+  governs). New `binding.test.ts` (durable round-trip, detach, 0600) + `mirroring.test.ts` (mirror-in/out, explicit-attach
+  invisibility, act-via-ownership deny, blast-radius no-op, registry-fault degradation) drive the **real** middleware +
+  store + filter. marid-auth **87→100 pass / 0 fail**; typecheck + lint clean; **zero upstream edit**.
+- **Decisions:** Scope cut to the mirroring **mechanism** (advisor-confirmed). Deliberately NOT built here — and
+  documented as carried, not dropped: the operator/admin-gated `/attach` HTTP endpoint + cross-surface permission
+  first-responder-wins → **WBS-6.4**; channel-client-consume of bound sessions → **WBS-6.1** (`@marid/channel-client`);
+  seq→id SSE fan-out + attach-triggers-reconnect → **WBS-6.5**. **INV-001 landmine avoided:** an HTTP attach route was
+  NOT added — a `channel:` token self-attaching to an arbitrary session would defeat explicit-attach (self-observe a
+  privileged session); attach-auth is WBS-6.4's admin-gated design. End-to-end Telegram mirror-in is blocked on the
+  WBS-6.5 reconnect trigger anyway (`owns`/`isVisible` snapshotted at subscribe time), so the marid-auth altitude is the
+  highest-fidelity test that exists until 6.5. **Flag for WBS-6.1:** `isVisible` guards `url.pathname === "/event"`, so it
+  bites web/TUI/SDK subscribers now, but the live Telegram gateway subscribes via **`/global/event`** (`gateway.ts:218`) —
+  6.1 must route the channel-client's mirror subscription through `/event` (or extend the predicate to `/global/event`,
+  confirming that route's own isolation) or mirroring will silently not reach Telegram. **Production no-op until then:** with
+  no attach endpoint (deferred to 6.4), no binding is ever written → `bound` is always empty → `isVisible ≡ owns` for every
+  live client, so this change alters nothing until 6.4 adds the admin-gated attach path.
+- **Deviations:** AC-019 → **Partial** (mechanism proven; cross-surface permission slice is WBS-6.4), not Met. WBS-6.3
+  marked done for its own DoD (mirror both ways / unattached invisible / additive). **Blockers:** none. **Next:** operator
+  gate for PR into `develop`; then WBS-6.4 (cross-surface permission + attach endpoint) / WBS-6.1 (channel-client).
+
 ## 2026-07-10 — PH-6 execution begins: EXP-005/007/008 PASS + WBS-6.2 Telegram fix-in-place implemented (unmerged, gated)
 - **Done:** First PH-6 **product code** (operator go-ahead). **WBS-6.2 — full Telegram experience, fix-in-place (ADR-0009),
   all 4 UX defects fixed:** (1) **Markdown → MarkdownV2** via `telegramify-markdown` (split-plain-then-render per chunk so

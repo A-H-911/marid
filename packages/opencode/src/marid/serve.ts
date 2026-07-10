@@ -2,6 +2,7 @@ import path from "node:path"
 import { Global } from "@opencode-ai/core/global"
 import {
   createAuditLog,
+  createBindingStore,
   createMaridAuth,
   createOwnershipStore,
   createRateLimiter,
@@ -11,7 +12,7 @@ import { Server } from "../server/server"
 
 // Per-instance marid state lives under the instance data dir (XDG-driven, set
 // per instance by marid-instance in PH-2). tokens.json / ownership.json /
-// audit/ all sit here at 0600.
+// binding.json / audit/ all sit here at 0600.
 export function maridDir(): string {
   return path.join(Global.Path.data, "marid")
 }
@@ -28,6 +29,7 @@ export function createMaridHandler(dir: string): (request: Request) => Promise<R
   const auth = createMaridAuth({
     tokens: createTokenStore(dir),
     ownership: createOwnershipStore(dir),
+    bindings: createBindingStore(dir),
     audit: createAuditLog(dir),
     limiter: createRateLimiter(),
   })

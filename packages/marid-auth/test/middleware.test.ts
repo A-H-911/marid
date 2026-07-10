@@ -5,6 +5,7 @@ import path from "node:path"
 import { createMaridAuth } from "../src/middleware"
 import { createTokenStore } from "../src/token"
 import { createOwnershipStore } from "../src/ownership"
+import { createBindingStore } from "../src/binding"
 import { createAuditLog } from "../src/audit"
 import { createRateLimiter } from "../src/ratelimit"
 
@@ -12,9 +13,10 @@ let dir: string
 async function build() {
   const tokens = createTokenStore(dir)
   const ownership = createOwnershipStore(dir)
+  const bindings = createBindingStore(dir)
   const audit = createAuditLog(dir, { date: () => "2026-07-04" })
-  const auth = createMaridAuth({ tokens, ownership, audit, limiter: createRateLimiter() })
-  return { tokens, ownership, audit, auth }
+  const auth = createMaridAuth({ tokens, ownership, bindings, audit, limiter: createRateLimiter() })
+  return { tokens, ownership, bindings, audit, auth }
 }
 const bearer = (secret: string) => ({ authorization: `Bearer ${secret}` })
 // The upstream web UI (utils/server.ts) can only send Basic auth with the token as the password.
