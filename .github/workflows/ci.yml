@@ -126,6 +126,11 @@ jobs:
       # marid-telegram job below (KPI-002).
       - name: Run marid-telegram unit tests
         run: bun --cwd packages/marid-telegram test
+      # marid (WBS-6.1): the channel-agnostic firehose client extracted from the
+      # Telegram gateway (ADR-0011) — event-pump + per-part streaming + permission-ask
+      # parse. Dependency-free, cross-OS, injected fakes (no network).
+      - name: Run marid-channel-client unit tests
+        run: bun --cwd packages/marid-channel-client test
 
   smoke:
     name: smoke (${{ matrix.os }})

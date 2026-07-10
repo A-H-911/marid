@@ -1,4 +1,5 @@
 import type { OpencodeClient } from "@opencode-ai/sdk/v2"
+import { createChannelClient } from "@marid/channel-client"
 import type { BotApi } from "./bot-api"
 import { createDedup } from "./dedup"
 import { inboundFileParts, inboundNote } from "./media"
@@ -6,48 +7,23 @@ import { createPermissions, type ReplyDecision, type Timer } from "./permission"
 import { restrictedPrompt } from "./policy"
 import { runRouter } from "./router"
 import { routeSlash } from "./slash"
-import { createStreamer, type Streamer } from "./stream"
+import { createStreamer } from "./stream"
 import type { TgCallbackQuery, TgMessage } from "./telegram"
 
 // Composition root for the Telegram gateway (WBS wiring). One process, one operator.
 //
-// Flow: subscribe to /event FIRST (the firehose is live-only), then start the
-// long-poll router. An allowlisted operator message creates/continues a per-chat
-// session and prompts the bound restricted agent. Assistant text streams back as
-// coalesced edits; permission asks become inline keyboards.
+// Flow: subscribe to the firehose FIRST (it is live-only), then start the long-poll
+// router. An allowlisted operator message creates/continues a per-chat session and
+// prompts the bound restricted agent. Assistant text streams back as coalesced edits;
+// permission asks become inline keyboards.
 //
-// The exact live event names differ across API generations (message.part.updated /
-// session.idle vs session.next.text.delta / .step.ended vs permission.updated /
-// permission.asked) — all are in the committed manifest — so dispatch matches a SET
-// of type strings and reads fields defensively. Confirmed against a real run by the
-// live E2E.
+// The channel-agnostic half — the firehose subscribe/pump, event interpretation, and
+// per-part streamer coordination — now lives in `@marid/channel-client` (WBS-6.1,
+// ADR-0011); this file is the Telegram-specific composition: the chat↔session binding,
+// the Telegram rendering sink (`createStreamer`), and the inline-keyboard permission
+// surfacing. `parseAskEvent` is re-exported so its committed public API is unchanged.
 
-const TEXT_EVENTS = new Set(["message.part.updated", "session.next.text.delta"])
-const DONE_EVENTS = new Set(["session.idle", "session.next.step.ended"])
-const ASK_EVENTS = new Set(["permission.asked", "permission.updated"])
-
-// Whitelisted slash commands (deny-by-default — slash.ts). Everything else that
-// starts with "/" is refused, never prompted to the agent.
-const COMMAND_NAMES = new Set(["new", "help"])
-const HELP_TEXT = "Commands:\n/new — start a fresh session\n/help — show this help\n\nAny other message is sent to the agent."
-
-// Map a permission-ask event to the fields the keyboard needs. Field names are the
-// committed v1 PermissionRequest schema (packages/schema/src/v1/permission.ts):
-// `id` (the per_ id = reply requestID), `sessionID`, and `permission` (the tool/
-// permission name — there is NO `title` field). Pure + exported so the extraction is
-// locked by a unit test (the live harness cannot drive a real permission — the
-// openai-compatible test provider does not forward tools to the model).
-export function parseAskEvent(payload: {
-  type: string
-  properties?: Record<string, unknown>
-}): { id: string; sessionID: string; title?: string } | undefined {
-  if (!ASK_EVENTS.has(payload.type)) return undefined
-  const props = payload.properties ?? {}
-  const id = typeof props.id === "string" ? props.id : undefined
-  const sessionID = typeof props.sessionID === "string" ? props.sessionID : undefined
-  if (!id || !sessionID) return undefined
-  return { id, sessionID, title: typeof props.permission === "string" ? props.permission : undefined }
-}
+export { parseAskEvent } from "@marid/channel-client"
 
 export interface RunGatewayDeps {
   sdk: OpencodeClient
@@ -65,24 +41,17 @@ export interface RunGatewayDeps {
   signal: AbortSignal
 }
 
-// A session's live per-turn state: the chat it belongs to, ONE streamer per assistant
-// text part (defect 4 — each distinct part is its own Telegram message, not one joined
-// blob), the accumulated text per part (keyed by partID, insertion-ordered), and the
-// set of USER message ids. We stream any text part whose message is NOT a user
-// message — excluding user messages (rather than including assistant ones) avoids an
-// ordering race: the user's message.updated reliably precedes the user's text part,
-// whereas an assistant text part can arrive before its message.updated.
-interface SessionState {
-  chatId: number
-  streamers: Map<string, Streamer>
-  textByPart: Map<string, string>
-  userMessages: Set<string>
-}
+// Whitelisted slash commands (deny-by-default — slash.ts). Everything else that starts
+// with "/" is refused, never prompted to the agent.
+const COMMAND_NAMES = new Set(["new", "help"])
+const HELP_TEXT = "Commands:\n/new — start a fresh session\n/help — show this help\n\nAny other message is sent to the agent."
 
 export async function runGateway(deps: RunGatewayDeps): Promise<void> {
   const dedup = createDedup(deps.dedupFile)
   const chatToSession = new Map<number, string>()
-  const sessions = new Map<string, SessionState>()
+  // Reverse binding (session → chat) so an inbound event knows which chat to render into.
+  // Set the instant a turn begins, before any event for that session can arrive.
+  const sessionChat = new Map<string, number>()
 
   const permissions = createPermissions({
     bot: deps.bot,
@@ -91,78 +60,28 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
       deps.sdk.permission
         .respond({ sessionID, permissionID, response: decision }, { throwOnError: true })
         .then(() => undefined),
-    chatOf: (sessionID) => sessions.get(sessionID)?.chatId,
+    chatOf: (sessionID) => sessionChat.get(sessionID),
     timers: deps.timers,
     timeoutMs: deps.permissionTimeoutMs ?? 300_000, // 5 min human-decision window; deny on timeout
     log: deps.log,
   })
 
-  // One streamer per part (lazily created on the part's first text), so each assistant
-  // text part streams into its own message. finishAll force-flushes every part's final
-  // text when the turn ends.
-  function streamerFor(state: SessionState, partID: string): Streamer {
-    const existing = state.streamers.get(partID)
-    if (existing) return existing
-    const streamer = createStreamer({ bot: deps.bot, chatId: state.chatId, now: deps.now, sleep: deps.sleep, cadenceMs: deps.cadenceMs })
-    state.streamers.set(partID, streamer)
-    return streamer
-  }
-
-  function finishAll(state: SessionState): void {
-    for (const [partID, text] of state.textByPart) {
-      if (text) void streamerFor(state, partID).finish(text)
-    }
-  }
-
-  function onEvent(payload: { type: string; properties?: Record<string, unknown> }): void {
-    const props = payload.properties ?? {}
-    const sessionID = typeof props.sessionID === "string" ? props.sessionID : undefined
-    const ask = parseAskEvent(payload)
-    if (ask) {
-      void permissions.onAsk(ask)
-      return
-    }
-    if (!sessionID) return
-    const state = sessions.get(sessionID)
-    if (!state) return // not one of our sessions
-
-    // Track user message ids (to exclude the operator's own echoed text), and treat a
-    // completed assistant message as a done signal (some generations emit no
-    // session.idle).
-    if (payload.type === "message.updated") {
-      const info = props.info as { id?: string; role?: string; time?: { completed?: number } } | undefined
-      if (info?.role === "user" && typeof info.id === "string") state.userMessages.add(info.id)
-      if (info?.role === "assistant" && info.time?.completed) finishAll(state)
-      return
-    }
-
-    if (TEXT_EVENTS.has(payload.type)) {
-      const part = props.part as { id?: string; type?: string; text?: string; messageID?: string } | undefined
-      let partID: string
-      if (
-        part &&
-        part.type === "text" &&
-        typeof part.text === "string" &&
-        typeof part.id === "string" &&
-        typeof part.messageID === "string" &&
-        !state.userMessages.has(part.messageID) // never stream the operator's own text back
-      ) {
-        partID = part.id
-        state.textByPart.set(partID, part.text)
-      } else if (typeof props.delta === "string") {
-        // delta-style event (session.next.text.delta): inherently assistant text
-        partID = typeof props.textID === "string" ? props.textID : "delta"
-        state.textByPart.set(partID, (state.textByPart.get(partID) ?? "") + props.delta)
-      } else {
-        return
-      }
-      const text = state.textByPart.get(partID)!
-      if (text) void streamerFor(state, partID).push(text) // each part -> its own message
-      return
-    }
-
-    if (DONE_EVENTS.has(payload.type)) finishAll(state)
-  }
+  // The shared channel client owns the firehose + event interpretation; Telegram supplies
+  // only the per-part rendering sink (one Telegram streamer per assistant text part) and
+  // the permission-ask surfacing.
+  const client = createChannelClient({
+    sdk: deps.sdk,
+    signal: deps.signal,
+    createStreamer: (sessionID) =>
+      createStreamer({
+        bot: deps.bot,
+        chatId: sessionChat.get(sessionID)!,
+        now: deps.now,
+        sleep: deps.sleep,
+        cadenceMs: deps.cadenceMs,
+      }),
+    onAsk: (ask) => void permissions.onAsk(ask),
+  })
 
   // Execute a whitelisted slash command. /new resets the chat→session binding so the
   // next message starts fresh; /help lists the commands. Both reply directly and never
@@ -204,29 +123,17 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
       sessionID = created.data.id
       chatToSession.set(chatId, sessionID)
     }
-    // Fresh per-part streamer map + text buffers for this turn's reply (streamers are
-    // created lazily as each assistant text part arrives — one message per part).
-    sessions.set(sessionID, { chatId, streamers: new Map(), textByPart: new Map(), userMessages: new Set() })
+    // Bind the reverse mapping and start a fresh per-part reply BEFORE prompting, so any
+    // event for this session finds its chat and a clean streamer set (one message per part).
+    sessionChat.set(sessionID, chatId)
+    client.beginTurn(sessionID)
     await deps.sdk.session.promptAsync(restrictedPrompt({ sessionID, text, agent: deps.agent, files }), { throwOnError: true })
   }
 
   const onCallback = (query: TgCallbackQuery): Promise<void> => permissions.onCallback({ id: query.id, data: query.data })
 
   // Subscribe to the firehose BEFORE polling so no early events are missed.
-  // Frames are routing-wrapped on /global/event ({ payload: {type,properties} }) but
-  // raw on /event; tolerate both by unwrapping payload when present.
-  const events = await deps.sdk.global.event({ signal: deps.signal })
-  type Frame = { type?: string; properties?: Record<string, unknown>; payload?: { type: string; properties?: Record<string, unknown> } }
-  const stream = events.stream as AsyncIterator<Frame>
-  const pump = (async () => {
-    while (!deps.signal.aborted) {
-      const next = await stream.next().catch(() => ({ done: true, value: undefined }) as IteratorResult<Frame>)
-      if (next.done) break
-      const frame = next.value
-      const evt = frame?.payload ?? frame
-      if (evt && typeof evt.type === "string") onEvent({ type: evt.type, properties: evt.properties })
-    }
-  })()
+  const { done } = await client.start()
 
   await runRouter({
     getUpdates: (offset, timeoutSec) => deps.bot.getUpdates(offset, timeoutSec),
@@ -239,5 +146,5 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
     onMessage,
     onCallback,
   })
-  await pump.catch(() => {})
+  await done.catch(() => {})
 }

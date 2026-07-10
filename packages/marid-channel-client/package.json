@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "version": "1.17.13",
+  "name": "@marid/channel-client",
+  "description": "Marid channel client — the channel-agnostic firehose consumer (event pump + per-part streaming + permission-ask parse) every channel process shares (ADR-0011, WBS-6.1)",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "bun test --timeout 30000",
+    "typecheck": "tsgo --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:"
+  }
+}
