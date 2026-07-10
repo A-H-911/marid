@@ -1,10 +1,22 @@
 import { describe, expect, test } from "bun:test"
-import { inboundNote, largestPhotoFileId, resolveDownloadUrl } from "../src/media"
+import { inboundFileParts, inboundNote, largestPhotoFileId, resolveDownloadUrl } from "../src/media"
 import { createBotApi } from "../src/bot-api"
 import { redact } from "../src/redact"
 import type { TgMessage } from "../src/telegram"
 
 const msg = (extra: Partial<TgMessage>): TgMessage => ({ message_id: 1, chat: { id: 5, type: "private" }, ...extra })
+
+// A bot whose getFile returns file_path (or ok:false for the failure case).
+const TOKEN = "123:AAsecretTokenValue"
+const botWith = (filePath: string | null) =>
+  createBotApi({
+    token: TOKEN,
+    baseUrl: "https://api.telegram.org",
+    fetch: (async () =>
+      new Response(
+        JSON.stringify(filePath ? { ok: true, result: { file_id: "f", file_path: filePath } } : { ok: false, description: "not found" }),
+      )) as unknown as typeof fetch,
+  })
 
 describe("inboundNote (INV-004: attachments surface as data)", () => {
   test("describes a photo", () => {
@@ -29,6 +41,56 @@ describe("largestPhotoFileId", () => {
       ],
     })
     expect(largestPhotoFileId(m)).toBe("large")
+  })
+})
+
+describe("inboundFileParts (defect 2: the file lands in the workspace, not just a note)", () => {
+  test("a document becomes a file part carrying its mime, filename, and resolved URL", async () => {
+    const parts = await inboundFileParts(
+      msg({ document: { file_id: "f", file_unique_id: "u", file_name: "report.pdf", mime_type: "application/pdf" } }),
+      botWith("documents/report.pdf"),
+    )
+    expect(parts).toHaveLength(1)
+    expect(parts[0]).toMatchObject({ type: "file", mime: "application/pdf", filename: "report.pdf" })
+    expect(parts[0]!.url).toContain("documents/report.pdf") // the real download URL (previously discarded)
+  })
+
+  test("a document with no mime falls back to application/octet-stream", async () => {
+    const parts = await inboundFileParts(msg({ document: { file_id: "f", file_unique_id: "u" } }), botWith("documents/x.bin"))
+    expect(parts[0]!.mime).toBe("application/octet-stream")
+  })
+
+  test("a photo becomes an image/jpeg file part", async () => {
+    const parts = await inboundFileParts(msg({ photo: [{ file_id: "p", file_unique_id: "u" }] }), botWith("photos/x.jpg"))
+    expect(parts).toHaveLength(1)
+    expect(parts[0]).toMatchObject({ type: "file", mime: "image/jpeg", filename: "photo.jpg" })
+  })
+
+  test("a text-only message yields no file parts", async () => {
+    expect(await inboundFileParts(msg({ text: "hi" }), botWith("x/y"))).toEqual([])
+  })
+
+  test("INV-004: a malicious filename with path separators is neutralized (traversal guard)", async () => {
+    const parts = await inboundFileParts(
+      msg({ document: { file_id: "f", file_unique_id: "u", file_name: "../../etc/passwd" } }),
+      botWith("documents/x"),
+    )
+    expect(parts[0]!.filename).not.toContain("/")
+    expect(parts[0]!.filename).not.toContain("\\")
+  })
+
+  test("a file that cannot be resolved (getFile failed) is skipped, not fatal", async () => {
+    const parts = await inboundFileParts(msg({ document: { file_id: "f", file_unique_id: "u", file_name: "x.pdf" } }), botWith(null))
+    expect(parts).toEqual([])
+  })
+
+  test("INV-002: the file part's URL embeds the token and is redactable before any log", async () => {
+    const parts = await inboundFileParts(
+      msg({ document: { file_id: "f", file_unique_id: "u", file_name: "x.pdf" } }),
+      botWith("documents/x.pdf"),
+    )
+    expect(parts[0]!.url).toContain(TOKEN)
+    expect(redact(parts[0]!.url, TOKEN)).not.toContain(TOKEN)
   })
 })
 

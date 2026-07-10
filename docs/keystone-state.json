@@ -4147,6 +4147,19 @@
       "author": "operator (STK-001) + execution-agent",
       "summary": "PH-7 GATE APPROVED + blast-radius CONFIRMED (operator). Flipped ADR-0010/0014/0015 + DEC-015/016/020/021 -> Approved; applied the DEC-016 FR-047 amendment (statement -> unofficial client under private-network containment; official kept rejected-with-reason INV-006). Blast-radius mitigation in ADR-0011 (path isolation + graceful degradation + additive-OpenAPI/health/TEST-CONTRACT endpoints) confirmed; RISK-024 + AC-024 + EXP-008 degradation test + WBS-6.7/7.6 docs+diagrams stand. BOTH PH-6 and PH-7 now fully Approved (design); implementation authorized, phases start with their experiments. No product code, no upstream edit, no merge. validate_package.py docs/ = RESULT: OK.",
       "items_completed": []
+    },
+    {
+      "date": "2026-07-10",
+      "author": "operator (STK-001) + execution-agent",
+      "summary": "PH-6 execution begins: EXP-005/007/008 PASS + WBS-6.2 Telegram fix-in-place implemented (all 4 UX defects; marid-telegram 68->89 green; typecheck clean). On feat/ph6-marid-gateway, unmerged (INV-003/005). Live E2E/CI = WBS-6.6.",
+      "items_completed": [
+        "WBS-6.2: MarkdownV2 render (telegramify-markdown, split-then-render per chunk, 400->plain fallback)",
+        "WBS-6.2: inbound files land (resolveDownloadUrl->FilePartInput; filename traversal guard; token URL never logged - INV-002/004)",
+        "WBS-6.2: deny-by-default slash whitelist (/new,/help; unknown /command refused, creates no session)",
+        "WBS-6.2: multi-part separation (per-part streamers - each assistant text part is its own message)",
+        "EXP-007 PASS: GramJS userbot <-> real bot round-trip (reply+inline-keyboard, callback, file both ways); real-account/prod-DC (test-DC superseded); harness scripts/exp-007-userbot-e2e.mjs + report exp-007-report.md",
+        "Telegram test-DC blocker resolved: server-side SMS-login restriction (GramJS+mtcute identical PHONE_CODE_INVALID); real throwaway account path; runbook renamed telegram-userbot-e2e-setup.md"
+      ]
     }
   ],
   "change_log": [
@@ -4248,6 +4261,12 @@
       "actor": "operator (STK-001)",
       "action": "PH-7 gate ACCEPTED + blast-radius mitigation CONFIRMED. Flipped ADR-0010/0014/0015 + DEC-015/016/020/021 -> Approved; applied DEC-016 FR-047 amendment (functional.md statement + keystone-state). Both PH-6 and PH-7 channel phases now fully Approved (design-level); implementation authorized (each phase starts with its experiments). docs-only, no product code, no upstream edit, no merge. validate_package.py docs/ = RESULT: OK.",
       "target": "adrs/{adr-0010,adr-0014,adr-0015}+decisions/open-decision-register+requirements/functional+progress/*+keystone-state"
+    },
+    {
+      "timestamp": "2026-07-10T22:00:00Z",
+      "actor": "operator (STK-001) + execution-agent",
+      "action": "PH-6 first product code: WBS-6.2 (full Telegram experience, fix-in-place ADR-0009) implemented - 4 UX defects fixed (MarkdownV2; inbound files->FilePartInput; deny-by-default slash whitelist; multi-part separation); inline keyboards pre-existed. marid-telegram 68->89 pass/0 fail, typecheck clean; INV-001 unchanged, INV-002/004 held. EXP-005/007/008 PASS (de-risking). Committed to feat/ph6-marid-gateway, NOT merged (INV-003/005). Trackers reconciled. validate_package.py docs/ = RESULT: OK.",
+      "target": "packages/marid-telegram/*+experiments/exp-007-report+planning/work-breakdown+validation/acceptance-audit+progress/{progress-log,status-report}+keystone-state"
     }
   ]
 }

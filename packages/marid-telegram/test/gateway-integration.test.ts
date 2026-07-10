@@ -159,4 +159,142 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
       await gateway.catch(() => {})
     }
   })
+
+  test("multiple assistant text parts become separate messages, not one joined blob (defect 4)", async () => {
+    const events = eventQueue()
+    const updates: unknown[] = []
+    const sent: string[] = []
+    const edits: string[] = []
+    let prompted = false
+
+    const bot = {
+      getUpdates: async () => {
+        if (updates.length) return updates.splice(0) as never
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async (_c: number, text: string) => {
+        sent.push(text)
+        return { message_id: sent.length, chat: { id: OPERATOR, type: "private" } } as never
+      },
+      editMessageText: async (_c: number, _m: number, text: string) => void edits.push(text),
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => { prompted = true; return { data: {} } } },
+      permission: { respond: async () => ({ data: true }) },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // Operator prompts → session ses_1 exists once promptAsync is called.
+      updates.push({ update_id: 1, message: { message_id: 1, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "go" } })
+      expect(await waitFor(() => prompted)).toBe(true)
+
+      // Two distinct assistant text parts on the same assistant message.
+      events.push({ payload: { id: "e1", type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "p1", type: "text", text: "First part", messageID: "m1" } } } })
+      events.push({ payload: { id: "e2", type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "p2", type: "text", text: "Second part", messageID: "m1" } } } })
+
+      // Each part is its own message…
+      expect(await waitFor(() => sent.filter((t) => t.includes("First part")).length === 1 && sent.filter((t) => t.includes("Second part")).length === 1)).toBe(true)
+      // …and no single message ever concatenates both parts (the old joined-blob bug).
+      expect(sent.some((t) => t.includes("First part") && t.includes("Second part"))).toBe(false)
+      expect(edits.some((t) => t.includes("First part") && t.includes("Second part"))).toBe(false)
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
+
+  test("a non-whitelisted /command is refused and creates NO session (deny-by-default)", async () => {
+    const events = eventQueue()
+    const updates: unknown[] = []
+    const sent: string[] = []
+    let createCount = 0
+    let promptCount = 0
+
+    const bot = {
+      getUpdates: async () => {
+        if (updates.length) return updates.splice(0) as never
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async (_c: number, text: string) => {
+        sent.push(text)
+        return { message_id: sent.length, chat: { id: OPERATOR, type: "private" } } as never
+      },
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: {
+        create: async () => {
+          createCount += 1
+          return { data: { id: `ses_${createCount}` } }
+        },
+        promptAsync: async () => {
+          promptCount += 1
+          return { data: {} }
+        },
+      },
+      permission: { respond: async () => ({ data: true }) },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // /shell is not whitelisted → refused, NO session created, agent never prompted.
+      updates.push({ update_id: 1, message: { message_id: 1, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "/shell rm -rf /" } })
+      expect(await waitFor(() => sent.some((t) => t.startsWith("Unknown command")))).toBe(true)
+      expect(createCount).toBe(0)
+      expect(promptCount).toBe(0)
+
+      // /new is whitelisted → a plain reply, still no prompt to the agent.
+      updates.push({ update_id: 2, message: { message_id: 2, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "/new" } })
+      expect(await waitFor(() => sent.includes("Started a new session."))).toBe(true)
+      expect(promptCount).toBe(0)
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
 })

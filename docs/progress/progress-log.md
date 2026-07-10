@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-09
+updated: 2026-07-10
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,32 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-10 — PH-6 execution begins: EXP-005/007/008 PASS + WBS-6.2 Telegram fix-in-place implemented (unmerged, gated)
+- **Done:** First PH-6 **product code** (operator go-ahead). **WBS-6.2 — full Telegram experience, fix-in-place (ADR-0009),
+  all 4 UX defects fixed:** (1) **Markdown → MarkdownV2** via `telegramify-markdown` (split-plain-then-render per chunk so
+  a fence never straddles a boundary; 400→clean-plain fallback; `bot-api` `parse_mode` widened); (2) **inbound files land**
+  — `resolveDownloadUrl`→SDK `FilePartInput` wired into the prompt (`media.inboundFileParts`, `policy` parts widened),
+  filename **path-separator traversal guard** (INV-004), token URL **never logged** (INV-002, count only); (3) **slash
+  whitelist** — new `slash.routeSlash` deny-by-default (`/new` resets the chat→session binding, `/help`; any other
+  `/command` refused, **never prompted**, creates no session); (4) **multi-part separation** — `gateway` SessionState
+  `streamer`→`streamers: Map<partID,Streamer>`, each assistant text part streams into its **own** message (single-part
+  turns unchanged). Inline keyboards pre-existed (`permission.ts`). marid-telegram suite **68→89 pass / 0 fail**, typecheck
+  clean. **Experiments de-risking the tier: EXP-005 PASS** (fix-in-place is 1 dep + wiring), **EXP-008 PASS** (mirroring is
+  additive, zero src edit), **EXP-007 PASS** (GramJS userbot ↔ real bot round-trip: reply+inline-keyboard, callback, file
+  both ways — harness proven; report `experiments/exp-007-report.md` + harness `scripts/exp-007-userbot-e2e.mjs`).
+- **Key resolution — Telegram test DC is server-side blocked** (SMS-code login restricted to official apps; verified with
+  GramJS **and** mtcute → identical `PHONE_CODE_INVALID`, not a library bug). **Resolved via a real dedicated throwaway
+  account** (login code arrives in-app), production DC; runbook renamed `execution/telegram-userbot-e2e-setup.md` (test-DC
+  analysis → Appendix A). All four creds provisioned + verified in git-ignored `.env`. Bun-compat answered: run the userbot
+  tier on **Node**.
+- **Decisions:** WBS-6.2 sequenced **before** WBS-6.1 (operator) — lower-risk, EXP-005-proven, doesn't touch the proven
+  auth path (RISK-017 avoided for now). Filename sanitized channel-side (defense-in-depth at the untrusted boundary).
+  **Deviations:** EXP-007 bot side is a **stub** (the real gateway behavior is WBS-6.2/6.6, not yet integration-run) — this
+  proves the userbot harness mechanism, not product E2E; test-DC premise formally superseded, not deferred.
+- **Blockers:** none technical. **Gated:** code is on `feat/ph6-marid-gateway`, **not merged/PR'd** (INV-003/005 — merge on
+  operator instruction only). **Next:** live wiring + CI in **WBS-6.6** (EXP-007 harness vs a real `marid serve` + the 6.2
+  fixes; 3-OS `marid-telegram`), or **WBS-6.1** (Marid Gateway extraction + `@marid/channel-client`), then WBS-6.3/6.4/6.5.
 
 ## 2026-07-10 — PH-6 scope expansion: Marid Gateway + full cross-client mirroring + real-app test strategy (Proposed, gated)
 - **Done:** Operator-directed **scope expansion** of PH-6 (Telegram-first, all-in-one; decision-support only, NO code).

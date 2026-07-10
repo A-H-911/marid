@@ -1,6 +1,6 @@
-import type { BotApi, SendOptions } from "./bot-api"
+import type { BotApi } from "./bot-api"
 import { TelegramError } from "./bot-api"
-import { escapeHtml, splitMessage } from "./format"
+import { splitMessage, toMarkdownV2 } from "./format"
 
 // Streaming simulation for one assistant reply (WBS-4.2, AC-011, EXP-003).
 //
@@ -55,16 +55,16 @@ export function createStreamer(deps: StreamerDeps): Streamer {
     }
   }
 
-  const htmlOpts: SendOptions = { parse_mode: "HTML" }
-
-  async function sendChunk(text: string): Promise<number | undefined> {
+  // Send `rendered` in MarkdownV2 (or plain if telegramify declined). On a 400 parse
+  // error resend the un-escaped `plain` chunk with no parse_mode — clean text, never
+  // the escaped MarkdownV2 with visible backslashes.
+  async function sendChunk(rendered: string, plain: string, mode?: "MarkdownV2"): Promise<number | undefined> {
     try {
-      const msg = await withRetry(() => deps.bot.sendMessage(deps.chatId, text, htmlOpts))
+      const msg = await withRetry(() => deps.bot.sendMessage(deps.chatId, rendered, mode ? { parse_mode: mode } : undefined))
       return msg.message_id
     } catch (e) {
       if (e instanceof TelegramError && e.code === 400) {
-        // Parse error → resend as plain text (no parse_mode).
-        const msg = await withRetry(() => deps.bot.sendMessage(deps.chatId, text)).catch(() => undefined)
+        const msg = await withRetry(() => deps.bot.sendMessage(deps.chatId, plain)).catch(() => undefined)
         return msg?.message_id
       }
       deps.log?.(`sendMessage failed: ${e instanceof Error ? e.message : String(e)}`)
@@ -72,42 +72,49 @@ export function createStreamer(deps: StreamerDeps): Streamer {
     }
   }
 
-  async function editChunk(messageId: number, text: string): Promise<void> {
+  async function editChunk(messageId: number, rendered: string, plain: string, mode?: "MarkdownV2"): Promise<void> {
     try {
-      await withRetry(() => deps.bot.editMessageText(deps.chatId, messageId, text, htmlOpts))
+      await withRetry(() => deps.bot.editMessageText(deps.chatId, messageId, rendered, mode ? { parse_mode: mode } : undefined))
     } catch (e) {
       if (e instanceof TelegramError && e.code === 400) {
         // "message is not modified" is benign; any other 400 is a parse error → plain text.
         if (/not modified/i.test(e.message)) return
-        await withRetry(() => deps.bot.editMessageText(deps.chatId, messageId, text)).catch(() => {})
+        await withRetry(() => deps.bot.editMessageText(deps.chatId, messageId, plain)).catch(() => {})
         return
       }
       deps.log?.(`editMessageText failed: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  // Reconcile Telegram messages with the current chunks. New chunks are always sent
-  // immediately (new content). Existing chunks are edited only when their text
-  // changed AND (the cadence window elapsed OR force). Returns whether an edit fired.
+  // Reconcile Telegram messages with the current chunks. Split the PLAIN text on line
+  // boundaries, then render each chunk to MarkdownV2 individually (a fence never
+  // straddles a chunk boundary this way). New chunks send immediately; existing chunks
+  // are edited only when their rendered text changed AND (cadence elapsed OR force).
+  // ponytail: MarkdownV2 escaping expands length, so a full 4096 plain chunk can exceed
+  // 4096 once escaped → Telegram 400 → the plain-chunk fallback (which fits) sends. Rare
+  // (only >4096 replies); if it ever matters, split at a headroom limit below 4096.
   async function reconcile(fullText: string, force: boolean): Promise<void> {
     if (!typingSent) {
       typingSent = true
       await deps.bot.sendChatAction(deps.chatId, "typing").catch(() => {})
     }
-    const chunks = splitMessage(escapeHtml(fullText), limit)
+    const chunks = splitMessage(fullText, limit)
     for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]!
+      const plain = chunks[i]!
+      const md = toMarkdownV2(plain)
+      const rendered = md ?? plain
+      const mode = md !== undefined ? ("MarkdownV2" as const) : undefined
       const existing = parts[i]
       if (!existing) {
-        const messageId = await sendChunk(chunk)
-        if (messageId !== undefined) parts.push({ messageId, sentText: chunk })
+        const messageId = await sendChunk(rendered, plain, mode)
+        if (messageId !== undefined) parts.push({ messageId, sentText: rendered })
         lastEditAt = deps.now()
         continue
       }
-      if (existing.sentText === chunk) continue // unchanged — skip (avoids 400 not-modified)
+      if (existing.sentText === rendered) continue // unchanged — skip (avoids 400 not-modified)
       if (!force && deps.now() - lastEditAt < cadenceMs) continue // throttle
-      await editChunk(existing.messageId, chunk)
-      existing.sentText = chunk
+      await editChunk(existing.messageId, rendered, plain, mode)
+      existing.sentText = rendered
       lastEditAt = deps.now()
     }
   }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { escapeHtml, splitMessage } from "../src/format"
+import { escapeHtml, splitMessage, toMarkdownV2 } from "../src/format"
 
 describe("escapeHtml", () => {
   test("escapes &, <, > in the right order", () => {
@@ -7,6 +7,31 @@ describe("escapeHtml", () => {
     expect(escapeHtml("<script>")).toBe("&lt;script&gt;")
     // & is escaped first so an existing entity-looking sequence is not double-escaped wrongly
     expect(escapeHtml("&lt;")).toBe("&amp;lt;")
+  })
+})
+
+describe("toMarkdownV2 (defect 1)", () => {
+  test("converts bold, inline code, and lists to MarkdownV2 markup", () => {
+    const out = toMarkdownV2("Here is **bold**, `code`:\n- one\n- two")
+    expect(out).toBeDefined()
+    expect(out).toContain("*bold*") // MarkdownV2 bold is single asterisks
+    expect(out).toContain("`code`") // inline code preserved
+    expect(out).toContain("•") // list bulletized
+    expect(out).not.toContain("**bold**") // the raw Markdown is gone
+  })
+
+  test("preserves fenced code blocks", () => {
+    const out = toMarkdownV2("```js\nconst x = 1\n```")
+    expect(out).toContain("```")
+    expect(out).toContain("const x = 1")
+  })
+
+  test("escapes MarkdownV2 special characters in plain text", () => {
+    expect(toMarkdownV2("Done.")).toBe("Done\\.") // a lone dot must be escaped for MarkdownV2
+  })
+
+  test("trims the trailing newline telegramify appends", () => {
+    expect(toMarkdownV2("hello")).toBe("hello") // not "hello\n"
   })
 })
 

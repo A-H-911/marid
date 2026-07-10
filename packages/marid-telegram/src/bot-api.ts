@@ -16,7 +16,7 @@ export interface InlineKeyboardMarkup {
   inline_keyboard: InlineKeyboardButton[][]
 }
 export interface SendOptions {
-  parse_mode?: "HTML"
+  parse_mode?: "HTML" | "MarkdownV2"
   reply_markup?: InlineKeyboardMarkup
 }
 export interface TgFile {
