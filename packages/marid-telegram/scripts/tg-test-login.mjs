@@ -16,11 +16,40 @@ import { TelegramClient } from "telegram"
 import { StringSession } from "telegram/sessions/index.js"
 import readline from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
+import { readFileSync } from "node:fs"
+
+// Load the repo-root .env explicitly (relative to THIS file), so the script works
+// regardless of the current working directory. Bun/Node only auto-load .env from the
+// CWD; the .env lives at the repo root, three levels up from scripts/.
+function loadRootEnv() {
+  const path = new URL("../../../.env", import.meta.url)
+  const text = (() => {
+    try {
+      return readFileSync(path, "utf8")
+    } catch {
+      return ""
+    }
+  })()
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith("#")) continue
+    const eq = trimmed.indexOf("=")
+    if (eq === -1) continue
+    const key = trimmed.slice(0, eq).trim()
+    const value = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, "")
+    if (!(key in process.env) || !process.env[key]) process.env[key] = value
+  }
+}
+loadRootEnv()
 
 const apiId = Number(process.env.TELEGRAM_API_ID)
 const apiHash = process.env.TELEGRAM_API_HASH
 if (!apiId || !apiHash) {
-  console.error("Missing TELEGRAM_API_ID / TELEGRAM_API_HASH. Fill them in .env first (Step 1).")
+  console.error(
+    "Missing TELEGRAM_API_ID / TELEGRAM_API_HASH.\n" +
+      "Fill them in the repo-root .env (Step 1). Expected file: " +
+      new URL("../../../.env", import.meta.url).pathname,
+  )
   process.exit(1)
 }
 
