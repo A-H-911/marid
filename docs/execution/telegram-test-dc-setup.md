@@ -1,6 +1,6 @@
 ---
 status: Draft
-version: v1.1
+version: v1.2
 updated: 2026-07-10
 owner: operator (STK-001)
 ---
@@ -11,10 +11,14 @@ owner: operator (STK-001)
 [EXP‑007](../research/hypothesis-register.md) (GramJS userbot) and
 [EXP‑009](../research/hypothesis-register.md) (Telegram‑Web + Playwright), tiers 2–3 of
 [ADR‑0013](../adrs/adr-0013-telegram-test-strategy.md) — drive a **real Telegram client against
-Telegram's test datacenter (test DC)**, so they need three operator‑provisioned credentials that the
+Telegram's test datacenter (test DC)**, so they need **four** operator‑provisioned credentials that the
 agent **cannot** create or commit ([INV‑002](../requirements/invariant-register.md): secrets never
 committed / never logged). This runbook is the one‑time setup. The **deterministic fake‑server E2E stays
 the blocking PR gate regardless** — these tiers run local‑pre‑PR + GitHub‑on‑demand, never gating.
+
+**Who does what:** Steps 1–3 are **operator** actions (mint credentials into `.env`); Step 4 is **agent**
+build work (the EXP‑007/009 harness that *consumes* `.env`) — the operator does not run Step 4, only fills
+`.env` first.
 
 > Why a test DC (not production): the test environment uses **synthetic phone numbers with a fixed login
 > code — no SMS, no real account, zero ban risk** — which is what makes an *automated* real‑protocol login
@@ -33,6 +37,18 @@ All four are **secrets**: local = a git‑ignored `.env` (never staged); CI = **
 secrets**, injected as env for the on‑demand `workflow_dispatch` job only. Never echo them in logs — the
 gateway already `redact()`s the bot token ([media.ts](../../packages/marid-telegram/src/redact.ts));
 the userbot session string is equally sensitive (it is a full login).
+
+### Where to put them — `.env` at the repo root
+
+There is one env file: **`<repo-root>/.env`** (i.e. `opencode/.env`), already git‑ignored
+([`.gitignore`](../../.gitignore) line 5) and auto‑loaded by Bun. It does not exist until you create it —
+copy the committed template and fill it in:
+
+```bash
+cp .env.example .env      # from the repo root; .env is ignored, .env.example is the committed template
+```
+
+`.env.example` lists every variable with comments. Fill the four `TELEGRAM_*` values below as you mint them.
 
 ## Step 1 — API id / hash (once)
 
@@ -67,26 +83,34 @@ Telegram reserves phone numbers for each test DC (authoritative:
   Example on DC 2: `+9996 6 2 1234`.
 - **Login code:** always **the DC number repeated five times** — e.g. DC 2 → **`22222`** (no SMS).
 
-Log in **once** with a GramJS `StringSession` connected to the test DC, print the session string, and store
-it as `TELEGRAM_TEST_SESSION` so subsequent runs are non‑interactive:
+Log in **once** to mint the `StringSession`. A ready script is committed at
+[`packages/marid-telegram/scripts/tg-test-login.mjs`](../../packages/marid-telegram/scripts/tg-test-login.mjs)
+(GramJS `telegram`, a test‑only devDependency — DEP‑014). With `TELEGRAM_API_ID`/`TELEGRAM_API_HASH` already
+in `.env`, run:
 
-```ts
-// one-time: scripts/tg-test-login.ts  (run on Node if GramJS is Bun-incompatible — EXP-007 caveat)
-import { TelegramClient } from "telegram"
-import { StringSession } from "telegram/sessions"
-const client = new TelegramClient(new StringSession(""), Number(API_ID), API_HASH, { testServers: true })
-await client.start({
-  phoneNumber: async () => "9996621234",   // DC 2 synthetic number
-  phoneCode:   async () => "22222",          // fixed code for DC 2
-  onError: console.error,
-})
-console.log(client.session.save())           // -> paste into TELEGRAM_TEST_SESSION (secret)
+```bash
+cd packages/marid-telegram
+bun scripts/tg-test-login.mjs
+# If GramJS misbehaves under Bun, use Node (loads .env explicitly):
+#   node --env-file=../../.env scripts/tg-test-login.mjs
 ```
 
+Press **Enter** at each prompt to accept the test defaults:
+
+| Prompt | Default | Meaning |
+|---|---|---|
+| Test phone | `9996621234` | synthetic DC‑2 number (`99966` + DC id `2` + `1234`) |
+| Login code | `22222` | fixed code = DC id ×5, no SMS |
+| 2FA password | *(blank)* | a fresh synthetic account has none |
+| First name | `MaridTest` | only asked on first login (= account signup) |
+
+It prints the session string between `==== TELEGRAM_TEST_SESSION ====` markers — **paste that line into
+`.env`** as `TELEGRAM_TEST_SESSION=…`. Later runs are then non‑interactive.
+
 > **Known caveat (EXP‑007):** test‑DC login has documented `PHONE_CODE_INVALID` intermittency
-> (GramJS #70/#169/#734), and GramJS's repo is ~18mo stale. If login proves intractable, the fake‑server
-> E2E remains the sole deterministic tier and the userbot is documented best‑effort — that is the EXP‑007
-> FAIL branch, not a blocker.
+> (GramJS #70/#169/#734), and GramJS's repo is ~18mo stale — **just re‑run** if it hits. If login proves
+> genuinely intractable, the fake‑server E2E remains the sole deterministic tier and the userbot is
+> documented best‑effort — that is the EXP‑007 FAIL branch, not a blocker.
 
 ## Step 3 — a bot in the test environment
 
@@ -107,7 +131,10 @@ does **not** carry over.
    `https://api.telegram.org/bot<token>/test/METHOD_NAME`. `marid-telegram` needs a `baseUrl`/`/test`
    switch to target it (WBS‑6.2).
 
-## Step 4 — how each experiment consumes them
+## Step 4 — how each experiment consumes them (agent‑built; no operator action)
+
+Once Steps 1–3 have filled `.env`, the credential setup is **done**. The harnesses below are built by the
+agent (WBS‑6.6) and *read* those four values — the operator does not run them by hand here.
 
 - **EXP‑007 (GramJS userbot, TEST‑TG‑E2E):** connects with `testServers:true` + `TELEGRAM_TEST_SESSION`,
   messages the test bot: `/start` → assert reply → tap an inline button → send + receive a file. Runs
