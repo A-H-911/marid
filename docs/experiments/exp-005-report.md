@@ -73,8 +73,8 @@ The PASS bar's fourth clause — *streaming cadence hits no 429s* — is a live 
 **throwaway BotFather bot token** (production DC is fine for a cadence check; no test-DC needed) + network,
 run against a real `marid serve` with the edit-coalesced streamer at the EXP-003 cadence. **Staged behind an
 operator-provided token**; the offline defect fixes above do not depend on it. (The separate real-client
-E2E tiers — GramJS userbot / Telegram-Web Playwright — are EXP-007/009 and need the **test-DC** setup in
-[telegram-test-dc-setup.md](../execution/telegram-test-dc-setup.md).)
+E2E tiers — GramJS userbot / Telegram-Web Playwright — are EXP-007/009 and need the setup in
+[telegram-userbot-e2e-setup.md](../execution/telegram-userbot-e2e-setup.md).)
 
 **FAIL path not taken:** fix-in-place did not prove larger than the port, so C-8 (port grinev's `render/`)
 stays rejected. HYP-005 stands on the deterministic tiers; the live cadence tail is a confirmation, not a
