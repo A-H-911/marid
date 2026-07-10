@@ -1,6 +1,6 @@
 ---
 status: Draft
-version: v1.4
+version: v1.5
 updated: 2026-07-10
 owner: operator (STK-001)
 ---
@@ -32,15 +32,24 @@ build work (the EXP‑007/009 harness that *consumes* `.env`) — the operator d
 > - **mtcute** (modern, actively maintained, `testMode:true`): **identical failure** — *"confirmation code
 >   sent via sms"* then *"Provided code was invalid"* for `22222`.
 >
-> Because a *current* library reproduces it exactly, the cause is **upstream of the client**: the synthetic
-> `99966XYYYY` numbers are being handled as **real numbers ("sms" delivery), so Telegram's reserved‑test‑number
-> fixed‑code logic never engages** — no typed code can validate. This is the **EXP‑007 FAIL branch**. **The
-> deterministic fake‑server E2E remains the blocking gate; the userbot tier is blocked.** Narrowed options
-> (operator decision): (a) **EXP‑009 Telegram‑Web** (`web.telegram.org/?test=1`) — the *official* client hits
-> the real test env directly and is the definitive test of whether these creds/numbers work at all; (b) a
-> **real throwaway account on production** (ban‑exposed, needs a real phone — plan's noted fallback); (c)
-> accept **fake‑server as the sole gate** and build on. Steps 1–3 below remain correct for if/when a working
-> path exists; Step 4 (harness) is paused on the userbot tier only.
+> Both the 5‑digit (`22222`) and 6‑digit (`222222`) codes were tried on both libraries (Telethon/@mtproto‑core
+> docs note the code is `dc_id`×5, "try ×6 if that fails") — **all fail** with the same *"sent via sms" →
+> invalid code*. Because a *current* library reproduces it exactly and the code length isn't it, the cause is
+> **server‑side, upstream of the client**: the synthetic numbers route through the **SMS path, which Telegram
+> now restricts to official apps** ([bugs.telegram.org](https://bugs.telegram.org/c/4239/7); community
+> threads) — so no third‑party MTProto client (any library, any code) can complete it. Spiking a third
+> library (Telethon‑in‑Python) is the **same MTProto flow → same wall**; do not.
+>
+> **The one decisive, free data point — the official client.** Step 3 already logs a synthetic account into
+> **Telegram Desktop's test server**; that manual login *is* the official‑client test, and it decides the
+> path:
+> - **If Desktop login works** → official‑app‑only restriction confirmed → **EXP‑009** (Playwright driving the
+>   *official* `web.telegram.org/?test=1`) is the **only** viable automated real‑client route, and worth building.
+> - **If Desktop login also fails** → the test‑number path is broken for everyone → EXP‑009 hits the same wall →
+>   **fake‑server E2E is the real‑client coverage. Done.**
+>
+> **This tier is non‑blocking by design** (ADR‑0013 — the fake‑server E2E is the gate, green and untouched).
+> PH‑6 (WBS‑6.1/6.2) does **not** wait on this; resolve the userbot/web tier asynchronously.
 
 ## What you provision (three secrets)
 
