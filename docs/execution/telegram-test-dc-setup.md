@@ -1,6 +1,6 @@
 ---
 status: Draft
-version: v1.2
+version: v1.3
 updated: 2026-07-10
 owner: operator (STK-001)
 ---
@@ -23,6 +23,18 @@ build work (the EXP‑007/009 harness that *consumes* `.env`) — the operator d
 > Why a test DC (not production): the test environment uses **synthetic phone numbers with a fixed login
 > code — no SMS, no real account, zero ban risk** — which is what makes an *automated* real‑protocol login
 > possible at all. It is a completely separate instance (separate users, chats, bots) from production.
+
+> ⚠️ **VERIFIED BLOCKER (2026‑07‑10) — GramJS test‑DC login is currently non‑functional.** An exhaustive
+> spike (Node, all three DCs, low‑level `sendCode`+`signIn`, explicit DC pinning to `149.154.167.40:443`,
+> 5‑ and 6‑digit codes) returns **`PHONE_CODE_INVALID` on every path**. `sendCode` succeeds but returns
+> `SentCodeTypeSms` (not a test‑code type) — the synthetic numbers are not hitting Telegram's reserved
+> test‑number logic through GramJS's (stale, ~18mo) test‑DC endpoints. This is the **EXP‑007 FAIL branch**
+> (GramJS issue #70, unresolved): **the deterministic fake‑server E2E remains the blocking gate; the GramJS
+> userbot tier is best‑effort and currently blocked.** Fallbacks (operator decision): (a) a real throwaway
+> account on production (ban‑exposed, needs a real phone — plan's noted fallback), (b) evaluate an
+> alternative MTProto lib (mtcute/Telethon) as a separate gated comparison, (c) accept fake‑server + the
+> Telegram‑Web GUI tier (EXP‑009) as the real‑client coverage. Steps 1–3 below are still correct for if/when
+> a working userbot path exists; Step 4 (harness) is paused on the userbot tier only.
 
 ## What you provision (three secrets)
 
@@ -107,10 +119,11 @@ Press **Enter** at each prompt to accept the test defaults:
 It prints the session string between `==== TELEGRAM_TEST_SESSION ====` markers — **paste that line into
 `.env`** as `TELEGRAM_TEST_SESSION=…`. Later runs are then non‑interactive.
 
-> **Known caveat (EXP‑007):** test‑DC login has documented `PHONE_CODE_INVALID` intermittency
-> (GramJS #70/#169/#734), and GramJS's repo is ~18mo stale — **just re‑run** if it hits. If login proves
-> genuinely intractable, the fake‑server E2E remains the sole deterministic tier and the userbot is
-> documented best‑effort — that is the EXP‑007 FAIL branch, not a blocker.
+> **⚠️ Currently blocked (verified 2026‑07‑10):** this returns `PHONE_CODE_INVALID` on every DC/config
+> (see the VERIFIED BLOCKER box at the top). The script itself is correct — the fault is GramJS's stale
+> test‑DC endpoints not reaching Telegram's reserved‑test‑number path. Do **not** burn time re‑running it;
+> the userbot tier is on hold pending an operator decision on the fallbacks listed above. The fake‑server
+> E2E remains the blocking gate regardless.
 
 ## Step 3 — a bot in the test environment
 
