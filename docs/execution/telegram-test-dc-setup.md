@@ -1,6 +1,6 @@
 ---
 status: Draft
-version: v1.0
+version: v1.1
 updated: 2026-07-10
 owner: operator (STK-001)
 ---
@@ -38,12 +38,25 @@ the userbot session string is equally sensitive (it is a full login).
 
 1. Sign in at **https://my.telegram.org** with your phone (this uses your real account only to *mint app
    credentials*; the tests themselves never touch it).
-2. Open **API development tools**, create an app (any name/short‑name), copy **`api_id`** and **`api_hash`**.
-3. The same panel lists the **test‑DC IP addresses / ports** (TCP transport) and the HTTPS/WebSocket URIs —
+2. Open **API development tools** → **Create new application**. Create **exactly one** app — the fields are
+   cosmetic:
+
+   | Field | Value |
+   |---|---|
+   | App title | `Marid Test Client` (any readable name) |
+   | Short name | `maridtest` (5–32 alphanumeric) |
+   | URL | *leave blank* (optional, unused for an MTProto client) |
+   | Platform | **Other** (or Desktop) — does not restrict usage |
+   | Description | `Automated E2E test client (test DC) for Marid channels` (optional) |
+
+3. Copy **`api_id`** (numeric) and **`api_hash`** immediately — the hash is shown once. → `TELEGRAM_API_ID` /
+   `TELEGRAM_API_HASH`.
+4. The same panel lists the **test‑DC IP addresses / ports** (TCP transport) and the HTTPS/WebSocket URIs —
    note them; GramJS's `testServers` option uses these. (Test DC 2 is the usual default.)
 
-`api_id`/`api_hash` are account‑level and identical for production and test DCs — only the *connection*
-targets the test DC.
+> **One app is enough.** `api_id`/`api_hash` are **account‑level and identical for production and test DCs** —
+> both EXP‑007 and EXP‑009 reuse this single pair; only the *connection* targets the test DC. Do not create a
+> second app.
 
 ## Step 2 — the synthetic test login (GramJS userbot)
 
@@ -77,12 +90,22 @@ console.log(client.session.save())           // -> paste into TELEGRAM_TEST_SESS
 
 ## Step 3 — a bot in the test environment
 
-BotFather lives on production, but the bot the tests target must exist **in the test env**:
+The Bot **test environment is completely separate** from production (per
+**https://core.telegram.org/bots/features#dedicated-test-environment**): *"you will need to create a new
+user account and a new bot with @BotFather"* **while logged into the test server**. A production bot token
+does **not** carry over.
 
-1. Connect a client to the **test DC** (Telegram Desktop supports a test‑environment toggle; or a throwaway
-   test‑DC session), open **@BotFather**, `/newbot`, copy the token → `TELEGRAM_TEST_BOT_TOKEN`.
-2. Point `marid-telegram` at the **Bot‑API test mode** by using the `/test` path segment:
-   `https://api.telegram.org/bot<token>/test/METHOD` (the gateway needs a `baseUrl`/`/test` switch — WBS‑6.2).
+1. **Open the test server** in a Telegram app and create a throwaway account there:
+   - **Telegram Desktop:** ☰ **Settings** → **Shift + Alt + Right‑click** on **"Add Account"** → select
+     **"Test Server"**.
+   - **iOS:** tap the **Settings** icon **10×** → **Accounts** → **Login to another account** → **Test**.
+   - **macOS:** click the **Settings** icon **10×** to open the Debug Menu → **⌘ + click "Add Account"**.
+   - Sign that test account in with a synthetic number + fixed code (same rule as Step 2 — e.g.
+     `+9996621234` / `22222` for DC 2).
+2. In that test‑server session open **@BotFather**, `/newbot`, copy the token → `TELEGRAM_TEST_BOT_TOKEN`.
+3. Call the bot in test mode via the **`/test` path segment** (verified format):
+   `https://api.telegram.org/bot<token>/test/METHOD_NAME`. `marid-telegram` needs a `baseUrl`/`/test`
+   switch to target it (WBS‑6.2).
 
 ## Step 4 — how each experiment consumes them
 
