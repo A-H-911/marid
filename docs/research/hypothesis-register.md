@@ -1,7 +1,7 @@
 ---
 status: Draft
 version: v0.1
-updated: 2026-07-03
+updated: 2026-07-11
 owner: operator (STK-001)
 ---
 
@@ -26,6 +26,7 @@ planning — this package only defines them.
 | HYP-011 | A fake at the WAHA WebSocket boundary gives a deterministic, hermetic PR-gating integration test for the WhatsApp adapter (round-trip, media, streaming-sim, attach/mirror, token-permission) with no accounts/ban risk | EXP-011 | ADR-0014 tier 2 / AC-023 |
 | HYP-012 | A second-account burner probe can smoke-test the real WhatsApp protocol off-CI without an unacceptable per-run ban rate for an inbound-only responder bot | EXP-012 | ADR-0014 tier 3 |
 | HYP-013 | mobilewright drives the native WhatsApp Android app repeatably enough for an occasional manual render check (incl. whether an optional list message actually displays) | EXP-013 | ADR-0014 tier 4 |
+| HYP-014 | The gateway's attach/binding endpoints can be OpenAPI-documented **additively** — a Marid-owned `HttpApiGroup`'s `OpenApi.fromApi` fragment merged into the `marid-auth`-intercepted `/doc` response — with **no upstream edit (no `P-*`)**; the route is served by the wrapper | EXP-014 | ADR-0011; AC-024; NFR-001 |
 
 ## Experiment plans
 
@@ -125,3 +126,13 @@ the fake-WA gate (EXP-011) + native render check; record the limitation.
 Setup: mobilewright/mobile-mcp drives the **WhatsApp Android app** in an emulator; send/receive a message + media;
 confirm rendering (incl. whether an optional WAHA-Plus list message actually displays as tappable UI).
 **PASS:** repeatable enough for occasional manual render QA. **FAIL/too-brittle:** manual visual QA only (RISK-020).
+
+### EXP-014 — Additive OpenAPI for the gateway attach endpoint · timebox 0.5 day · runs at WBS-6.1 slice b start
+Setup: define a minimal Marid `HttpApiGroup` (`POST /marid/attach`), generate its spec with `OpenApi.fromApi`, and
+merge the fragment's `paths` + `components.schemas` into the upstream `/doc` spec (`OpenApi.fromApi(PublicApi)`).
+**PASS:** the standalone fragment carries `/marid/attach`; the upstream spec lacks it; the merge has no path/schema
+collision and stays serializable → `marid-auth` can serve an augmented `/doc` with **zero upstream edit (no `P-*`)**.
+**FAIL:** any collision, or `fromApi` needs full app context → documenting the endpoint forces an upstream `api.ts`
+edit = enumerate one `P-*`, STOP for operator approval.
+**Result: PASS** (2026-07-11, 3/3) — see [exp-014-report](../experiments/exp-014-report.md). Production TEST-CONTRACT
+(the `/doc`-merge + a live round-trip) lands in slice b.

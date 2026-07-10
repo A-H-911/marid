@@ -1576,6 +1576,12 @@
         "statement": "mobilewright drives the native WhatsApp Android app repeatably enough for an occasional manual render check (incl. whether an optional list message actually displays)",
         "status": "Proposed",
         "links": { "tested_by": ["EXP-013"] }
+      },
+      {
+        "id": "HYP-014",
+        "statement": "The gateway's attach/binding endpoints can be OpenAPI-documented additively - a Marid-owned HttpApiGroup's OpenApi.fromApi fragment merged into the marid-auth-intercepted /doc response - with no upstream edit (no P-*); the route is served by the wrapper.",
+        "status": "Confirmed",
+        "links": { "tested_by": ["EXP-014"] }
       }
     ],
     "experiments": [
@@ -1710,6 +1716,14 @@
         "pass_criteria": "Repeatable enough for occasional manual render QA. Else manual visual QA only (RISK-020).",
         "status": "Planned",
         "links": { "tests_hypothesis": ["HYP-013"] }
+      },
+      {
+        "id": "EXP-014",
+        "title": "Additive OpenAPI for the gateway attach endpoint (AC-024 P-* de-risk)",
+        "method": "Define a minimal Marid HttpApiGroup (POST /marid/attach); generate its spec via OpenApi.fromApi; merge the fragment paths + component schemas into the upstream /doc spec OpenApi.fromApi(PublicApi). Spike: packages/opencode/test/marid, 3 assertions, 3/3 pass.",
+        "pass_criteria": "Standalone fragment carries /marid/attach; upstream spec lacks it; merge has no path/schema collision and stays serializable -> marid-auth serves an augmented /doc with zero upstream edit (no P-*). FAIL -> documenting the endpoint forces an upstream api.ts edit = one P-*, STOP for operator approval.",
+        "status": "PASS",
+        "links": { "tests_hypothesis": ["HYP-014"] }
       }
     ],
     "comparisons": [
@@ -4196,6 +4210,16 @@
         "WBS-6.1 slice a: marid-telegram package.json depends @marid/channel-client workspace:*; bun.lock updated; +1 ci.yml step (Marid-owned, sync-durable)",
         "WBS-6.1 slice a VERIFIED: marid-auth 101 green (unchanged, TEST-AUTH/TEST-SEC/channel-binding intact), marid-telegram 89 green (unchanged), channel-client 10 green; typecheck+lint 0 errors; additive envelope intact (NFR-001), zero upstream edit"
       ]
+    },
+    {
+      "date": "2026-07-11",
+      "author": "execution-agent",
+      "summary": "EXP-014 (HYP-014) PASS - de-risked the AC-024 endpoint-location P-* question for WBS-6.1 slice b. /doc is served from OpenApi.fromApi(PublicApi) wired in upstream files, so composing a group into PublicApi would edit api.ts (a P-*). Additive path proven by a 3/3 spike: marid-auth intercepts GET /doc, calls next, and merges a Marid-owned OpenApi.fromApi fragment (standalone HttpApiGroup for POST /marid/attach) into the upstream spec - no path/schema collision (Marid identifiers prefixed), serializable, zero upstream edit -> NO P-*. Endpoint served by the wrapper (manual handler before next); the group only generates the fragment + drives TEST-CONTRACT. Health-covered = existing /global/health. Slice b needs no operator P-* gate. Registers HYP-014/EXP-014 + exp-014-report added.",
+      "items_completed": [
+        "EXP-014 spike (packages/opencode/test/marid, 3/3): OpenApi.fromApi on a standalone Marid group yields a valid /marid/attach fragment; upstream /doc spec lacks it; merge of paths+component-schemas has no collision and stays serializable",
+        "Verdict: attach endpoint = marid-auth wrapper serve + GET /doc-merge (both additive) -> NO P-*; rejected compose-into-PublicApi path characterized in the report",
+        "HYP-014 + EXP-014 added to hypothesis-register.md and keystone-state registers; exp-014-report.md authored; spike removed (throwaway - production TEST-CONTRACT lands in slice b)"
+      ]
     }
   ],
   "change_log": [
@@ -4321,6 +4345,12 @@
       "actor": "execution-agent",
       "action": "WBS-6.1 slice a: extracted @marid/channel-client (ADR-0011) from the Telegram gateway - channel-agnostic firehose subscribe/pump + event interpretation + parseAskEvent + per-part streamer coordination. marid-telegram consumes it (createChannelClient/beginTurn/start), keeps Telegram specifics; parseAskEvent re-exported (public API unchanged). Behavior-preserving: subscription stays on global.event, no server/auth path touched (RISK-017); marid-auth 101 / marid-telegram 89 unchanged & green; +10 channel-client tests; typecheck+lint clean; +1 Marid-owned CI step; ZERO upstream edit, no P-*. WBS-6.1 split (advisor-confirmed): slice a done (this), slice b carried (attach endpoint AC-024 P-* question + switch subscription to filtered /event + consume operator-attached bound sessions + close /global/event INV-001 boundary gap; all decision-gated, verifications required). Reconnect deferred to WBS-6.5. WBS-6.1 stays in-progress; AC-019/AC-024 unchanged. On feat/ph6-gateway, NOT merged (INV-003/005).",
       "target": "packages/marid-channel-client/*+packages/marid-telegram/{package.json,src/gateway.ts}+.github/workflows/ci.yml+bun.lock+planning/work-breakdown+progress/{progress-log,status-report}+keystone-state(progress/change_log)"
+    },
+    {
+      "timestamp": "2026-07-11T02:00:00Z",
+      "actor": "execution-agent",
+      "action": "EXP-014 (HYP-014) PASS: attach-endpoint OpenAPI is additive, no P-*. marid-auth intercepts GET /doc and merges a Marid-owned OpenApi.fromApi(HttpApiGroup) fragment into the upstream OpenApi.fromApi(PublicApi) spec - proven collision-free + serializable by a 3/3 spike; endpoint served by the wrapper. Rejected: compose-into-PublicApi (would edit upstream api.ts = one P-*). WBS-6.1 slice b endpoint-location decision resolved -> no operator P-* gate needed. Added HYP-014/EXP-014 registers + exp-014-report; progress-log/status trackers updated; spike removed (production TEST-CONTRACT lands in slice b). docs-only; no product code; validate = OK.",
+      "target": "experiments/exp-014-report+research/hypothesis-register+keystone-state(registers/progress/change_log)+progress/{progress-log,status-report}+planning/work-breakdown"
     }
   ]
 }

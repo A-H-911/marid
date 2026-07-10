@@ -11,6 +11,25 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-11 — EXP-014 PASS: attach-endpoint OpenAPI is additive (no P-*); WBS-6.1 slice b scoped
+- **Done:** **EXP-014 (HYP-014) — PASS.** De-risked the AC-024 endpoint-location `P-*` question for WBS-6.1
+  slice b. `/doc` is served from `OpenApi.fromApi(PublicApi)` (`server httpapi/server.ts:188`), wired in
+  **upstream** files — so composing a group into `PublicApi` would edit `api.ts` (= a `P-*`). The **additive
+  path** proven by a 3/3 spike: `marid-auth` intercepts `GET /doc`, calls `next`, and **merges a Marid-owned
+  `OpenApi.fromApi` fragment** (a standalone `HttpApiGroup` for `POST /marid/attach`) into the upstream spec —
+  no path/schema collision (Marid identifiers prefixed), serializable, **zero upstream edit → NO `P-*`**. The
+  endpoint is *served* by the wrapper (manual handler before `next`, like existing marid routes); the group
+  exists only to generate the fragment + drive TEST-CONTRACT. Report: `experiments/exp-014-report.md`;
+  registers HYP-014/EXP-014 added. **Slice b scope** locked (see work-breakdown WBS-6.1 row + the slice-b plan).
+- **Decisions:** attach endpoint lives in the `marid-auth` wrapper (serve) + `/doc`-merge (document), **not** an
+  upstream HttpApi group — so slice b needs **no operator `P-*` gate**. Health-covered = existing
+  `/global/health` (process/surface health, not per-route). The rejected compose-into-`PublicApi` path is
+  characterized in the report for the record.
+- **Deviations:** none. **Blockers:** none for slice b's endpoint (P-* cleared); the `/global/event` boundary
+  fix still needs the wrapped-frame `sessionID`-extraction verification before it's assumed cheap. **Next:**
+  build slice b acceptance-criteria-first (attach endpoint + `/doc`-merge + TEST-CONTRACT → then `/event`
+  switch + bound-consume → then close the `/global/event` INV-001 gap).
+
 ## 2026-07-11 — WBS-6.1 slice a `@marid/channel-client` extracted (slice; unmerged, gated)
 - **Done:** **First slice of WBS-6.1 (ADR-0011): a new additive package `@marid/channel-client`** holding the
   channel-agnostic half of the Telegram gateway — firehose subscribe/pump, cross-generation event interpretation
