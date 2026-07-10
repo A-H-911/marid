@@ -5,6 +5,8 @@ import type { RateLimiter } from "./ratelimit"
 import { authorize, sessionFromPathname } from "./scope"
 import { filterOwnedArray, filterSseStream, pickPermissionSessionId, pickSessionId } from "./event-filter"
 import { REQUEST_ID_HEADER, resolveRequestId } from "./request-id"
+import { errorResponse } from "./http"
+import { augmentDoc, handleGatewayRoute, isGatewayRoute } from "./gateway"
 import type { TokenStore } from "./token"
 
 export type Next = (request: Request) => Response | Promise<Response>
@@ -85,21 +87,6 @@ function withRequestId(response: Response, requestId: string): Response {
   const headers = new Headers(response.headers)
   headers.set(REQUEST_ID_HEADER, requestId)
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
-}
-
-// Upstream structured errors pass through; marid-auth failures use the same
-// shape (api-event-contract §"Errors"): { name, message, requestId }.
-function errorResponse(
-  status: number,
-  name: string,
-  message: string,
-  requestId: string,
-  extra?: Record<string, string>,
-): Response {
-  return new Response(JSON.stringify({ name, message, requestId }), {
-    status,
-    headers: { "content-type": "application/json", [REQUEST_ID_HEADER]: requestId, ...extra },
-  })
 }
 
 // Echo Access-Control-Allow-Origin on marid-auth's OWN responses (its 401/403/429
@@ -197,6 +184,24 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
         if (!gate.ok) return rateLimited(gate.retryAfter)
       }
 
+      // Marid gateway routes (WBS-6.1b): admin-gated attach/detach/bindings, served entirely
+      // here — they never reach the upstream handler, and are not upstream session routes, so
+      // they short-circuit before ownership/authorize. releaseStream is a no-op unless a
+      // client sent Accept: text/event-stream on one of these (defensive — they aren't SSE).
+      if (isGatewayRoute(url.pathname)) {
+        releaseStream()
+        const res = await handleGatewayRoute({
+          request,
+          pathname: url.pathname,
+          method: request.method,
+          scope: token.scope,
+          requestId,
+          bindings: deps.bindings,
+        })
+        await record(token.name, res.status >= 200 && res.status < 300 ? "allow" : "deny")
+        return res
+      }
+
       const owned = await deps.ownership.list(token.name)
       const decision = authorize({
         scope: token.scope,
@@ -235,11 +240,16 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
             ? pickPermissionSessionId
             : undefined
 
+      // GET /doc is augmented on the way out with the Marid gateway's OpenAPI fragment
+      // (WBS-6.1b, EXP-014). Strip accept-encoding so upstream returns plain JSON — a
+      // gzipped spec (>1KB) would be opaque to the merge, exactly like the list routes.
+      const isDoc = request.method === "GET" && url.pathname === "/doc"
+
       // Upstream gzips JSON >=1KB when the request allows it, and a compressed body
       // is opaque to the filter. Strip accept-encoding on the routes we rewrite so
       // upstream returns plain JSON. (SSE is never compressed, so /event needs none.)
       const delegated =
-        isolate && listPick !== undefined && request.headers.has("accept-encoding")
+        ((isolate && listPick !== undefined) || isDoc) && request.headers.has("accept-encoding")
           ? new Request(request, { headers: strippedHeaders(request.headers, "accept-encoding") })
           : request
 
@@ -293,6 +303,10 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
           const body = await filterOwnedArray(original, listPick, owns)
           return withRequestId(new Response(body, { status: response.status, statusText: response.statusText, headers }), requestId)
         }
+      }
+
+      if (isDoc && response.status >= 200 && response.status < 300) {
+        return withRequestId(await augmentDoc(response), requestId)
       }
 
       return withRequestId(response, requestId)
