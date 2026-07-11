@@ -46,7 +46,15 @@ function bearer(request: Request): string | undefined {
 }
 
 function isStream(request: Request): boolean {
-  return (request.headers.get("accept") ?? "").includes("text/event-stream")
+  if ((request.headers.get("accept") ?? "").includes("text/event-stream")) return true
+  // ADR-0016 / EXP-015: the firehose routes ARE streams by ROUTE, not by the client's Accept header.
+  // The generated SDK SSE client (`sdk.global.event()`) omits `Accept: text/event-stream`, so gating
+  // the owns∪bound isolation filter (below, `if (stream)`) on that header served the firehose UNFILTERED
+  // to non-admin tokens — a realized INV-001 leak (RISK-025). A security boundary must never depend on
+  // client-supplied content: recognise these routes regardless of the header.
+  if (request.method !== "GET") return false
+  const pathname = new URL(request.url).pathname
+  return pathname === "/event" || pathname === "/global/event"
 }
 
 // The two run-triggering routes a channel token is allowed to POST (scope.ts denies
@@ -293,7 +301,23 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
           url.pathname === "/event" ? owningSession : url.pathname === "/global/event" ? owningSessionGlobal : undefined
         if (isolate && pickFrame && response.body) {
           const bound = await deps.bindings.list(token.name).catch(() => new Set<string>())
-          const isVisible = (id: string): boolean => owns(id) || bound.has(id)
+          // ADR-0017: owns∪bound is snapshotted at subscribe, but a token creates sessions
+          // MID-STREAM (the gateway makes one per inbound turn) that must appear on its OWN
+          // firehose without a re-subscribe. Resolve visibility freshly: cache POSITIVE hits
+          // (an owned id, once seen, stays owned), but do NOT negative-cache — a session's
+          // `created` frame can arrive before the create request finishes recording ownership
+          // (a race), so an id seen as not-yet-owned must be re-checked on its next frame (the
+          // assistant reply, which lands after ownership is recorded). One small ownership read
+          // per non-owned frame; binding changes stay on the WBS-6.5c self-bindings re-subscribe.
+          const visible = new Set<string>([...owned, ...bound])
+          const isVisible = async (id: string): Promise<boolean> => {
+            if (visible.has(id)) return true
+            if (await deps.ownership.owns(token.name, id).catch(() => false)) {
+              visible.add(id)
+              return true
+            }
+            return false
+          }
           filtered = new Response(filterSseStream(response.body, isVisible, pickFrame), {
             status: response.status,
             statusText: response.statusText,
