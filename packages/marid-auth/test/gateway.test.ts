@@ -111,6 +111,36 @@ describe("gateway attach endpoint (WBS-6.1b, AC-024)", () => {
     expect(denied.status).toBe(403)
   })
 
+  // WBS-6.5c: the NON-admin self-view a channel gateway polls to learn a mid-stream
+  // attach/detach (its own token can't call the admin /marid/bindings). Keyed on the
+  // AUTHENTICATED token, not a ?token= param — inherently least-privilege; reading your
+  // own bound session IDs leaks nothing the firehose filter (owns∪bound) already grants.
+  test("GET /marid/self-bindings returns the CALLER's own bindings (non-admin, keyed on the authenticated token)", async () => {
+    const { auth, tokens } = await build()
+    const { secret: admin } = await tokens.create("adm", "admin")
+    await auth.handle(
+      new Request("http://x/marid/attach", { method: "POST", headers: bearer(admin), body: JSON.stringify({ token: "tg", session: "ses_9" }) }),
+      neverNext(),
+    )
+    const { secret: chan } = await tokens.create("tg", "channel:telegram", "telegram-channel")
+    const res = await auth.handle(new Request("http://x/marid/self-bindings", { method: "GET", headers: bearer(chan) }), neverNext())
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ sessions: ["ses_9"] })
+  })
+
+  test("a token's /marid/self-bindings cannot be spoofed to another token's set (no ?token= override)", async () => {
+    const { auth, tokens } = await build()
+    const { secret: admin } = await tokens.create("adm", "admin")
+    await auth.handle(
+      new Request("http://x/marid/attach", { method: "POST", headers: bearer(admin), body: JSON.stringify({ token: "other", session: "ses_secret" }) }),
+      neverNext(),
+    )
+    const { secret: chan } = await tokens.create("tg", "channel:telegram", "telegram-channel")
+    const res = await auth.handle(new Request("http://x/marid/self-bindings?token=other", { method: "GET", headers: bearer(chan) }), neverNext())
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ sessions: [] }) // sees ITS OWN empty set, never "other"
+  })
+
   test("a malformed attach body (missing session) is 400", async () => {
     const { auth, tokens } = await build()
     const { secret } = await tokens.create("adm", "admin")

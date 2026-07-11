@@ -11,6 +11,38 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-11 — WBS-6.5 SSE reconnect + re-fetch recovery DONE (unmerged, gated)
+- **Done:** all recovery in **`@marid/channel-client`** (shared → PH-7 inherits) + one non-admin route in
+  marid-auth; additive, **zero upstream edit, no `P-*`**. **(a) reconnect** — the firehose pump reconnects on
+  drop with capped exponential backoff (500ms–30s), first subscribe retried (server-not-up recoverable); a
+  per-connection controller ends the pump on shutdown OR a deliberate re-subscribe (pump races `next()` against
+  the abort → never hangs on a stream that ignores the signal); `done` resolves ONLY on shutdown. **(b) re-fetch
+  recovery** — on reconnect the OWNED tracked sessions re-read the durable store (`session.messages`, no limit →
+  full history) and flush the latest assistant text **edit-in-place** (same `part.id` → same message; identical
+  text skipped). `part.id`-keyed = exactly what Marid's live `message.part.updated` renders on (v2/next
+  `session.next.text.*` not built) → a turn finished during the gap renders **once, no duplicate**. **BOUND
+  (non-owned) sessions are NEVER re-fetched** — `session.messages` is owns-gated (403, INV-001/EXP-008) → resume
+  live only, gap frames lost (documented; gate **not** widened). **(c) attach-triggered mid-stream reconnect
+  (cross-process)** — admin `/marid/bindings` is off-limits to a channel token, so a new **non-admin
+  `GET /marid/self-bindings`** returns the AUTHENTICATED token's own bound sessions (keyed on the token, not a
+  `?token=` param → spoof-proof; INV-001-safe — leaks nothing the owns∪bound firehose already grants; WRITE stays
+  admin-only). The channel-client polls it (default 45s; an intentional re-subscribe skips backoff+refetch → the
+  attach mirrors instantly) and re-subscribes on any set change (attach OR detach) → server re-applies owns∪bound
+  fresh. channel-client **11→16**, marid-auth **119→121**, marid-telegram **90→91** green; typecheck+lint clean.
+- **Decisions:** operator chose (b) = flush-latest edit-in-place (not full-history replay); (c) in-scope this WBS
+  (self-bindings poll route). Verified at source (META-LESSON): Marid live text is `message.part.updated`
+  (`part.id`-keyed) — v2/next delta family not built — so recovery aligns with the live render.
+- **Deviations:** **advisor-caught & fixed** — (1) a poll-abort *mid-subscribe* now retries instead of exiting
+  (else the reconnect loop died and mirroring stopped); (2) the gateway injects a non-abort-aware `sleep`, so the
+  internal sleep ALWAYS races shutdown (else `done` hangs up to `bindingPollMs` on SIGINT) — biting test added.
+- **Blockers:** none. **AC verdicts unchanged** — AC-019 Partial / AC-024 Met (6.5 traces FR-036/043 + RISK-006,
+  not an AC flip; the live real-account E2E that flips AC-019 → Met is WBS-6.6). **Also fixed a pre-existing
+  G-IDS validator failure** (operator-directed): PR #42 had reverted `acceptance-audit.md`'s ID column from the
+  WBS-5.5 reference form `[AC-NNN](acceptance-criteria.md)` back to bare `AC-NNN`, so both audit and criteria
+  strong-defined every AC (24 duplicates) — restored the reference-link form (criteria.md is again the sole
+  definer). `validate_package.py docs/` = **RESULT: OK**. On `feat/ph6-reconnect`, unmerged (INV-003/005).
+  **Next:** WBS-6.6 (live 4-tier E2E) / 6.7 (docs), or an operator merge.
+
 ## 2026-07-11 — WBS-6.1 slice b parts 2/3 + owed: mirroring mechanism live (AC-024 Met; AC-019 Partial, blockers cleared) (unmerged, gated)
 - **Done:** **Part 2 (the linchpin)** — the binding-aware `isVisible = owns ∪ bound` filter (WBS-6.3) now also
   narrows the **routing-wrapped `/global/event`** firehose, not just `/event`. web + TUI + channel all subscribe

@@ -283,6 +283,75 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
     }
   })
 
+  // WBS-6.5c: the composition forwards pollBindings → channel-client, so an operator
+  // attach/detach mid-stream re-subscribes the firehose (fresh owns∪bound snapshot). Fast
+  // `sleep` caps the client's 45s poll to ~1ms, so the change is picked up immediately. A
+  // dropped `pollBindings: deps.pollBindings` wire (or `sleep`) fails this.
+  test("a binding change from pollBindings re-subscribes the firehose (attach mid-stream wiring)", async () => {
+    let subscribeCount = 0
+    const bot = {
+      getUpdates: async () => {
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async () => ({ message_id: 1, chat: { id: OPERATOR, type: "private" } }) as never,
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+    } as unknown as BotApi
+
+    // A reconnectable SDK: each global.event() hands out a fresh queue that stays OPEN (the
+    // pump blocks on it), counting subscribes. Because the stream never drops on its own, the
+    // ONLY thing that can re-subscribe is a pollBindings change — so subscribeCount 1→2 proves
+    // the wiring, not the reconnect loop.
+    const queues: ReturnType<typeof eventQueue>[] = []
+    const sdk = {
+      global: {
+        event: async () => {
+          subscribeCount += 1
+          const q = eventQueue()
+          queues.push(q)
+          return { stream: q.iterator() }
+        },
+      },
+      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => ({ data: {} }), messages: async () => ({ data: [] }) },
+      permission: { respond: async () => ({ data: true }) },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    let bindings = new Set<string>()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      pollBindings: async () => new Set(bindings),
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, Math.min(ms, 1))), // cap backoff + poll
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // First (only) subscribe; the open stream keeps subscribeCount steady at 1.
+      expect(await waitFor(() => subscribeCount === 1)).toBe(true)
+      await new Promise((r) => setTimeout(r, 30))
+      expect(subscribeCount).toBe(1) // no spurious re-subscribe while bindings are unchanged
+
+      bindings = new Set(["ses_attached"]) // operator attaches mid-stream
+      expect(await waitFor(() => subscribeCount === 2)).toBe(true) // poll → re-subscribe (wiring proven)
+    } finally {
+      controller.abort()
+      queues.forEach((q) => q.close())
+      await gateway.catch(() => {})
+    }
+  })
+
   test("a non-whitelisted /command is refused and creates NO session (deny-by-default)", async () => {
     const events = eventQueue()
     const updates: unknown[] = []
