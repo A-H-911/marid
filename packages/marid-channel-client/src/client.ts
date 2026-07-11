@@ -194,7 +194,10 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
         typeof part.id === "string" &&
         typeof part.url === "string" &&
         typeof part.messageID === "string" &&
-        !state.userMessages.has(part.messageID) // never echo the operator's own inbound file back
+        // Never echo the operator's own inbound file back. Inherits the text path's ordering
+        // assumption: the user's message.updated (which records the id in userMessages) precedes
+        // the user's file part — same assumption already load-bearing for user-text exclusion.
+        !state.userMessages.has(part.messageID)
       ) {
         if (!state.sentFiles.has(part.id)) {
           state.sentFiles.add(part.id)
