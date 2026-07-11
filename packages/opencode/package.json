@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.28.4",
+    "@marid/channel-client": "workspace:*",
     "@octokit/webhooks-types": "7.6.1",
     "@opencode-ai/core": "workspace:*",
     "@opencode-ai/http-recorder": "workspace:*",

@@ -6,6 +6,7 @@ import { Effect } from "effect"
 import { createOpencodeClient } from "@opencode-ai/sdk/v2"
 import { createTokenStore } from "@marid/auth"
 import { instanceMaridDir, start, stop, type LaunchResolver } from "@marid/instance"
+import { createChannelClient, type Streamer } from "@marid/channel-client"
 import { TestLLMServer } from "../lib/llm-server"
 import { testProviderConfig } from "../lib/test-provider"
 import { it } from "../lib/effect"
@@ -111,6 +112,65 @@ function collectEvents(
 }
 
 const settle = (ms: number) => Effect.promise(() => new Promise((r) => setTimeout(r, ms)))
+
+// Poll a predicate until true (or the timeout), scaled by OPENCODE_TIMING_SCALE for slow CI.
+async function waitUntil(predicate: () => boolean, timeoutMs = 20_000): Promise<boolean> {
+  const deadline = timeoutMs * (Number(process.env.OPENCODE_TIMING_SCALE) || 1)
+  const started = Date.now()
+  while (Date.now() - started < deadline) {
+    if (predicate()) return true
+    await new Promise((r) => setTimeout(r, 25))
+  }
+  return predicate()
+}
+
+// Recording streamer sinks (mirrors the channel-client unit test): capture every push/finish
+// per session so the live reconnect E2E can assert what the loop flushed.
+function recordingStreamers() {
+  const created: Array<{ sessionID: string; pushes: string[]; finishes: string[] }> = []
+  const createStreamer = (sessionID: string): Streamer => {
+    const rec = { sessionID, pushes: [] as string[], finishes: [] as string[] }
+    created.push(rec)
+    return { push: async (t) => void rec.pushes.push(t), finish: async (t) => void rec.finishes.push(t) }
+  }
+  return { created, createStreamer }
+}
+
+// Cap backoff/poll sleeps at ~1ms so the WBS-6.5 reconnect loop advances fast in-test.
+const fastSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, Math.min(ms, 1)))
+
+// Wrap a real sdk so `global.event`'s live stream can be force-ENDED once — a real SSE drop
+// (the server stays up), not a restart. `session.messages` delegates straight through to the
+// real durable store, so refetchOwned recovers authoritative state. The channel client only
+// ever calls sdk.global.event + sdk.session.messages, so this partial proxy is sufficient.
+function droppableSdk(real: ReturnType<typeof createOpencodeClient>) {
+  let dropActive: (() => void) | null = null
+  const event = async (opts: { signal?: AbortSignal }) => {
+    const events = await real.global.event(opts)
+    const realStream = events.stream as AsyncIterator<unknown>
+    const ended: IteratorResult<unknown> = { done: true, value: undefined }
+    let dropped = false
+    let signalDrop: (() => void) | null = null
+    const dropPromise = new Promise<IteratorResult<unknown>>((resolve) => {
+      signalDrop = () => resolve(ended)
+    })
+    dropActive = () => {
+      dropped = true
+      signalDrop?.()
+      void realStream.return?.(undefined)
+    }
+    const stream: AsyncIterator<unknown> = {
+      next: () => (dropped ? Promise.resolve(ended) : Promise.race([realStream.next(), dropPromise])),
+      return: () => realStream.return?.(undefined) ?? Promise.resolve(ended),
+    }
+    return { stream }
+  }
+  const sdk = {
+    global: { event },
+    session: { messages: (args: { sessionID: string }) => real.session.messages(args) },
+  } as unknown as ReturnType<typeof createOpencodeClient>
+  return { sdk, drop: () => dropActive?.() }
+}
 
 suite("TEST-SYNC: §7 cross-interface flow (live, real marid serve + LLM)", () => {
   it.live(
@@ -317,6 +377,70 @@ suite("TEST-SYNC: §7 cross-interface flow (live, real marid serve + LLM)", () =
           after.session.messages({ sessionID }, { throwOnError: true }).then((r) => r.data),
         )
         expect(final.length).toBeGreaterThan(recovered.length)
+      }).pipe(Effect.provide(TestLLMServer.layer)),
+    300_000,
+  )
+
+  // WBS-6.5 (FR-036/043, RISK-006): the SAME reconnect+re-fetch machinery, but driven END-TO-END
+  // through the real @marid/channel-client loop against a live `marid serve` — the merged 6.5 code
+  // has unit coverage (channel-client/test/reconnect.test.ts, faked queue) but nothing exercised it
+  // against a real firehose + real durable store until now. A turn is persisted BEFORE the client
+  // subscribes, so the live-only firehose never delivers it on the wire; only refetchOwned (run on
+  // the server-drop reconnect path) can recover it. We force-END the live stream (a real SSE drop,
+  // server stays up) and assert the loop flushes the recovered assistant text into its streamer.
+  it.live(
+    "WBS-6.5: the channel-client reconnect loop recovers an owned session's pre-drop turn from the durable store",
+    () =>
+      Effect.gen(function* () {
+        const llm = yield* TestLLMServer
+        const { url, headers } = yield* launchInstance(llm)
+        const real = createOpencodeClient({ baseUrl: url, headers })
+
+        // Persist a completed turn while NOTHING is subscribed — the firehose is live-only, so this
+        // assistant text is only ever recoverable via a durable re-read (session.messages), never live.
+        const marker = "recovered-via-refetch-6point5"
+        yield* llm.text(marker)
+        const sessionID = yield* Effect.promise(() =>
+          real.session.create({ title: "sse-drop" }, { throwOnError: true }).then((r) => r.data.id),
+        )
+        yield* Effect.promise(() =>
+          real.session.prompt(
+            { sessionID, model: testModel, parts: [{ type: "text", text: "go" }] },
+            { throwOnError: true },
+          ),
+        )
+
+        // Start the real WBS-6.5 loop over a droppable transport; beginTurn marks the session OWNED
+        // (the precondition for refetchOwned to re-read it — a bound session would be owns-gated).
+        const recs = recordingStreamers()
+        const controller = new AbortController()
+        const { sdk, drop } = droppableSdk(real)
+        const client = createChannelClient({
+          sdk,
+          signal: controller.signal,
+          createStreamer: recs.createStreamer,
+          onAsk: () => {},
+          sleep: fastSleep,
+        })
+        client.beginTurn(sessionID)
+        const { done } = yield* Effect.promise(() => client.start())
+
+        // Live-only: the pre-subscription turn is NOT replayed on the wire, so nothing is streamed yet.
+        yield* settle(300)
+        expect(recs.created.some((c) => c.pushes.some((t) => t.includes(marker)))).toBe(false)
+
+        // Drop the firehose → server-drop path → backoff → refetchOwned re-reads the durable store and
+        // flushes the persisted assistant text into a (lazily created) streamer for the owned session.
+        drop()
+        const recovered = yield* Effect.promise(() =>
+          waitUntil(() =>
+            recs.created.some((c) => c.sessionID === sessionID && c.pushes.some((t) => t.includes(marker))),
+          ),
+        )
+        expect(recovered).toBe(true)
+
+        controller.abort()
+        yield* Effect.promise(() => done.catch(() => {}))
       }).pipe(Effect.provide(TestLLMServer.layer)),
     300_000,
   )
