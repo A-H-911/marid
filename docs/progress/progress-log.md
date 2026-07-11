@@ -11,6 +11,31 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-11 — WBS-6.1 slice b parts 2/3 + owed: mirroring live (AC-019 Met, AC-024 Met) (unmerged, gated)
+- **Done:** **Part 2 (the linchpin)** — the binding-aware `isVisible = owns ∪ bound` filter (WBS-6.3) now also
+  narrows the **routing-wrapped `/global/event`** firehose, not just `/event`. web + TUI + channel all subscribe
+  `/global/event`, so this ONE change **(a)** closes the pre-existing **INV-001 gap** (`/global/event` was
+  UNFILTERED for every non-admin token — broader than "just Telegram") and **(b)** delivers mirroring (bound
+  sessions reach the channel). `filterSseStream` gains a pluggable session-extractor; `/event` byte-unchanged.
+  **Part 3** — the channel-client lazily creates a streamer for any untracked session (post-filter = an
+  operator-bound, non-owned one), not only on `beginTurn`; the Telegram gateway renders bound sessions into the
+  single operator's `defaultChatId` (CLI derives it from a single-operator allowlist; no chat → no-op sink).
+  **Owed** — a live `/doc` merge assertion in the `marid-sync` job (real gzip→strip→merge). marid-auth
+  **109→119**, channel-client **10→11**, marid-telegram **89→90**, all green; typecheck+lint clean; **zero
+  upstream edit, no `P-*`**. On `feat/ph6-gateway`, unmerged (INV-003/005).
+- **Decisions:** kept the channel on `/global/event` and fine-filtered it (the old "switch channel to `/event`"
+  idea is DROPPED); `SyncEvent.*` is **not** a blanket-pass (see the security correction below).
+- **Deviations / SECURITY CORRECTION to the slice-b plan:** the plan listed `SyncEvent.*` among the "no-`sessionID`
+  families that pass." Grepping the sync publish path (`event-v2-bridge.ts`) showed `/global/event` carries a
+  durable **sync TWIN** of every session event — `payload.syncEvent.{aggregateID, data}` with the SAME data as the
+  regular frame. Every session-durable event uses `durable.aggregate: "sessionID"`, so `aggregateID` IS the
+  owning session (`ses`-prefixed). A picker reading only `payload.properties.sessionID` would have treated every
+  sync twin as session-less → **PASS**, leaking the durable copy of a non-owned session's content. `owningSessionGlobal`
+  reads BOTH shapes; `global-event-filter.test.ts` pins the drop. This corrected the plan file, not an
+  operator-gated register. **Blockers:** operator gate (push/PR/merge — INV-005). Attach-triggered mid-stream
+  reconnect = WBS-6.5 (hook noted, not built). **Next:** operator review of `feat/ph6-gateway` (6 + 3 commits);
+  then WBS-6.5/6.6 or a merge.
+
 ## 2026-07-11 — WBS-6.1 slice b part 1: admin-gated attach endpoint + /doc OpenAPI merge (unmerged, gated)
 - **Done:** the **operator-reachable attach surface** (ADR-0012), served entirely by the marid-auth wrapper
   (never reaches upstream): `POST /marid/attach`, `POST /marid/detach`, `GET /marid/bindings`, writing the

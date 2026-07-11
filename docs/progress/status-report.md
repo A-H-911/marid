@@ -16,10 +16,10 @@ generation: derived
 | | |
 |---|---|
 | Reporting date | 2026-07-11 |
-| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005/007/008 PASS**. **WBS-6.2 done** (4 Telegram UX defects; marid-telegram **68→89 green**). **WBS-6.3 done** (mirroring mechanism: durable `BindingStore` + binding-aware `isVisible`; marid-auth **87→100**, merged #44). **WBS-6.4 done** (cross-surface permission verified: first-responder-wins server invariant, ask-mirrors-to-bound-surface, act-via-ownership; concurrency = EXP-001; opencode permission **79→80**, marid-auth **→101**). **WBS-6.1 slice a done** (channel-client extracted: new additive `@marid/channel-client` ← `gateway.ts`; behavior-preserving, marid-auth **101** / marid-telegram **89** unchanged & green, channel-client **+10**; zero upstream edit, no P-\*). On `feat/ph6-gateway`, **unmerged** (INV-003/005). Next: **WBS-6.1 slice b** (decision-gated — admin-gated attach endpoint [AC-024 P-\* question], switch subscription to filtered `/event` + consume bound sessions [flips AC-019], close the `/global/event` INV-001 boundary gap) |
-| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 + 6.3 merged/done, 6.4 + 6.1a done unmerged) |
+| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005/007/008 PASS**. **WBS-6.2 done** (4 Telegram UX defects; marid-telegram **68→89 green**). **WBS-6.3 done** (mirroring mechanism: durable `BindingStore` + binding-aware `isVisible`; marid-auth **87→100**, merged #44). **WBS-6.4 done** (cross-surface permission verified: first-responder-wins server invariant, ask-mirrors-to-bound-surface, act-via-ownership; concurrency = EXP-001; opencode permission **79→80**, marid-auth **→101**). **WBS-6.1 slice a done** (channel-client extracted: new additive `@marid/channel-client` ← `gateway.ts`; behavior-preserving, marid-auth **101** / marid-telegram **89** unchanged & green, channel-client **+10**; zero upstream edit, no P-\*). **WBS-6.1 slice b done** — part 1 admin-gated attach endpoint + `/doc` OpenAPI merge; part 2 fine-filtered `/global/event` (owns ∪ bound — closes the pre-existing `/global/event` INV-001 gap AND delivers mirroring; wrapped picker drops the durable `sync` twin of a non-owned session); part 3 channel-client consumes bound sessions + Telegram `defaultChatId`; owed live `/doc` assertion. **AC-019 Met, AC-024 Met.** marid-auth **101→119**, channel-client **10→11**, marid-telegram **89→90**; zero upstream edit, no P-\*. On `feat/ph6-gateway`, **unmerged** (INV-003/005). Next: WBS-6.5 (reconnect) / 6.6 (live 3-OS E2E) / 6.7 (docs), or an operator merge |
+| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 + 6.3 merged/done; 6.4 + **6.1 slice a+b** done unmerged — **AC-019/AC-024 Met**) |
 | Last milestone met | **MS-006 (2026-07-09)** — public `v0.1.0` release, MVP release-ready |
-| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2/6.3/6.4 + 6.1a done + EXP-005/007/008 PASS; **6.1b** + live E2E + remaining WBS (6.5/6.6) outstanding. AC-019 Partial (mirroring + cross-surface permission properties proven; operator-reachable attach + live path = WBS-6.1 slice b/6.5) |
+| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2/6.3/6.4 + **6.1 slice a+b** done + EXP-005/007/008 PASS; remaining WBS (6.5 reconnect / 6.6 live 3-OS E2E / 6.7 docs) outstanding. **AC-019 Met + AC-024 Met** (WBS-6.1 slice b: operator-reachable attach + `/global/event` fine-filter + bound-consume); real-account Telegram bidirectional E2E + mid-stream reconnect = WBS-6.6/6.5 |
 
 ## Phase progress
 
@@ -53,9 +53,10 @@ the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `par
 **PH-6 (Telegram-first).** MVP (PH-0..5) complete since gate 14. **WBS-6.2 implemented** (all 4 Telegram UX defects fixed
 in place; marid-telegram 89 green, typecheck clean) + **EXP-005/007/008 PASS** — all on `feat/ph6-marid-gateway`,
 **unmerged** (awaiting operator merge, INV-003/005). **WBS-6.3/6.4 done** (mirroring mechanism + cross-surface
-permission verified) and **WBS-6.1 slice a done** (`@marid/channel-client` extracted, behavior-preserving), all unmerged.
-Outstanding: **WBS-6.1 slice b** (attach endpoint + `/event` routing + bound-consume; AC-019/AC-024, decision-gated),
-WBS-6.5 (SSE reconnect), WBS-6.6 (live 3-OS/E2E + CI), WBS-6.7 (docs).
+permission verified) and **WBS-6.1 slice a+b done** (`@marid/channel-client` extracted + attach endpoint +
+`/global/event` fine-filter + bound-session consume; **AC-019 Met, AC-024 Met**; marid-auth 119 / channel-client 11 /
+marid-telegram 90 green; zero upstream edit, no P-\*), all unmerged. Outstanding: WBS-6.5 (SSE reconnect + attach-
+triggered mid-stream re-subscribe), WBS-6.6 (live 3-OS real-account E2E + CI), WBS-6.7 (docs).
 
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18
