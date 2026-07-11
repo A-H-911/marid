@@ -11,7 +11,7 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
-## 2026-07-11 — WBS-6.1 slice b parts 2/3 + owed: mirroring live (AC-019 Met, AC-024 Met) (unmerged, gated)
+## 2026-07-11 — WBS-6.1 slice b parts 2/3 + owed: mirroring mechanism live (AC-024 Met; AC-019 Partial, blockers cleared) (unmerged, gated)
 - **Done:** **Part 2 (the linchpin)** — the binding-aware `isVisible = owns ∪ bound` filter (WBS-6.3) now also
   narrows the **routing-wrapped `/global/event`** firehose, not just `/event`. web + TUI + channel all subscribe
   `/global/event`, so this ONE change **(a)** closes the pre-existing **INV-001 gap** (`/global/event` was
