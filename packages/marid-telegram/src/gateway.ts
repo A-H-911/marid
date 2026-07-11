@@ -39,6 +39,8 @@ export interface RunGatewayDeps {
   // operator attach/detach that lands mid-stream triggers a firehose re-subscribe. Unset →
   // no poll (attach is still picked up on the next natural reconnect).
   pollBindings?: () => Promise<Set<string>>
+  // Cadence of the self-bindings poll above (ms). Unset → the channel-client default (45s).
+  bindingPollMs?: number
   dedupFile: string
   now(): number
   sleep(ms: number): Promise<void>
@@ -83,6 +85,7 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
     signal: deps.signal,
     sleep: deps.sleep,
     pollBindings: deps.pollBindings,
+    bindingPollMs: deps.bindingPollMs,
     createStreamer: (sessionID) => {
       // A session the operator prompted has its own chat; a BOUND (attached, non-owned)
       // session mirrored in from web/TUI (WBS-6.1b) has none, so fall back to the single
