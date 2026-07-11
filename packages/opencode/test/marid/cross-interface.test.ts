@@ -235,6 +235,30 @@ suite("TEST-SYNC: §7 cross-interface flow (live, real marid serve + LLM)", () =
     300_000,
   )
 
+  // WBS-6.1b (AC-024, EXP-014): the admin-gated attach/detach/bindings endpoints are
+  // DOCUMENTED by intercepting GET /doc and merging a Marid-owned OpenAPI fragment into
+  // the upstream spec. The unit test proves the merge with a synthetic spec; this proves
+  // the LIVE pipeline: an admin token requests /doc WITH accept-encoding: gzip, the
+  // middleware strips it so upstream returns plain JSON (a gzipped >1KB spec would be
+  // opaque to the merge), and augmentDoc adds the paths. If the strip ever regresses,
+  // augmentDoc's .json().catch(()=>undefined) silently returns the UN-augmented spec —
+  // 200 + valid OpenAPI, just missing /marid/attach — which this assertion catches.
+  it.live(
+    "GET /doc is live-augmented with the Marid gateway paths (real gzip→strip→merge)",
+    () =>
+      Effect.gen(function* () {
+        const llm = yield* TestLLMServer
+        const { url, headers } = yield* launchInstance(llm)
+        const res = yield* Effect.promise(() => fetch(`${url}/doc`, { headers: { ...headers, "accept-encoding": "gzip" } }))
+        expect(res.status).toBe(200)
+        const spec = (yield* Effect.promise(() => res.json())) as { paths?: Record<string, unknown> }
+        expect(spec.paths?.["/marid/attach"]).toBeDefined() // the additive merge survived the live pipeline
+        expect(spec.paths?.["/marid/detach"]).toBeDefined()
+        expect(spec.paths?.["/marid/bindings"]).toBeDefined()
+      }).pipe(Effect.provide(TestLLMServer.layer)),
+    120_000,
+  )
+
   // WBS-3.2 (FR-036/043, RISK-006): no state loss across a server restart. The
   // firehose is live-only (no ?after= replay — contract v1.1); recovery is by
   // re-reading the authoritative, durable event-sourced store on reconnect. A
