@@ -11,6 +11,31 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-11 — WBS-6.6 test tiers + live E2E; INV-001 firehose leak found & fixed (ADR-0016/0017) — unmerged, gated
+- **Done:** WBS-6.6 agent-ownable + live tiers. **Deterministic:** SSE-drop E2E (drives the 6.5 reconnect+refetch
+  through the real `@marid/channel-client` vs a live `marid serve`); outbound-file feature (WBS-6.2 residual DoD
+  gap — `onFile` in channel-client + gateway); inbound-file E2E. **Live (operator-run, creds in git-ignored `.env`):**
+  `scripts/tg-userbot-e2e.ts` — real GramJS userbot ↔ REAL gateway slash round-trip (`/help`, deny-by-default
+  refusal, `/new`) → **AC-020 Met**; DEP-014 (GramJS-on-Bun) resolved. `scripts/tg-model-e2e.ts` — real GLM
+  (OpenRouter) over the real gateway + real MTProto: text round-trip (AC-017 evidence) + **bidirectional mirror +
+  unattached-invisible + attach re-subscribe → AC-019 Met**.
+- **🔒 Security (INV-001):** the live model tier surfaced a **realized firehose isolation leak** — `/event`+
+  `/global/event` served UNFILTERED to any non-admin token (channel AND client scope) because the SDK's SSE client
+  omits `Accept: text/event-stream` and marid-auth gated the owns∪bound filter on that header (`isStream`).
+  Defeated AC-004/019/024 isolation on the live path; the unit suite missed it (function/header-ful frames only).
+  [EXP-015](../experiments/exp-015-report.md) REFUTED HYP-015; [RISK-025](../risks/risk-register.md). **Fixed:**
+  [ADR-0016](../adrs/adr-0016-sse-isolation-route-not-header.md) — `isStream` recognises firehose routes by
+  **pathname** (header-independent). That exposed a companion defect (own-session visibility had depended on the
+  leak): [ADR-0017](../adrs/adr-0017-firehose-own-session-lazy-visibility.md) — the filter resolves a token's own
+  mid-stream sessions **lazily** (first-sight, positive-cache only). Both proven deterministically (real-request
+  regression test + isolation repro + `telegram.test.ts` + the live re-run); marid-auth **123** green. Zero
+  upstream edit, no `P-*`.
+- **Decisions:** ADR-0016 + ADR-0017 Approved; Option B (server lazy re-read) chosen over channel-client
+  re-subscribe (advisor-evaluated — A insufficient for web/TUI on the same client scope + a multi-session teardown
+  defect). **Deviations:** `own-session-visibility-repro.ts` confirms the CAUSE only, not the fix (a channel can't
+  emit a post-ownership frame model-free). **Blockers:** none for the delivered tiers. **Next (WBS-6.6 residual):**
+  AC-021 TEST-TG-UI (EXP-009 Telegram-Web/Playwright — NOT yet built) + native-mobile manual → then MS-007.
+
 ## 2026-07-11 — WBS-6.5 SSE reconnect + re-fetch recovery DONE (unmerged, gated)
 - **Done:** all recovery in **`@marid/channel-client`** (shared → PH-7 inherits) + one non-admin route in
   marid-auth; additive, **zero upstream edit, no `P-*`**. **(a) reconnect** — the firehose pump reconnects on

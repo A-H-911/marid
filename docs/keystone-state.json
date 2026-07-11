@@ -1254,6 +1254,22 @@
         "context": "Unofficial WhatsApp interactive buttons are deprecated/broken (Meta pushed them to Cloud API; Baileys #2465 + long breakage history; WAHA maintainer: buttons fragile, use polls/text); lists are WAHA-Plus (paid, NOWEB/GOWS) and only relatively stable. A permission gate must not depend on UI that can silently fail to render.",
         "decision": "Token-bound text-reply approval: gateway sends 'Approve X? Reply APPROVE <token> / DENY <token>'; the reply is untrusted input parsed STRICTLY server-side (exact match, no NLP), token single-use + bound to sender JID + short TTL; anything ambiguous rejected; the server independently re-checks scope (message authorizes, never defines scope). Preserves ADR-0012 view-via-binding/act-via-ownership (a channel approves only for sessions it owns). Optional WAHA-Plus list convenience but text-reply must remain sufficient; buttons/polls rejected.",
         "consequences": "Reliable injection-resistant approval UX independent of fragile WhatsApp UI; INV-001 held. Approval parser unit-tested. Realized PH-7 (WBS-7.4); a portable pattern for any button-less channel. Rejected: interactive buttons (dead); WAHA-Plus lists as primary (paid/fragile); free-text yes/no (ambiguous/replayable); polls (no token binding)."
+      },
+      {
+        "id": "ADR-0016",
+        "title": "SSE owns-bound isolation keys on the route, not the client Accept header",
+        "status": "Approved",
+        "date": "2026-07-11",
+        "context": "marid-auth gated the owns-bound SSE firehose filter on isStream(), keyed on Accept: text/event-stream; the generated SDK SSE client (sdk.global.event) omits that header, so /event+/global/event were served UNFILTERED to any non-admin token (channel AND client) - a realized INV-001 leak surfaced by the WBS-6.6 live tier (EXP-015/RISK-025); the unit suite missed it (filter fn / header-ful frames only).",
+        "decision": "Recognise GET /event and GET /global/event as streams by PATHNAME (header-independent) so the owns-bound filter always runs for non-admin tokens; fail closed. Marid-owned, additive, no upstream edit, no P-*. Real-request regression test (global-event-filter PART 2b) pins it."
+      },
+      {
+        "id": "ADR-0017",
+        "title": "Firehose owns-bound filter resolves a token's own mid-stream sessions lazily",
+        "status": "Approved",
+        "date": "2026-07-11",
+        "context": "Companion to ADR-0016: turning the filter ON exposed that the gateway's own-session visibility had depended on the leak - it subscribes owning zero sessions then creates one per turn mid-stream, absent from the frozen subscribe-time snapshot, so its own reply frames were filtered out. marid token create defaults to non-admin client scope, so web/TUI/API share the SDK+filter -> a server-side fix is required.",
+        "decision": "The filter resolves visibility LAZILY on first sight of a session id: keep the subscribe snapshot as initial cache, re-read ownership once for an unknown id, positive-cache; do NOT negative-cache (a session's created frame races ahead of its ownership record; the reply lands after -> admitted). filterSseStream/keepFrame take an async predicate. Rejected A (channel-client re-subscribe) and B-timer. Marid-owned, no upstream edit, no P-*."
       }
     ],
     "risks": [
@@ -1472,6 +1488,15 @@
         "mitigation": "strict path isolation (auth/scope/event-filter untouched - TEST-AUTH/SEC green); binding-aware isVisible is a strict superset (no binding => plain-client path byte-for-byte unchanged); graceful degradation (mirroring/registry fault => today's non-mirrored behavior, never breaks auth/plain clients); new attach/binding endpoints additive + OpenAPI + health + TEST-CONTRACT-pinned (ADR-0011); EXP-008 tests degradation",
         "trigger": "any plain-client regression traced to the gateway module",
         "scope": "Full"
+      },
+      {
+        "id": "RISK-025",
+        "description": "REALIZED->RESOLVED (2026-07-11) - SSE firehose isolation leak (INV-001): /event+/global/event served UNFILTERED to any non-admin token (channel AND client) whose SSE request omits Accept: text/event-stream (the SDK omits it), because isStream() gated the owns-bound filter on that header. Defeated AC-004/019/024 isolation on the live path.",
+        "impact": "high",
+        "likelihood": "high",
+        "mitigation": "RESOLVED via ADR-0016 (isStream route-based) + ADR-0017 (lazy own-session visibility); real-request regression test (global-event-filter PART 2b) + global-event-isolation-repro.ts + telegram.test.ts; marid-auth 123 green; no upstream edit.",
+        "trigger": "already realized - live tier 2026-07-11; resolved same day",
+        "scope": "Full"
       }
     ],
     "hypotheses": [
@@ -1582,6 +1607,16 @@
         "statement": "The gateway's attach/binding endpoints can be OpenAPI-documented additively - a Marid-owned HttpApiGroup's OpenApi.fromApi fragment merged into the marid-auth-intercepted /doc response - with no upstream edit (no P-*); the route is served by the wrapper.",
         "status": "Confirmed",
         "links": { "tested_by": ["EXP-014"] }
+      },
+      {
+        "id": "HYP-015",
+        "statement": "The owns-bound SSE isolation (WBS-6.1 slice b) holds on the live path a non-admin token actually uses - a channel/client token subscribing via sdk.global.event() / /event receives only frames for sessions it owns or is bound to.",
+        "status": "Refuted",
+        "links": {
+          "tested_by": [
+            "EXP-015"
+          ]
+        }
       }
     ],
     "experiments": [
@@ -1724,6 +1759,18 @@
         "pass_criteria": "Standalone fragment carries /marid/attach; upstream spec lacks it; merge has no path/schema collision and stays serializable -> marid-auth serves an augmented /doc with zero upstream edit (no P-*). FAIL -> documenting the endpoint forces an upstream api.ts edit = one P-*, STOP for operator approval.",
         "status": "PASS",
         "links": { "tests_hypothesis": ["HYP-014"] }
+      },
+      {
+        "id": "EXP-015",
+        "title": "Live SSE firehose isolation probe (owns-bound on the real SDK path) - TEST-SEC",
+        "method": "Channel token subscribes to /global/event three ways (raw fetch with/without Accept, and sdk.global.event()); create an admin-only session after each; observe leak (scripts/global-event-isolation-repro.ts, model-free). Surfaced by tg-model-e2e.ts.",
+        "pass_criteria": "PASS: admin session invisible on all paths. Result: REFUTED - leaks without the header and via sdk.global.event() (SDK omits it), isolated only with it. Root cause: isStream() gates the filter on a client-supplied header the SDK doesn't send. Fixed by ADR-0016 (+ADR-0017).",
+        "status": "Complete",
+        "links": {
+          "tests_hypothesis": [
+            "HYP-015"
+          ]
+        }
       }
     ],
     "comparisons": [
@@ -4253,6 +4300,11 @@
         "advisor fixes: poll-abort-mid-subscribe retries (loop no longer dies); internal sleep ALWAYS races shutdown so done resolves promptly despite a non-abort-aware injected sleep (biting test); marid-telegram gateway-integration wiring test proves pollBindings forwards end-to-end",
         "channel-client 16 / marid-auth 121 / marid-telegram 91 green; typecheck+lint clean; ZERO upstream edit, no P-*; WBS-6.5 marked done in work-breakdown; AC-019/AC-024 verdicts unchanged (live E2E = WBS-6.6)"
       ]
+    },
+    {
+      "date": "2026-07-11",
+      "author": "execution-agent",
+      "summary": "WBS-6.6 test tiers + live E2E; INV-001 firehose leak found & fixed (ADR-0016/0017). Live (operator creds): userbot<->real gateway slash round-trip -> AC-020 Met; real GLM over real gateway+MTProto -> AC-017 text round-trip + AC-019 bidirectional mirror/unattached-invisible/attach re-subscribe -> AC-019 Met. Security: live tier found a realized INV-001 firehose isolation leak (owns-bound filter gated on the SDK-absent Accept header -> unfiltered for all non-admin); fixed by ADR-0016 (route-based isStream) + ADR-0017 (lazy own-session visibility). EXP-015/RISK-025; marid-auth 123 green; zero upstream edit. AC-004/024 restored Met, AC-017 Partial, AC-019/020 Met; AC-021 (TEST-TG-UI/EXP-009 + native mobile) NOT built -> WBS-6.6 in progress, MS-007 not met. Unmerged (INV-005)."
     }
   ],
   "change_log": [
@@ -4402,6 +4454,12 @@
       "actor": "execution-agent",
       "action": "WBS-6.5 SSE reconnect + re-fetch recovery implemented -> WBS-6.5 done. All in @marid/channel-client (shared) + one non-admin marid-auth route; additive, ZERO upstream edit, no P-*. (a) firehose pump reconnects on drop with capped exponential backoff (500ms..30s), first-connect retried, done resolves only on shutdown. (b) on reconnect OWNED tracked sessions re-read the durable store (session.messages) and flush the latest assistant text edit-in-place (part.id-keyed = Marid live message.part.updated, no duplicate); BOUND sessions never re-fetched (owns-gated 403, INV-001) -> resume-live-only, documented, gate NOT widened. (c) new NON-admin GET /marid/self-bindings keyed on the authenticated token (spoof-proof; INV-001-safe; write/attach stays admin-only); channel-client polls it and re-subscribes on attach/detach (intentional re-subscribe skips backoff -> instant). ADVISOR-CAUGHT and fixed: poll-abort-mid-subscribe retries instead of killing the loop; internal sleep always races shutdown (injected gateway sleep is not abort-aware) so done doesn't hang on SIGINT - biting test added. channel-client 11->16, marid-auth 119->121, marid-telegram 90->91 green; typecheck+lint clean. AC verdicts unchanged (AC-019 Partial / AC-024 Met; 6.5 traces FR-036/043 + RISK-006, not an AC flip; live E2E = WBS-6.6). On feat/ph6-reconnect, NOT merged (INV-003/005). Also fixed a PRE-EXISTING G-IDS validator failure (24 duplicate AC definitions: PR #42 reverted acceptance-audit.md's ID column from the WBS-5.5 reference form [AC-NNN](acceptance-criteria.md) back to bare AC-NNN, so both audit and criteria strong-defined every AC) by restoring the reference-link form in the audit ID column - criteria.md is again the sole definer; validate_package.py docs/ = RESULT: OK (operator-directed, this branch).",
       "target": "packages/marid-channel-client/src/client.ts+packages/marid-channel-client/test/reconnect.test.ts+packages/marid-auth/src/{gateway.ts,middleware.ts}+packages/marid-auth/test/gateway.test.ts+packages/marid-telegram/src/gateway.ts+packages/marid-telegram/test/gateway-integration.test.ts+packages/opencode/src/cli/cmd/marid-telegram.ts+planning/work-breakdown+validation/acceptance-audit+progress/{progress-log,status-report}+keystone-state(progress/change_log)"
+    },
+    {
+      "timestamp": "2026-07-11T23:30:00Z",
+      "actor": "execution-agent",
+      "action": "WBS-6.6 live tiers + INV-001 firehose leak found & fixed. tg-userbot-e2e.ts real userbot<->real gateway slash round-trip -> AC-020 Met (DEP-014 resolved); tg-model-e2e.ts real GLM over real gateway+MTProto -> AC-017 text + AC-019 mirror/unattached-invisible/attach -> AC-019 Met. SECURITY: realized INV-001 firehose isolation leak (isStream gated owns-bound filter on Accept: text/event-stream which the SDK omits -> /event+/global/event unfiltered for non-admin). Fixed: ADR-0016 (isStream route-based) + ADR-0017 (lazy own-session visibility). EXP-015 REFUTED HYP-015; RISK-025 resolved. Proven deterministically (real-request regression test + isolation repro + telegram.test.ts + live re-run) + marid-auth 123 green; zero upstream edit, no P-*. AC-021 (EXP-009 + native mobile) NOT built. NOT merged (INV-003/005).",
+      "target": "packages/marid-auth/src/{middleware,event-filter}.ts + tests; packages/marid-telegram/src/gateway.ts; packages/opencode/scripts/*; docs/adrs/{adr-0016,adr-0017}; docs/experiments/exp-015-report; docs/{risks/risk-register,research/hypothesis-register,validation/acceptance-audit,planning/{work-breakdown,milestones},progress/{progress-log,status-report}}; keystone-state"
     }
   ]
 }
