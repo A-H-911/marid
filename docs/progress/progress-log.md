@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-10
+updated: 2026-07-11
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,101 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-11 — WBS-6.1 slice b parts 2/3 + owed: mirroring mechanism live (AC-024 Met; AC-019 Partial, blockers cleared) (unmerged, gated)
+- **Done:** **Part 2 (the linchpin)** — the binding-aware `isVisible = owns ∪ bound` filter (WBS-6.3) now also
+  narrows the **routing-wrapped `/global/event`** firehose, not just `/event`. web + TUI + channel all subscribe
+  `/global/event`, so this ONE change **(a)** closes the pre-existing **INV-001 gap** (`/global/event` was
+  UNFILTERED for every non-admin token — broader than "just Telegram") and **(b)** delivers mirroring (bound
+  sessions reach the channel). `filterSseStream` gains a pluggable session-extractor; `/event` byte-unchanged.
+  **Part 3** — the channel-client lazily creates a streamer for any untracked session (post-filter = an
+  operator-bound, non-owned one), not only on `beginTurn`; the Telegram gateway renders bound sessions into the
+  single operator's `defaultChatId` (CLI derives it from a single-operator allowlist; no chat → no-op sink).
+  **Owed** — a live `/doc` merge assertion in the `marid-sync` job (real gzip→strip→merge). marid-auth
+  **109→119**, channel-client **10→11**, marid-telegram **89→90**, all green; typecheck+lint clean; **zero
+  upstream edit, no `P-*`**. On `feat/ph6-gateway`, unmerged (INV-003/005).
+- **Decisions:** kept the channel on `/global/event` and fine-filtered it (the old "switch channel to `/event`"
+  idea is DROPPED); `SyncEvent.*` is **not** a blanket-pass (see the security correction below).
+- **Deviations / SECURITY CORRECTION to the slice-b plan:** the plan listed `SyncEvent.*` among the "no-`sessionID`
+  families that pass." Grepping the sync publish path (`event-v2-bridge.ts`) showed `/global/event` carries a
+  durable **sync TWIN** of every session event — `payload.syncEvent.{aggregateID, data}` with the SAME data as the
+  regular frame. Every session-durable event uses `durable.aggregate: "sessionID"`, so `aggregateID` IS the
+  owning session (`ses`-prefixed). A picker reading only `payload.properties.sessionID` would have treated every
+  sync twin as session-less → **PASS**, leaking the durable copy of a non-owned session's content. `owningSessionGlobal`
+  reads BOTH shapes; `global-event-filter.test.ts` pins the drop. This corrected the plan file, not an
+  operator-gated register. **Blockers:** operator gate (push/PR/merge — INV-005). Attach-triggered mid-stream
+  reconnect = WBS-6.5 (hook noted, not built). **Next:** operator review of `feat/ph6-gateway` (6 + 3 commits);
+  then WBS-6.5/6.6 or a merge.
+
+## 2026-07-11 — WBS-6.1 slice b part 1: admin-gated attach endpoint + /doc OpenAPI merge (unmerged, gated)
+- **Done:** the **operator-reachable attach surface** (ADR-0012), served entirely by the marid-auth wrapper
+  (never reaches upstream): `POST /marid/attach`, `POST /marid/detach`, `GET /marid/bindings`, writing the
+  durable `BindingStore` (WBS-6.3). **Admin-scope ONLY** — a `channel:` token self-attaching is the INV-001
+  self-attach landmine, so attach is an admin-surface action (401 unauth, 403 non-admin, 400 bad body).
+  **OpenAPI-documented (AC-024) additively per EXP-014:** marid-auth intercepts `GET /doc`, strips
+  `accept-encoding` (the >1KB spec is gzipped → opaque to the merge, like the list routes), and merges a
+  hand-authored Marid fragment (inline schemas → no component collision; **no effect dep** — marid-auth stays
+  dependency-free). Health-covered by existing `/global/health`. New `gateway.ts` + shared `http.ts`
+  (`errorResponse` extracted from middleware + `jsonResponse`); middleware gains a `/marid/*` short-circuit
+  (before ownership/authorize) + the `/doc` augment. **Zero upstream edit, no `P-*`.** marid-auth **101→109**
+  (8 new gateway/TEST-CONTRACT tests), typecheck+lint clean, `index.ts` public API unchanged (consumer
+  unaffected). On `feat/ph6-gateway`, unmerged (INV-003/005).
+- **Decisions:** hand-authored static OpenAPI fragment (not `OpenApi.fromApi` at runtime) — keeps marid-auth
+  dependency-free; EXP-014 already de-risked the merge mechanics, and TEST-CONTRACT pins the fragment against
+  the served handlers. Attach body = `{token, session}` (channel-token NAME + session id).
+- **Deviations:** none. **Blockers:** operator gate (push/PR/merge). AC-024 endpoints delivered; formal AC-024
+  verdict flip held until the full slice b lands (with the blast-radius/degradation coverage). **Next:** 6.1b
+  part 2 (fine-filter `/global/event` → INV-001 + mirroring, AC-019) then part 3 (channel-client consumes
+  bound sessions).
+
+## 2026-07-11 — EXP-014 PASS: attach-endpoint OpenAPI is additive (no P-*); WBS-6.1 slice b scoped
+- **Done:** **EXP-014 (HYP-014) — PASS.** De-risked the AC-024 endpoint-location `P-*` question for WBS-6.1
+  slice b. `/doc` is served from `OpenApi.fromApi(PublicApi)` (`server httpapi/server.ts:188`), wired in
+  **upstream** files — so composing a group into `PublicApi` would edit `api.ts` (= a `P-*`). The **additive
+  path** proven by a 3/3 spike: `marid-auth` intercepts `GET /doc`, calls `next`, and **merges a Marid-owned
+  `OpenApi.fromApi` fragment** (a standalone `HttpApiGroup` for `POST /marid/attach`) into the upstream spec —
+  no path/schema collision (Marid identifiers prefixed), serializable, **zero upstream edit → NO `P-*`**. The
+  endpoint is *served* by the wrapper (manual handler before `next`, like existing marid routes); the group
+  exists only to generate the fragment + drive TEST-CONTRACT. Report: `experiments/exp-014-report.md`;
+  registers HYP-014/EXP-014 added. **Slice b scope** locked (see work-breakdown WBS-6.1 row + the slice-b plan).
+- **Decisions:** attach endpoint lives in the `marid-auth` wrapper (serve) + `/doc`-merge (document), **not** an
+  upstream HttpApi group — so slice b needs **no operator `P-*` gate**. Health-covered = existing
+  `/global/health` (process/surface health, not per-route). The rejected compose-into-`PublicApi` path is
+  characterized in the report for the record.
+- **Deviations:** none. **Blockers:** none for slice b's endpoint (P-* cleared); the `/global/event` boundary
+  fix still needs the wrapped-frame `sessionID`-extraction verification before it's assumed cheap. **Next:**
+  build slice b acceptance-criteria-first (attach endpoint + `/doc`-merge + TEST-CONTRACT → then `/event`
+  switch + bound-consume → then close the `/global/event` INV-001 gap).
+
+## 2026-07-11 — WBS-6.1 slice a `@marid/channel-client` extracted (slice; unmerged, gated)
+- **Done:** **First slice of WBS-6.1 (ADR-0011): a new additive package `@marid/channel-client`** holding the
+  channel-agnostic half of the Telegram gateway — firehose subscribe/pump, cross-generation event interpretation
+  (`TEXT/DONE/ASK` families + `parseAskEvent`), and per-part streamer coordination. `marid-telegram/gateway.ts`
+  now consumes it (`createChannelClient` + `beginTurn` + `start()`), keeping only Telegram specifics (chat↔session
+  binding, the Telegram rendering sink, inline-keyboard permission surfacing); `parseAskEvent` re-exported so the
+  committed public API is unchanged. gateway.ts nets **−87 lines**. New package: 10 tests (parseAskEvent + pump
+  coordination), typecheck+lint clean. **Behavior-preserving (RISK-017):** subscription stays on `global.event`,
+  no server/auth path touched — **marid-auth 101 / marid-telegram 89 both unchanged & green** (TEST-AUTH/TEST-SEC/
+  channel-binding intact). Additive envelope intact (NFR-001): new package + one Marid-owned CI step; **zero
+  upstream edit, no P-\***. On `feat/ph6-gateway`, unmerged (INV-003/005).
+- **Decisions:** slice WBS-6.1 into **6.1a** (this — the safe channel-client extraction) and **6.1b** (the
+  decision-gated AC-019/AC-024 trio), advisor-confirmed. Reconnect/backoff/SSE-resume deliberately **not** built
+  (WBS-6.5 owns it); the pump *structure* is extracted so recovery slots in later (YAGNI).
+- **Findings (for 6.1b, not fixed here):** (1) **INV-001 boundary gap** — `middleware.ts` filters only
+  `url.pathname === "/event"`, so `/global/event` hands the *unfiltered* firehose to any channel token that
+  requests it (Telegram currently suppresses non-owned frames client-side via `if (!state) return`, so nothing is
+  *surfaced*, but the data reaches the process). The real fix is at the boundary (filter `/global/event`), and it
+  is **not** a one-liner: `/global/event` frames are `{payload:{…}}`-wrapped, so `filterSseStream`/`pickSessionId`
+  likely won't extract `sessionID` from the wrapped shape — verify before assuming cheap. (2) **Mirroring can't
+  reach Telegram** until the channel-client subscribes via the filtered `/event` (or `isVisible` is extended to
+  `/global/event`) **and** consumes operator-attached bound sessions — both are 6.1b. (3) **AC-024 P-\* question:**
+  the attach endpoint's OpenAPI/health/contract coverage may force an upstream `api.ts` edit (a `P-*`) unless a
+  group composes additively into `PublicApi` from a Marid-owned file — **verify additivity first; if it forces an
+  upstream edit, STOP for operator approval** (patch-surface + INV-005). De-risk with an EXP.
+- **Deviations:** none. **Blockers:** operator gate — push/PR/merge are operator-only (INV-005); 6.1b scope
+  (fold the `/event` switch + bound-consume + attach endpoint, or split further / EXP the additive-group path)
+  is an operator decision. **Next:** operator reviews/merges 6.1a; then scope 6.1b (the two verifications above
+  gate any subscription switch or boundary fix).
 
 ## 2026-07-10 — WBS-6.4 cross-surface permission + concurrency (verification; unmerged, gated)
 - **Done:** **WBS-6.4 — cross-surface permission surfacing + concurrency, verified.** Code-light by design (the DoD is

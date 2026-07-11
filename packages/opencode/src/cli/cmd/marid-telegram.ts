@@ -60,6 +60,11 @@ const StartCommand = cmd({
       bot,
       allow: env.allow,
       agent: args.agent,
+      // One operator → their chat is the default sink for bound (attached) sessions mirrored
+      // in from web/TUI (WBS-6.1b). A private-chat id equals the user id, so a single-operator
+      // allowlist gives it for free. ponytail: multi-operator mirror-target selection is future
+      // work (WBS-6.5); with >1 operator, bound sessions render nowhere until then.
+      defaultChatId: env.allow.size === 1 ? [...env.allow][0] : undefined,
       dedupFile: path.join(instanceMaridDir(dir), "telegram-dedup.json"),
       now: () => Date.now(),
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),

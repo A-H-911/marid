@@ -23,6 +23,7 @@
     "telegram": "2.26.22"
   },
   "dependencies": {
+    "@marid/channel-client": "workspace:*",
     "telegramify-markdown": "1.3.3"
   }
 }

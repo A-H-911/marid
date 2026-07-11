@@ -31,9 +31,37 @@ export function owningSession(frame: unknown): string | undefined {
   return typeof sessionID === "string" && sessionID.startsWith("ses") ? sessionID : undefined
 }
 
-// Keep a parsed frame iff it is session-less (infrastructure/global) or owned.
-export function keepFrame(frame: unknown, owns: (sessionID: string) => boolean): boolean {
-  const session = owningSession(frame)
+// The owning session of a ROUTING-WRAPPED /global/event frame ({ directory, payload }).
+// Unlike the raw /event stream, /global/event carries TWO frames per durable event
+// (event-v2-bridge.ts): the regular twin — payload = { id, type, properties } (owns via
+// properties.sessionID) — AND the durable "sync" twin — payload = { type:"sync",
+// syncEvent:{ aggregateID, data } } — which repeats the SAME data addressed by
+// aggregateID. Every session-durable event uses `durable.aggregate: "sessionID"`
+// (session-event.ts), so the sync twin's aggregateID IS the owning session (`ses`-prefixed).
+// Filtering only the regular twin would leak the durable copy; this reads both. Non-session
+// aggregates (non-`ses`) and session-less control frames (server.connected/heartbeat/
+// instance.disposed, installation.updated) have no `ses` id and pass.
+export function owningSessionGlobal(frame: unknown): string | undefined {
+  if (typeof frame !== "object" || frame === null) return undefined
+  const payload = (frame as { payload?: unknown }).payload
+  if (typeof payload !== "object" || payload === null) return undefined
+  const direct = owningSession(payload) // regular twin: payload.properties.sessionID
+  if (direct) return direct
+  const syncEvent = (payload as { syncEvent?: unknown }).syncEvent // sync twin: payload.syncEvent.aggregateID
+  if (typeof syncEvent !== "object" || syncEvent === null) return undefined
+  const aggregateID = (syncEvent as { aggregateID?: unknown }).aggregateID
+  return typeof aggregateID === "string" && aggregateID.startsWith("ses") ? aggregateID : undefined
+}
+
+// Keep a parsed frame iff it is session-less (infrastructure/global) or owned. `pick`
+// maps a frame to its owning session id (defaults to the raw /event shape; /global/event
+// passes owningSessionGlobal for the wrapped shape).
+export function keepFrame(
+  frame: unknown,
+  owns: (sessionID: string) => boolean,
+  pick: (frame: unknown) => string | undefined = owningSession,
+): boolean {
+  const session = pick(frame)
   return session === undefined || owns(session)
 }
 
@@ -42,12 +70,16 @@ const FRAME_DELIMITER = "\n\n"
 // Extract the `data:` payload of one raw SSE frame and decide whether to keep it.
 // Frames with no `data:` line (comments, bare `event:` lines) and unparseable
 // payloads pass through unchanged — only well-formed non-owned session frames drop.
-const keepRawFrame = async (raw: string, owns: (sessionID: string) => boolean): Promise<boolean> => {
+const keepRawFrame = async (
+  raw: string,
+  owns: (sessionID: string) => boolean,
+  pick: (frame: unknown) => string | undefined,
+): Promise<boolean> => {
   const dataLine = raw.split("\n").find((line) => line.startsWith("data:"))
   if (!dataLine) return true
   const parsed = await safeJson(dataLine.slice("data:".length).trim())
   if (parsed === undefined) return true
-  return keepFrame(parsed, owns)
+  return keepFrame(parsed, owns, pick)
 }
 
 // Wrap an SSE byte stream, dropping event frames the token does not own. Buffers
@@ -59,6 +91,7 @@ const keepRawFrame = async (raw: string, owns: (sessionID: string) => boolean): 
 export function filterSseStream(
   body: ReadableStream<Uint8Array>,
   owns: (sessionID: string) => boolean,
+  pick: (frame: unknown) => string | undefined = owningSession,
 ): ReadableStream<Uint8Array> {
   const reader = body.getReader()
   const decoder = new TextDecoder()
@@ -70,7 +103,7 @@ export function filterSseStream(
       while (true) {
         const { done, value } = await reader.read().catch(() => ({ done: true, value: undefined }))
         if (done) {
-          if (buffer.length > 0 && (await keepRawFrame(buffer, owns))) controller.enqueue(encoder.encode(buffer))
+          if (buffer.length > 0 && (await keepRawFrame(buffer, owns, pick))) controller.enqueue(encoder.encode(buffer))
           buffer = ""
           controller.close()
           return
@@ -81,7 +114,7 @@ export function filterSseStream(
         while (index !== -1) {
           const frame = buffer.slice(0, index + FRAME_DELIMITER.length)
           buffer = buffer.slice(index + FRAME_DELIMITER.length)
-          if (await keepRawFrame(frame, owns)) emitted += frame
+          if (await keepRawFrame(frame, owns, pick)) emitted += frame
           index = buffer.indexOf(FRAME_DELIMITER)
         }
         // Only return once there is something to hand back; if this read produced

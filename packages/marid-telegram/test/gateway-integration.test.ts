@@ -226,6 +226,63 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
     }
   })
 
+  // WBS-6.1b PART 3 (AC-019, ADR-0012): mirroring-IN. A bound session's turn originates
+  // on web/TUI — no operator Telegram message, so no sessionChat entry. After the server's
+  // owns∪bound /global/event filter the frame still arrives; the channel-client lazily
+  // creates a streamer, and the gateway renders it into the operator's defaultChatId.
+  test("a bound session (no inbound message) mirrors into defaultChatId", async () => {
+    const events = eventQueue()
+    const sent: Array<{ chatId: number; text: string }> = []
+
+    const bot = {
+      getUpdates: async () => {
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async (chatId: number, text: string) => {
+        sent.push({ chatId, text })
+        return { message_id: sent.length, chat: { id: chatId, type: "private" } } as never
+      },
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: { create: async () => ({ data: { id: "ses_x" } }), promptAsync: async () => ({ data: {} }) },
+      permission: { respond: async () => ({ data: true }) },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      defaultChatId: OPERATOR,
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // No operator message — a bound (non-owned) session's assistant text arrives directly.
+      events.push({ payload: { id: "e1", type: "message.part.updated", properties: { sessionID: "ses_bound", part: { id: "p1", type: "text", text: "mirrored from web", messageID: "m1" } } } })
+      expect(await waitFor(() => sent.some((m) => m.chatId === OPERATOR && m.text.includes("mirrored from web")))).toBe(true)
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
+
   test("a non-whitelisted /command is refused and creates NO session (deny-by-default)", async () => {
     const events = eventQueue()
     const updates: unknown[] = []
