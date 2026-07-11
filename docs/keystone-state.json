@@ -1717,7 +1717,7 @@
         "title": "Telegram Web + Playwright rendering spike",
         "method": "Headless Playwright on web.telegram.org/?test=1, log in via the test-DC account, send a prompt, assert rendered Markdown + a media message. Runs at PH-6 start.",
         "pass_criteria": "Automatable + stable enough (bounded retry) for the local-pre-PR + GitHub-on-demand tier; else downgrade to manual visual QA.",
-        "status": "Planned",
+        "status": "Complete",
         "links": { "tests_hypothesis": ["HYP-009"] }
       },
       {
@@ -4305,6 +4305,11 @@
       "date": "2026-07-11",
       "author": "execution-agent",
       "summary": "WBS-6.6 test tiers + live E2E; INV-001 firehose leak found & fixed (ADR-0016/0017). Live (operator creds): userbot<->real gateway slash round-trip -> AC-020 Met; real GLM over real gateway+MTProto -> AC-017 text round-trip + AC-019 bidirectional mirror/unattached-invisible/attach re-subscribe -> AC-019 Met. Security: live tier found a realized INV-001 firehose isolation leak (owns-bound filter gated on the SDK-absent Accept header -> unfiltered for all non-admin); fixed by ADR-0016 (route-based isStream) + ADR-0017 (lazy own-session visibility). EXP-015/RISK-025; marid-auth 123 green; zero upstream edit. AC-004/024 restored Met, AC-017 Partial, AC-019/020 Met; AC-021 (TEST-TG-UI/EXP-009 + native mobile) NOT built -> WBS-6.6 in progress, MS-007 not met. Unmerged (INV-005)."
+    },
+    {
+      "date": "2026-07-12",
+      "author": "execution-agent",
+      "summary": "AC-021 TEST-TG-UI (Telegram-Web render tier) Met. Built scripts/tg-web-e2e.ts (Bun: real marid serve + inline fake LLM emitting fixed markdown through the REAL telegramify-markdown formatter + real Bot API) + scripts/tg-web-driver.mjs (Node: Playwright drives a logged-in Telegram Web account, asserts rendered DOM <strong>/<code>/<pre> + no-literal-** + <img> media) + scripts/tg-web-login.mjs (one-time headed QR login persists .pw-telegram/). Live vs PRODUCTION web.telegram.org; 4/4 stable. EXP-009 PASS -> AC-021 Met. Playwright browser launch hangs under Bun -> Node child for the browser half. Operator-confirmed (INV-005, evidence notes not ADRs): production not test-DC (EXP-007 precedent already superseded it); native-mobile EXP-010 DEFERRED (no Android tooling; ADR-0013 manual/never-a-gate, not in MS-007 exit); TEST-TG-UI local-pre-PR only, not wired into ci.yml (GitHub on-demand deferred - ephemeral runner lacks the logged-in IndexedDB profile). onFile outbound-media render stays deferred (zero-tools served run + instance-local URL Telegram can't fetch, gateway.ts:111); media assertion uses bot.sendPhoto public URL. AC-017 stays Partial (render fidelity now proven by AC-021; inline-kbd/outbound-file live-impossible = faked-SDK gateway-integration tier) -> MS-007 gate is the operator's AC-017 acceptance. playwright added as opencode devDep; typecheck 0, lint clean, INV-002 clean, zero upstream edit, no P-*. On feat/ph6-test-tiers, NOT merged (INV-003/005)."
     }
   ],
   "change_log": [
@@ -4460,6 +4465,12 @@
       "actor": "execution-agent",
       "action": "WBS-6.6 live tiers + INV-001 firehose leak found & fixed. tg-userbot-e2e.ts real userbot<->real gateway slash round-trip -> AC-020 Met (DEP-014 resolved); tg-model-e2e.ts real GLM over real gateway+MTProto -> AC-017 text + AC-019 mirror/unattached-invisible/attach -> AC-019 Met. SECURITY: realized INV-001 firehose isolation leak (isStream gated owns-bound filter on Accept: text/event-stream which the SDK omits -> /event+/global/event unfiltered for non-admin). Fixed: ADR-0016 (isStream route-based) + ADR-0017 (lazy own-session visibility). EXP-015 REFUTED HYP-015; RISK-025 resolved. Proven deterministically (real-request regression test + isolation repro + telegram.test.ts + live re-run) + marid-auth 123 green; zero upstream edit, no P-*. AC-021 (EXP-009 + native mobile) NOT built. NOT merged (INV-003/005).",
       "target": "packages/marid-auth/src/{middleware,event-filter}.ts + tests; packages/marid-telegram/src/gateway.ts; packages/opencode/scripts/*; docs/adrs/{adr-0016,adr-0017}; docs/experiments/exp-015-report; docs/{risks/risk-register,research/hypothesis-register,validation/acceptance-audit,planning/{work-breakdown,milestones},progress/{progress-log,status-report}}; keystone-state"
+    },
+    {
+      "timestamp": "2026-07-12T02:00:00Z",
+      "actor": "execution-agent",
+      "action": "AC-021 -> Met. Telegram-Web-Playwright render tier (TEST-TG-UI / EXP-009) built + closed live vs PRODUCTION web.telegram.org: real telegramify-markdown -> real Bot API -> rendered DOM asserted <strong>/<code>/<pre>/no-literal + <img> media; 4/4 stable. Playwright launch hangs under Bun -> Node driver child (tg-web-driver.mjs) + Bun orchestrator (tg-web-e2e.ts) + one-time headed login (tg-web-login.mjs; IndexedDB session via launchPersistentContext, storageState insufficient). Operator-confirmed (INV-005, evidence notes not ADRs): production not test-DC (EXP-007 precedent); EXP-010 native-mobile deferred (no Android tooling; not in MS-007 exit); TEST-TG-UI local-pre-PR only (not ci.yml; GitHub on-demand deferred). onFile outbound-media deferred (zero-tools + instance-local URL); media via bot.sendPhoto public URL. AC-017 stays Partial (render fidelity now AC-021; inline-kbd/outbound-file = faked-SDK tier) -> MS-007 gate = operator accepts AC-017 Partial. playwright added as opencode devDep; typecheck 0/lint clean/INV-002 clean; zero upstream edit, no P-*. NOT merged (INV-003/005).",
+      "target": "packages/opencode/scripts/{tg-web-e2e.ts,tg-web-driver.mjs,tg-web-login.mjs}+packages/opencode/package.json+bun.lock+.gitignore+docs/experiments/exp-009-report+docs/validation/acceptance-audit+docs/planning/{work-breakdown,milestones}+docs/progress/{progress-log,status-report}+keystone-state(progress/change_log)"
     }
   ]
 }

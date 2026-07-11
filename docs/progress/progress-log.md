@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-11
+updated: 2026-07-12
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,33 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-12 — AC-021 TEST-TG-UI (Telegram-Web render tier) Met — unmerged, gated
+- **Done:** built the AC-021 Telegram-Web-Playwright render tier and closed it live vs **production**
+  web.telegram.org. `scripts/tg-web-e2e.ts` (Bun) boots a real `marid serve` + a channel token + `runGateway`
+  driven by an **inline fake LLM** emitting fixed markdown (bold/inline-code/fenced, per-run nonce) through the
+  **real** `telegramify-markdown` formatter + **real** Bot API; `scripts/tg-web-driver.mjs` (Node) drives a
+  logged-in Telegram Web account and asserts the **rendered DOM**: `<strong>` + `<code>` + `<pre>` + **no literal
+  `**…**`** (the direct guard on the ADR-0008 defect-1 regression) + `<img>` media (`bot.sendPhoto` public URL).
+  **4/4 stable runs.** One-time headed login (`scripts/tg-web-login.mjs`, QR) persists `.pw-telegram/`; operator
+  id captured via a getUpdates probe. **[EXP-009](../experiments/exp-009-report.md) PASS** → **AC-021 Met**.
+  Playwright + chromium added as an opencode devDep (bun.lock: single clean add). typecheck 0, lint clean, INV-002
+  clean (no token/session/key printed). Zero upstream edit, no `P-*` (three additive scripts).
+- **Decisions (operator-confirmed 2026-07-12, INV-005 — evidence notes, not ADRs):** run on **production** Telegram
+  not the test-DC/`?test=1` (as [EXP-007](../experiments/exp-007-report.md) already superseded the test-DC premise);
+  **dedicated Playwright userDataDir + one-time headed login** (Telegram Web keeps its session in IndexedDB, which
+  `storageState` does NOT capture → `launchPersistentContext`); **native-mobile EXP-010 deferred** (no Android
+  tooling here; ADR-0013 keeps it manual/never-a-gate, not in the MS-007 exit).
+- **Deviations:** Playwright's browser launch **hangs under Bun** → the browser half is a **Node** child (the
+  `@marid/*` half stays Bun), coordinated over a spawned-process JSON handshake. The meaningful **outbound-file
+  `onFile`** render is NOT exercised (zero-tools served run + instance-local URL Telegram can't fetch,
+  `gateway.ts:111`) — the media assertion uses the Bot API public-URL path; `onFile` stays deferred future work.
+  TEST-TG-UI runs **local pre-PR** only (like the userbot/model live tiers) — **not** wired into `ci.yml`; GitHub
+  on-demand deferred (ephemeral runner lacks the logged-in IndexedDB profile).
+- **Blockers:** none for AC-021. **Next (gate → operator, INV-005):** MS-007's exit lists AC-017 green but **AC-017
+  stays Partial** — render fidelity is now proven by AC-021, but inline-kbd/outbound-file parts remain
+  live-impossible (zero-tools ceiling; faked-SDK `gateway-integration` tier). The open decision is whether that
+  faked-SDK tier suffices to accept AC-017 Partial → then MS-007. Also: operator merge of the PH-6 stack.
 
 ## 2026-07-11 — WBS-6.6 test tiers + live E2E; INV-001 firehose leak found & fixed (ADR-0016/0017) — unmerged, gated
 - **Done:** WBS-6.6 agent-ownable + live tiers. **Deterministic:** SSE-drop E2E (drives the 6.5 reconnect+refetch
