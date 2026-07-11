@@ -155,9 +155,23 @@ describe("createChannelClient pump", () => {
     })
   })
 
-  test("events for an untracked session are ignored (no beginTurn)", async () => {
+  // WBS-6.1b PART 3 (ADR-0012): mirroring-IN. A bound (operator-attached, non-owned)
+  // session's turn originates on web/TUI — the channel never calls beginTurn for it. After
+  // the server's owns∪bound /global/event filter, a frame for such a session still arrives;
+  // the client must lazily create tracking + a streamer so it mirrors into the channel.
+  test("a bound session with NO beginTurn lazily creates a streamer (mirroring-in)", async () => {
     await withClient(async ({ events, created }) => {
-      events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_other", part: { id: "p1", type: "text", text: "hi", messageID: "m1" } } } })
+      events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_bound", part: { id: "p1", type: "text", text: "mirrored-in", messageID: "m1" } } } })
+      expect(
+        await waitFor(() => created.length === 1 && created[0]!.sessionID === "ses_bound" && created[0]!.pushes.at(-1) === "mirrored-in"),
+      ).toBe(true)
+    })
+  })
+
+  test("a session-less frame (no sessionID, not an ask) still creates no streamer", async () => {
+    await withClient(async ({ events, created }) => {
+      events.push({ payload: { type: "server.connected", properties: {} } })
+      events.push({ payload: { type: "server.heartbeat", properties: {} } })
       await new Promise((r) => setTimeout(r, 50))
       expect(created.length).toBe(0)
     })

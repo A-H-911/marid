@@ -30,6 +30,11 @@ export interface RunGatewayDeps {
   bot: BotApi
   allow: ReadonlySet<number>
   agent: string
+  // Where to render a BOUND (operator-attached, non-owned) session that has no inbound
+  // chat of its own — its turn originated on web/TUI (WBS-6.1b mirroring-in). "One process,
+  // one operator": the single operator's chat. Unset → bound sessions render nowhere
+  // (outbound is unaffected).
+  defaultChatId?: number
   dedupFile: string
   now(): number
   sleep(ms: number): Promise<void>
@@ -72,14 +77,21 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
   const client = createChannelClient({
     sdk: deps.sdk,
     signal: deps.signal,
-    createStreamer: (sessionID) =>
-      createStreamer({
+    createStreamer: (sessionID) => {
+      // A session the operator prompted has its own chat; a BOUND (attached, non-owned)
+      // session mirrored in from web/TUI (WBS-6.1b) has none, so fall back to the single
+      // operator's defaultChatId. With neither, there is nowhere to render — return a
+      // no-op sink rather than sending to an undefined chat.
+      const chatId = sessionChat.get(sessionID) ?? deps.defaultChatId
+      if (chatId === undefined) return { push: async () => {}, finish: async () => {} }
+      return createStreamer({
         bot: deps.bot,
-        chatId: sessionChat.get(sessionID)!,
+        chatId,
         now: deps.now,
         sleep: deps.sleep,
         cadenceMs: deps.cadenceMs,
-      }),
+      })
+    },
     onAsk: (ask) => void permissions.onAsk(ask),
   })
 

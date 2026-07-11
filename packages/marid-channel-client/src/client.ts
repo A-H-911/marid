@@ -120,8 +120,20 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
       return
     }
     if (!sessionID) return
-    const state = sessions.get(sessionID)
-    if (!state) return // not one of our sessions
+    let state = sessions.get(sessionID)
+    if (!state) {
+      // Mirroring-IN (WBS-6.1b, ADR-0012): after the server's owns∪bound /global/event
+      // filter (marid-auth middleware), any frame for a session the channel never called
+      // beginTurn on is by construction an operator-ATTACHED (bound, non-owned) session
+      // whose turn originated on web/TUI. Lazily create tracking so it gets a streamer and
+      // mirrors into the channel. The client keeps NO binding copy — it trusts the
+      // server-side filter (a channel token only ever receives owns∪bound frames).
+      // ponytail: state maps grow across a long-lived bound session's turns (no beginTurn
+      // reset); bounded cleanup + attach-triggered reconnect is WBS-6.5, not needed for
+      // MVP correctness (each turn's parts still render to their own messages).
+      state = { streamers: new Map(), textByPart: new Map(), userMessages: new Set() }
+      sessions.set(sessionID, state)
+    }
 
     // Track user message ids (to exclude the operator's own echoed text), and treat a
     // completed assistant message as a done signal (some generations emit no
