@@ -33,6 +33,7 @@ import { createOpencodeClient } from "@opencode-ai/sdk/v2"
 import { createTokenStore } from "@marid/auth"
 import { instanceMaridDir, start, stop, type LaunchResolver } from "@marid/instance"
 import { createBotApi, runGateway } from "@marid/telegram"
+import { testProviderConfig } from "../test/lib/test-provider"
 
 // --- env (repo-root .env, same loader as the userbot/model harnesses) --------------------
 const ENV_PATH = new URL("../../../.env", import.meta.url)
@@ -114,37 +115,9 @@ const fakeLlm = Bun.serve({
   },
 })
 const llmUrl = `http://127.0.0.1:${fakeLlm.port}/v1`
-
-function providerConfig() {
-  return {
-    formatter: false,
-    lsp: false,
-    provider: {
-      test: {
-        name: "Test",
-        id: "test",
-        env: [],
-        npm: "@ai-sdk/openai-compatible",
-        models: {
-          "test-model": {
-            id: "test-model",
-            name: "Test Model",
-            attachment: false,
-            reasoning: false,
-            temperature: false,
-            tool_call: true,
-            release_date: "2025-01-01",
-            limit: { context: 100_000, output: 10_000 },
-            cost: { input: 0, output: 0 },
-            options: {},
-          },
-        },
-        options: { apiKey: "test-key", baseURL: llmUrl },
-      },
-    },
-    model: "test/test-model",
-  }
-}
+// Same fake-provider config the sibling telegram.test.ts uses; add a default model so a prompt
+// without an explicit model runs against it.
+const configContent = JSON.stringify({ ...testProviderConfig(llmUrl), model: "test/test-model" })
 
 const maridEntry = path.resolve(import.meta.dir, "../src/marid.ts")
 const launch: LaunchResolver = () => ({
@@ -162,7 +135,7 @@ function overlay(fakeHome: string): Record<string, string> {
     OPENCODE_DISABLE_MODELS_FETCH: "1",
     OPENCODE_AUTH_CONTENT: "{}",
     OPENCODE_DB: "opencode.db",
-    OPENCODE_CONFIG_CONTENT: JSON.stringify(providerConfig()),
+    OPENCODE_CONFIG_CONTENT: configContent,
   }
 }
 
