@@ -3,7 +3,7 @@ import type { BindingStore } from "./binding"
 import type { OwnershipStore } from "./ownership"
 import type { RateLimiter } from "./ratelimit"
 import { authorize, sessionFromPathname } from "./scope"
-import { filterOwnedArray, filterSseStream, pickPermissionSessionId, pickSessionId } from "./event-filter"
+import { filterOwnedArray, filterSseStream, owningSession, owningSessionGlobal, pickPermissionSessionId, pickSessionId } from "./event-filter"
 import { REQUEST_ID_HEADER, resolveRequestId } from "./request-id"
 import { errorResponse } from "./http"
 import { augmentDoc, handleGatewayRoute, isGatewayRoute } from "./gateway"
@@ -274,18 +274,26 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
       await record(token.name, "allow")
 
       if (stream) {
-        // Full bidirectional mirroring (WBS-6.3, ADR-0012): a token sees frames of
+        // Full bidirectional mirroring (WBS-6.3/6.1b, ADR-0012): a token sees frames of
         // sessions it OWNS plus sessions the operator has explicitly ATTACHED it to
-        // (the binding registry). VIEW-via-binding lives here, on the /event firehose;
-        // the ACTING gate (authorize/scope.ts) and the list routes stay on `owns`
-        // alone, so a bound surface can view but never approve/prompt a session it does
-        // not own (act-via-ownership, INV-001 — EXP-008). Binding I/O is confined to the
-        // /event subscribe, and a registry fault degrades to owns-only (RISK-024).
+        // (the binding registry). VIEW-via-binding lives here, on BOTH SSE firehoses:
+        //   /event         — the per-instance stream, RAW frames (owningSession).
+        //   /global/event  — the cross-instance stream that web + TUI + the channel all
+        //                    ride, ROUTING-WRAPPED frames incl. durable sync twins
+        //                    (owningSessionGlobal). It was UNFILTERED for every non-admin
+        //                    token — a pre-existing INV-001 gap (WBS-6.1b) — and the same
+        //                    owns∪bound filter closes it AND delivers mirroring.
+        // The ACTING gate (authorize/scope.ts) and the list routes stay on `owns` alone,
+        // so a bound surface can view but never approve/prompt a session it does not own
+        // (act-via-ownership, INV-001 — EXP-008). Binding I/O is confined to the subscribe,
+        // and a registry fault degrades to owns-only (RISK-024).
         let filtered = response
-        if (isolate && url.pathname === "/event" && response.body) {
+        const pickFrame =
+          url.pathname === "/event" ? owningSession : url.pathname === "/global/event" ? owningSessionGlobal : undefined
+        if (isolate && pickFrame && response.body) {
           const bound = await deps.bindings.list(token.name).catch(() => new Set<string>())
           const isVisible = (id: string): boolean => owns(id) || bound.has(id)
-          filtered = new Response(filterSseStream(response.body, isVisible), {
+          filtered = new Response(filterSseStream(response.body, isVisible, pickFrame), {
             status: response.status,
             statusText: response.statusText,
             headers: response.headers,
