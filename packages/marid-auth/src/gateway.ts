@@ -9,7 +9,7 @@ import { errorResponse, jsonResponse } from "./http"
 // which is the INV-001 landmine ADR-0012 calls out. So "operator explicitly attaches" is an
 // admin-surface action (TUI/CLI/web), never a channel-typed command.
 
-const GATEWAY_ROUTES = new Set(["/marid/attach", "/marid/detach", "/marid/bindings"])
+const GATEWAY_ROUTES = new Set(["/marid/attach", "/marid/detach", "/marid/bindings", "/marid/self-bindings"])
 
 export function isGatewayRoute(pathname: string): boolean {
   return GATEWAY_ROUTES.has(pathname)
@@ -27,14 +27,27 @@ export async function handleGatewayRoute(input: {
   pathname: string
   method: string
   scope: string
+  tokenName: string
   requestId: string
   bindings: BindingStore
 }): Promise<Response> {
   const { requestId } = input
+  const method = input.method.toUpperCase()
+
+  // Non-admin self-view (WBS-6.5c): a token reads ITS OWN bindings, keyed on the
+  // AUTHENTICATED token — NOT a ?token= param, so it can't be spoofed to another token's
+  // set. A channel gateway polls this to learn a mid-stream attach/detach (its non-admin
+  // token can't call the admin /marid/bindings). INV-001-safe: the session IDs bound to
+  // you are already visible on the owns∪bound firehose; WRITING a binding stays admin-only.
+  if (input.pathname === "/marid/self-bindings") {
+    if (method !== "GET") return errorResponse(405, "MethodNotAllowedError", "GET only", requestId)
+    const sessions = [...(await input.bindings.list(input.tokenName))]
+    return jsonResponse(200, { sessions }, requestId)
+  }
+
   if (input.scope !== "admin") {
     return errorResponse(403, "ForbiddenError", "gateway routes require admin scope", requestId)
   }
-  const method = input.method.toUpperCase()
 
   if (input.pathname === "/marid/bindings") {
     if (method !== "GET") return errorResponse(405, "MethodNotAllowedError", "GET only", requestId)
@@ -111,6 +124,14 @@ const MARID_GATEWAY_DOC_PATHS: Record<string, unknown> = {
         "200": okObject({ token: stringSchema, sessions: { type: "array", items: stringSchema } }),
         "403": { description: "Not admin scope" },
       },
+    },
+  },
+  "/marid/self-bindings": {
+    get: {
+      summary: "List the caller's own bound sessions",
+      description:
+        "Any authenticated token. Returns the sessions bound to the AUTHENTICATED token (not a query param) so a channel gateway can poll for a mid-stream attach/detach (WBS-6.5, ADR-0012).",
+      responses: { "200": okObject({ sessions: { type: "array", items: stringSchema } }) },
     },
   },
 }

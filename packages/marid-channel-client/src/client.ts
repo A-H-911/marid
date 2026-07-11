@@ -13,12 +13,16 @@ import type { OpencodeClient } from "@opencode-ai/sdk/v2"
 // permission.asked) — all are in the committed manifest — so dispatch matches a SET of
 // type strings and reads fields defensively.
 //
-// Scope note (WBS-6.1, ADR-0011): reconnect/backoff/SSE-resume is NOT here yet — it is
-// WBS-6.5. This owns the pump STRUCTURE (subscribe → loop) so recovery can slot in
-// without reshaping the client. The subscription stays on the firehose the gateway
-// already used (`global.event`); switching to the ownership-filtered `/event` and
-// consuming operator-attached (bound, non-owned) sessions is the mirroring slice
-// (WBS-6.1b / ADR-0012), deliberately not folded into this behavior-preserving extract.
+// Recovery (WBS-6.5, FR-036/043, RISK-006): the pump reconnects a dropped firehose with
+// capped backoff; on each reconnect it re-fetches authoritative state for OWNED sessions
+// (a turn that finished during the gap is recovered) and re-subscribes — the server
+// re-reads owns∪bound FRESH per subscribe (marid-auth middleware), so a re-subscribe also
+// picks up a mid-stream operator attach/detach. A BOUND (non-owned) session is NEVER
+// re-fetched: its history route is owns-gated (403, INV-001 / EXP-008) — it resumes live
+// only, with gap frames lost. The firehose is live-only (no ?after= replay, contract v1.1),
+// so re-reading the durable event-sourced store is the only recovery. Optional `pollBindings`
+// (the channel token's OWN bound-session set) drives the attach-triggered re-subscribe; a
+// channel without cross-process attach omits it.
 
 const TEXT_EVENTS = new Set(["message.part.updated", "session.next.text.delta"])
 const DONE_EVENTS = new Set(["session.idle", "session.next.step.ended"])
@@ -65,6 +69,17 @@ export interface ChannelClientDeps {
   createStreamer(sessionID: string): Streamer
   // Surface a permission ask on the channel (inline keyboard / reply-token / …).
   onAsk(ask: PermissionAsk): void
+  // WBS-6.5c: the channel token's OWN bound-session set (from the server's admin-free
+  // self-bindings route). Polled so an operator attach/detach that lands while the stream
+  // is healthy triggers a re-subscribe (the re-subscribe re-reads owns∪bound fresh).
+  // Optional — a channel/test without cross-process attach omits it (no poll).
+  pollBindings?: () => Promise<Set<string>>
+  // Abortable sleep for backoff + poll cadence. Defaults to a setTimeout that resolves
+  // early on `signal`. Tests inject an instant sleep.
+  sleep?: (ms: number) => Promise<void>
+  // Binding-poll cadence (ms). Default 45s — sub-minute mirror-start latency for an
+  // operator attach is acceptable; a shorter poll just churns the self-bindings route.
+  bindingPollMs?: number
 }
 
 // A session's live per-turn state: ONE streamer per assistant text part (each distinct
@@ -78,6 +93,10 @@ interface SessionState {
   streamers: Map<string, Streamer>
   textByPart: Map<string, string>
   userMessages: Set<string>
+  // OWNED (beginTurn — the channel created/prompted it) vs BOUND (lazily tracked from a
+  // mirrored-in frame). Only owned sessions are safe to re-fetch on reconnect: a bound
+  // session's history route is owns-gated (403, INV-001). See start()'s refetchOwned.
+  owned: boolean
 }
 
 export interface ChannelClient {
@@ -129,9 +148,9 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
       // mirrors into the channel. The client keeps NO binding copy — it trusts the
       // server-side filter (a channel token only ever receives owns∪bound frames).
       // ponytail: state maps grow across a long-lived bound session's turns (no beginTurn
-      // reset); bounded cleanup + attach-triggered reconnect is WBS-6.5, not needed for
-      // MVP correctness (each turn's parts still render to their own messages).
-      state = { streamers: new Map(), textByPart: new Map(), userMessages: new Set() }
+      // reset); bounded cleanup is future work, not needed for MVP correctness (each turn's
+      // parts still render to their own messages). owned=false → never re-fetched (INV-001).
+      state = { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), owned: false }
       sessions.set(sessionID, state)
     }
 
@@ -173,29 +192,182 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
     if (DONE_EVENTS.has(payload.type)) finishAll(sessionID, state)
   }
 
+  // --- WBS-6.5 recovery machinery ---------------------------------------------------
+
+  type Frame = {
+    type?: string
+    properties?: Record<string, unknown>
+    payload?: { type: string; properties?: Record<string, unknown> }
+  }
+
+  const BACKOFF_BASE_MS = 500
+  const BACKOFF_CAP_MS = 30_000
+  // ponytail: plain capped exponential backoff (no jitter). A single-operator gateway does
+  // not thunder; add jitter if many channels ever reconnect against one instance at once.
+  const backoffMs = (attempt: number): number =>
+    attempt <= 0 ? 0 : Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (attempt - 1))
+
+  const rawSleep = deps.sleep ?? ((ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms)))
+  // ALWAYS race the sleep against shutdown, so a long backoff/poll interval can't park the
+  // loop past an abort. Do not trust the injected sleep to be abort-aware — the gateway's
+  // isn't (marid-telegram.ts); without this, `done` hangs up to bindingPollMs on SIGINT.
+  const sleep = (ms: number): Promise<void> => {
+    if (ms <= 0 || deps.signal.aborted) return Promise.resolve()
+    return Promise.race([
+      rawSleep(ms),
+      new Promise<void>((resolve) => deps.signal.addEventListener("abort", () => resolve(), { once: true })),
+    ])
+  }
+
+  // A per-connection controller that also aborts when the client shuts down, so a pump
+  // ends on EITHER a shutdown or a deliberate re-subscribe (poll-triggered).
+  function connectionController(): AbortController {
+    const controller = new AbortController()
+    if (deps.signal.aborted) controller.abort()
+    else deps.signal.addEventListener("abort", () => controller.abort(), { once: true })
+    return controller
+  }
+
+  // Subscribe once, retrying the connect itself (the server may not be up yet — the first
+  // subscribe is now recoverable because the channel router only starts after start()).
+  // Returns undefined only on shutdown/re-subscribe abort.
+  async function subscribeWithRetry(connSignal: AbortSignal): Promise<AsyncIterator<Frame> | undefined> {
+    let attempt = 0
+    while (!deps.signal.aborted && !connSignal.aborted) {
+      const stream = await deps.sdk.global
+        .event({ signal: connSignal })
+        .then((events) => events.stream as AsyncIterator<Frame>)
+        .catch(() => undefined)
+      if (stream) return stream
+      await sleep(backoffMs(++attempt))
+    }
+    return undefined
+  }
+
+  // Drain one subscription until its stream ends (server drop, or connSignal abort for a
+  // deliberate re-subscribe). Returns whether any frame was delivered (drives backoff reset
+  // so a flapping connection still backs off).
+  async function pump(stream: AsyncIterator<Frame>, connSignal: AbortSignal): Promise<boolean> {
+    // Resolves the instant the connection is aborted, so a re-subscribe (or shutdown) never
+    // waits on a stream that doesn't promptly end on abort — raced against each next().
+    const aborted = new Promise<IteratorResult<Frame>>((resolve) => {
+      const stop = () => resolve({ done: true, value: undefined })
+      if (connSignal.aborted) stop()
+      else connSignal.addEventListener("abort", stop, { once: true })
+    })
+    let delivered = false
+    while (!connSignal.aborted && !deps.signal.aborted) {
+      const next = await Promise.race([
+        stream.next().catch(() => ({ done: true, value: undefined }) as IteratorResult<Frame>),
+        aborted,
+      ])
+      if (next.done) break
+      delivered = true
+      const evt = next.value?.payload ?? next.value
+      if (evt && typeof evt.type === "string") onEvent({ type: evt.type, properties: evt.properties })
+    }
+    await stream.return?.(undefined).catch(() => {})
+    return delivered
+  }
+
+  // Recovery: re-read the durable store for OWNED sessions and flush the latest assistant
+  // message's text edit-in-place (same partID → same channel message; identical text is
+  // skipped so a no-gap reconnect makes no redundant edit). Bound sessions are owns-gated
+  // (403) — skipped (INV-001); they resume live only.
+  //
+  // Keying is aligned by construction: on Marid (the v1 chain — the v2/next
+  // session.next.text.* family is not built, per keep-remove) live assistant text renders
+  // via `message.part.updated` keyed by the real `part.id`, which is the same id
+  // session.messages returns here — so a turn finished during the gap renders once and a
+  // partial turn edits in place. `session.messages` is called with no limit → the full
+  // history, so the latest assistant is never off a page.
+  async function refetchOwned(): Promise<void> {
+    for (const [sessionID, state] of sessions) {
+      if (!state.owned) continue
+      const messages = await deps.sdk.session
+        .messages({ sessionID })
+        .then((res) => res.data as Array<{ info?: { role?: string }; parts?: Array<{ id?: string; type?: string; text?: string }> }>)
+        .catch(() => undefined)
+      if (!messages) continue
+      const lastAssistant = [...messages].reverse().find((m) => m.info?.role === "assistant")
+      if (!lastAssistant?.parts) continue
+      for (const part of lastAssistant.parts) {
+        if (part.type !== "text" || typeof part.text !== "string" || !part.text || typeof part.id !== "string") continue
+        if (state.textByPart.get(part.id) === part.text) continue // already rendered — no redundant edit
+        state.textByPart.set(part.id, part.text)
+        void streamerFor(sessionID, state, part.id).push(part.text)
+      }
+    }
+  }
+
+  // Poll the channel token's own bindings; a changed set (attach OR detach) forces the
+  // current connection to re-subscribe so the server re-applies owns∪bound fresh.
+  function startBindingPoll(requestReconnect: () => void): Promise<void> {
+    if (!deps.pollBindings) return Promise.resolve()
+    const sameSet = (a: Set<string>, b: Set<string>): boolean => a.size === b.size && [...a].every((v) => b.has(v))
+    return (async () => {
+      let previous: Set<string> | undefined
+      while (!deps.signal.aborted) {
+        await sleep(deps.bindingPollMs ?? 45_000)
+        if (deps.signal.aborted) break
+        const current = await deps.pollBindings!().catch(() => undefined)
+        if (!current) continue
+        if (previous && !sameSet(previous, current)) requestReconnect()
+        previous = current
+      }
+    })()
+  }
+
   return {
     beginTurn(sessionID) {
-      sessions.set(sessionID, { streamers: new Map(), textByPart: new Map(), userMessages: new Set() })
+      sessions.set(sessionID, { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), owned: true })
     },
     async start() {
-      // Subscribe FIRST (the firehose is live-only). Frames are routing-wrapped on
-      // /global/event ({ payload: {type,properties} }) but raw on /event; tolerate both
-      // by unwrapping payload when present.
-      const events = await deps.sdk.global.event({ signal: deps.signal })
-      type Frame = {
-        type?: string
-        properties?: Record<string, unknown>
-        payload?: { type: string; properties?: Record<string, unknown> }
-      }
-      const stream = events.stream as AsyncIterator<Frame>
+      // Subscribe FIRST and AWAIT it before returning (the firehose is live-only and the
+      // channel router starts only after start() resolves, so early frames aren't missed).
+      // Each cycle uses its OWN controller (linked to shutdown) for BOTH subscribe and pump,
+      // so a poll-triggered abort tears the fetch down cleanly (no double-delivery) and the
+      // next cycle re-subscribes with a fresh owns∪bound snapshot.
+      let connection = connectionController()
+      let stream = await subscribeWithRetry(connection.signal)
+      // A poll-triggered re-subscribe is INTENTIONAL (an attach/detach, not a failure): the
+      // flag lets the loop skip both the backoff penalty (so the attach mirrors instantly)
+      // and the recovery re-fetch (no frames were lost). The poll reads `connection` at call
+      // time; reassigning it below re-targets the trigger.
+      let reconnectRequested = false
+      const pollDone = startBindingPoll(() => {
+        reconnectRequested = true
+        connection.abort()
+      })
+
       const done = (async () => {
+        let attempt = 0
         while (!deps.signal.aborted) {
-          const next = await stream.next().catch(() => ({ done: true, value: undefined }) as IteratorResult<Frame>)
-          if (next.done) break
-          const frame = next.value
-          const evt = frame?.payload ?? frame
-          if (evt && typeof evt.type === "string") onEvent({ type: evt.type, properties: evt.properties })
+          if (stream) {
+            const delivered = await pump(stream, connection.signal)
+            if (deps.signal.aborted) break
+            if (reconnectRequested) {
+              reconnectRequested = false // intentional re-subscribe: instant, no gap to recover
+              attempt = 0
+            } else {
+              // Server drop: back off (reset only when the last connection delivered — a
+              // flap keeps growing), then re-fetch owned state before re-subscribing.
+              attempt = delivered ? 0 : attempt + 1
+              await sleep(backoffMs(attempt))
+              if (deps.signal.aborted) break
+              await refetchOwned()
+            }
+          } else if (reconnectRequested) {
+            reconnectRequested = false // poll aborted mid-subscribe — retry, no penalty
+          }
+          // (Re)subscribe. subscribeWithRetry returns undefined ONLY on shutdown or a
+          // poll-abort of THIS cycle — the latter is not a stop, so loop again with a fresh
+          // cycle (which picks up the attach that fired the poll). The while-guard exits on
+          // shutdown.
+          connection = connectionController()
+          stream = await subscribeWithRetry(connection.signal)
         }
+        await pollDone
       })()
       return { done }
     },

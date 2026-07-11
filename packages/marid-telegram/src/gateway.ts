@@ -35,6 +35,10 @@ export interface RunGatewayDeps {
   // one operator": the single operator's chat. Unset → bound sessions render nowhere
   // (outbound is unaffected).
   defaultChatId?: number
+  // WBS-6.5c: poll the channel token's OWN bound sessions (GET /marid/self-bindings) so an
+  // operator attach/detach that lands mid-stream triggers a firehose re-subscribe. Unset →
+  // no poll (attach is still picked up on the next natural reconnect).
+  pollBindings?: () => Promise<Set<string>>
   dedupFile: string
   now(): number
   sleep(ms: number): Promise<void>
@@ -77,6 +81,8 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
   const client = createChannelClient({
     sdk: deps.sdk,
     signal: deps.signal,
+    sleep: deps.sleep,
+    pollBindings: deps.pollBindings,
     createStreamer: (sessionID) => {
       // A session the operator prompted has its own chat; a BOUND (attached, non-owned)
       // session mirrored in from web/TUI (WBS-6.1b) has none, so fall back to the single

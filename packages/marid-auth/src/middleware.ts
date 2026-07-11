@@ -195,6 +195,7 @@ export function createMaridAuth(deps: MaridAuthDeps): MaridAuth {
           pathname: url.pathname,
           method: request.method,
           scope: token.scope,
+          tokenName: token.name,
           requestId,
           bindings: deps.bindings,
         })
