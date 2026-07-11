@@ -423,4 +423,77 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
       await gateway.catch(() => {})
     }
   })
+
+  // WBS-6.2 residual (AC-017): outbound files. An assistant FILE part is rendered into the
+  // session's chat — image mimes via sendPhoto, everything else via sendDocument, with the
+  // filename as the caption. The served-LLM E2E cannot emit assistant file parts (same limit
+  // as the permission round trip), so this deterministic faked-SDK tier owns the coverage.
+  test("an assistant file part is sent outbound (image → sendPhoto, other → sendDocument, filename = caption)", async () => {
+    const events = eventQueue()
+    const updates: unknown[] = []
+    const photos: Array<{ chatId: number; url: string; caption?: string }> = []
+    const docs: Array<{ chatId: number; url: string; caption?: string }> = []
+    let prompted = false
+
+    const bot = {
+      getUpdates: async () => {
+        if (updates.length) return updates.splice(0) as never
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async () => ({ message_id: 1, chat: { id: OPERATOR, type: "private" } }) as never,
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+      sendPhoto: async (chatId: number, url: string, caption?: string) => {
+        photos.push({ chatId, url, caption })
+        return { message_id: 10, chat: { id: chatId, type: "private" } } as never
+      },
+      sendDocument: async (chatId: number, url: string, caption?: string) => {
+        docs.push({ chatId, url, caption })
+        return { message_id: 11, chat: { id: chatId, type: "private" } } as never
+      },
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => { prompted = true; return { data: {} } } },
+      permission: { respond: async () => ({ data: true }) },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // Operator prompts so ses_1 is bound to the operator's chat.
+      updates.push({ update_id: 1, message: { message_id: 1, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "make me a file" } })
+      expect(await waitFor(() => prompted)).toBe(true)
+
+      // The assistant emits a document part and an image part on its message.
+      events.push({ payload: { id: "e1", type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "pf1", type: "file", url: "https://inst/file/report.pdf", mime: "application/pdf", filename: "report.pdf", messageID: "m1" } } } })
+      events.push({ payload: { id: "e2", type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "pf2", type: "file", url: "https://inst/file/chart.png", mime: "image/png", filename: "chart.png", messageID: "m1" } } } })
+
+      expect(await waitFor(() => docs.length === 1 && photos.length === 1)).toBe(true)
+      expect(docs[0]).toEqual({ chatId: OPERATOR, url: "https://inst/file/report.pdf", caption: "report.pdf" })
+      expect(photos[0]).toEqual({ chatId: OPERATOR, url: "https://inst/file/chart.png", caption: "chart.png" })
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
 })

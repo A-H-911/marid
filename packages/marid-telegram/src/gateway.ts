@@ -99,6 +99,20 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
       })
     },
     onAsk: (ask) => void permissions.onAsk(ask),
+    // Outbound files (WBS-6.2 residual, AC-017): render an assistant file part into the
+    // session's chat (or the bound session's defaultChatId). Image mimes → sendPhoto, else
+    // sendDocument; the filename is the caption.
+    onFile: (sessionID, file) => {
+      const chatId = sessionChat.get(sessionID) ?? deps.defaultChatId
+      if (chatId === undefined) return
+      // ponytail: the part URL is sent as-is — Telegram fetches HTTP(S) URLs. A non-public
+      // instance file URL won't be reachable by Telegram's servers; a public relay/upload path
+      // is future work if instance file URLs turn out not to be externally fetchable.
+      const send = file.mime.startsWith("image/")
+        ? deps.bot.sendPhoto(chatId, file.url, file.filename)
+        : deps.bot.sendDocument(chatId, file.url, file.filename)
+      void send.catch((e) => deps.log(`outbound file send failed: ${String(e)}`))
+    },
   })
 
   // Execute a whitelisted slash command. /new resets the chat→session binding so the
