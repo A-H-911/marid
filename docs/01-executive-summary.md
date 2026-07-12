@@ -14,10 +14,11 @@ instances on one machine, on a private network, for a single operator.
 **The key discovery of the planning phase:** most of the target already exists upstream. The remote API
 (7/16 requirements as-is), event-sourced session storage with per-session replay, optional LSP, OTLP
 observability, and 12-target release machinery are all present. The plan therefore builds only four
-things: **marid-auth** (bearer tokens, rate limits, audit), **marid-instance** (claudectl-style isolated
-runtimes), **marid-telegram** (a gateway process outside the core), and a **distribution profile** that
-ships the keep-list without deleting anything — keeping the upstream merge surface near zero (≤ 3
-enumerated patch items).
+things: **marid-gateway** (the Marid Gateway — bearer tokens, rate limits, audit, and the `/marid/*` routes;
+**marid-auth** is its auth module, ADR-0011), **marid-instance** (claudectl-style isolated
+runtimes), **marid-telegram** (a *channel* gateway process — a client of marid-gateway — outside the core),
+and a **distribution profile** that ships the keep-list without deleting anything — keeping the upstream
+merge surface near zero (≤ 3 enumerated patch items).
 
 **Approved decisions (gates 1–10):** instance = isolated runtime · MVP = API+SSE, cross-interface sync,
 Telegram, multi-instance (WhatsApp deferred) · single operator, private network · name **Marid** ·

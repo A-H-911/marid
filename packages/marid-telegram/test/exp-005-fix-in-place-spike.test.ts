@@ -175,6 +175,6 @@ describe("EXP-005 · defect 5 — the SSE pump reconnects + re-fetches after a d
 
 // ── INV-001 note (not re-tested here) ──
 // The spike changes only presentation/wiring in the channel process; acting stays
-// server-enforced by @marid/auth (channel scope deny-by-default, bound-agent guard).
+// server-enforced by @marid/gateway (channel scope deny-by-default, bound-agent guard).
 // That boundary is covered by the existing channel-binding + scope suites and EXP-008
 // (act-via-ownership). Nothing here widens the channel token's authority.

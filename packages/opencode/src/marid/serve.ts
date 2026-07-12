@@ -7,7 +7,7 @@ import {
   createOwnershipStore,
   createRateLimiter,
   createTokenStore,
-} from "@marid/auth"
+} from "@marid/gateway"
 import { Server } from "../server/server"
 
 // Per-instance marid state lives under the instance data dir (XDG-driven, set

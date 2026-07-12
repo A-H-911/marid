@@ -1,4 +1,4 @@
-import { createTokenStore, isValidScope, type Scope } from "@marid/auth"
+import { createTokenStore, isValidScope, type Scope } from "@marid/gateway"
 import { cmd } from "./cmd"
 import { maridDir, maridServe } from "../../marid/serve"
 

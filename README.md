@@ -321,7 +321,7 @@ what it doesn't ship (ADR-0002), so upstream syncs stay clean.
 
 | Kept (reused from OpenCode) | Added by Marid (new packages) | Excluded from the distribution |
 |---|---|---|
-| Session engine · 15+ LLM providers · LSP · MCP · git · config · SQLite | `marid-auth` — bearer tokens, scopes, rate-limit, audit | Desktop (Electron), cloud/console/function/stats/enterprise |
+| Session engine · 15+ LLM providers · LSP · MCP · git · config · SQLite | `marid-gateway` — the Marid Gateway (bearer tokens, scopes, rate-limit, audit; marid-auth is its auth module) | Desktop (Electron), cloud/console/function/stats/enterprise |
 | The TUI, the web UI, the HTTP+SSE API | `marid-instance` — isolated instance lifecycle | Slack integration, marketing/docs sites |
 | The v1 session/event contract & SDK | `marid-telegram` — Telegram gateway (outside the core) | Experimental `codemode` (externalized), the v2/next chain |
 
