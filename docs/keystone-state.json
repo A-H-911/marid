@@ -4516,6 +4516,12 @@
       "actor": "execution-agent",
       "action": "Realized ADR-0011: renamed the gateway pillar package @marid/auth -> @marid/gateway (packages/marid-auth -> packages/marid-gateway). Behaviour-neutral: the 13 suites / 124 tests pass unchanged under the new name, typecheck clean, and nothing depends on the literal 'marid-auth' at runtime (on-disk token store path is ${Global.Path.data}/marid, not the package name). Touched only: package name + @opencode-ai/opencode workspace dep + @marid/gateway import specifiers (16 sites) + ci.yml test-step --cwd path + bun.lock. Zero new patch surface (wrapper seam unchanged, P-1 resolved EXP-004). marid-auth persists as the auth module within the gateway. Docs: ADR-0011 realization note (v1.2.0), four-pillars line (CLAUDE.md + 01-executive-summary), keep-remove-matrix.",
       "target": "packages/marid-gateway/** (renamed from marid-auth)+packages/opencode/{package.json,src/marid/serve.ts,src/cli/cmd/marid.ts,scripts/*,test/marid/*}+packages/marid-telegram/test/exp-005-fix-in-place-spike.test.ts+.github/workflows/ci.yml+bun.lock+docs/adrs/adr-0011-marid-gateway+CLAUDE.md+docs/01-executive-summary+docs/architecture/keep-remove-matrix+keystone-state(change_log)"
+    },
+    {
+      "timestamp": "2026-07-12T15:00:00Z",
+      "actor": "execution-agent",
+      "action": "Gateway/channel-gateway diagram disambiguation (docs-only, follows the @marid/gateway rename). Restructured to ONE Marid Gateway (@marid/gateway) node = auth + /marid/* binding + owns-union-bound mirroring, FRONTING the reused upstream HTTP+SSE API / /doc / /global/health (DEC-009: fronts, never absorbs); marid-telegram is the CHANNEL gateway, a client. Fixed architecture.md's self-contradiction ('marid-auth becomes the channel gateway' -> @marid/gateway is the API/ingress gateway). TUI two-edge caveat honored (dashed in-process/no-token to engine + attach/token to gateway; no blanket TUI->gateway). Touched: README (3 Mermaid topologies + prose + kept/removed table), architecture.md (container view + components table + Marid Gateway section, v1.2), Tarseem specs 01/02/05/13/20 + re-rendered PNG/SVG, diagrams/README legend. No governed ids in diagram labels (G-IDS). validate = OK.",
+      "target": "README.md+docs/architecture/architecture.md+docs/architecture/diagrams/Marid/specs/{01-architecture-overview,02-package-dependencies,05-data-flow,13-deployment,20-gateway-mirroring}.json+docs/architecture/diagrams/Marid/{same}.{png,svg}+docs/architecture/diagrams/README.md+keystone-state(change_log)"
     }
   ]
 }

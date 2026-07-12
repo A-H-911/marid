@@ -17,7 +17,7 @@
       "id": "gw",
       "shape": "rect",
       "label": {
-        "text": "marid-telegram gateway - render - inline keyboards - multipart files"
+        "text": "marid-telegram - channel gateway - render - inline keyboards - multipart files"
       },
       "styleRefs": [
         "channel"
@@ -37,7 +37,7 @@
       "id": "auth",
       "shape": "rect",
       "label": {
-        "text": "marid-auth gateway - /marid/attach-detach-bindings-self-bindings - owns U bound SSE filter"
+        "text": "Marid Gateway - @marid/gateway - /marid/attach-detach-bindings-self-bindings - owns U bound SSE filter"
       },
       "styleRefs": [
         "auth"
@@ -81,7 +81,7 @@
       "id": "legend",
       "shape": "rect",
       "label": {
-        "text": "red = marid-auth gateway; orange = marid-telegram; amber = @marid/channel-client (shared, PH-7 reuses); dark = session core (reused). Mirroring = owns U bound; view-via-binding, act-via-ownership."
+        "text": "red = @marid/gateway (Marid Gateway - API/ingress); orange = marid-telegram (channel gateway, a client); amber = @marid/channel-client (shared, PH-7 reuses); dark = session core (reused). Mirroring = owns U bound; view-via-binding, act-via-ownership."
       }
     }
   ],

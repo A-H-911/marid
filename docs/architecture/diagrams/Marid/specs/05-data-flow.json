@@ -3,7 +3,7 @@
   "diagramType": "flowchart",
   "direction": "LR",
   "meta": {
-    "title": "Marid on OpenCode - Runtime Data Flow (marid-auth in the request path)"
+    "title": "Marid on OpenCode - Runtime Data Flow (Marid Gateway in the request path)"
   },
   "nodes": [
     {
@@ -87,7 +87,7 @@
       "id": "mauth",
       "shape": "rect",
       "label": {
-        "text": "marid-auth (authN / authZ)"
+        "text": "Marid Gateway - @marid/gateway (authN / authZ)"
       },
       "styleRefs": [
         "auth"
@@ -97,7 +97,7 @@
       "id": "mlegend",
       "shape": "rect",
       "label": {
-        "text": "Marid-added: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+        "text": "Marid-added: red = @marid/gateway (Marid Gateway), orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
       }
     }
   ],
