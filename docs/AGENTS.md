@@ -20,9 +20,9 @@ generation: derived
   [roadmap](planning/roadmap.md), [acceptance criteria](validation/acceptance-criteria.md). Decisions in the
   [ADRs](adrs/) and approved registers are FINAL.
 - **Where you are now:** the live [status report](progress/status-report.md) and
-  [acceptance audit](validation/acceptance-audit.md). PH-0..5 done; **PH-6 (Telegram gateway) in progress** —
-  all PH-6 acceptance criteria Met, WBS-6.7 docs done, awaiting operator merge to exit MS-007. Do not
-  re-litigate settled decisions.
+  [acceptance audit](validation/acceptance-audit.md). **PH-0..6 done; MS-007 MET** (2026-07-12, PR #48
+  `4409d92f`) — all PH-6 acceptance criteria Met and the Telegram gateway stack merged to `develop`. **PH-7
+  WhatsApp** is operator-gated and not started. Do not re-litigate settled decisions.
 
 ## Invariants — never violate (a violation requires a new ADR)
 

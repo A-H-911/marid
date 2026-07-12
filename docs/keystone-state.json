@@ -2999,7 +2999,7 @@
         "id": "PH-6",
         "name": "Telegram remediation",
         "goal": "Fix the 5 deferred-#9 UX defects in place (markdown, media, slash, multipart, SSE reconnect)",
-        "status": "in-progress",
+        "status": "done",
         "depends_on": [
           "PH-5"
         ],
@@ -4320,6 +4320,17 @@
       "date": "2026-07-12",
       "author": "execution-agent",
       "summary": "WBS-6.7 PH-6 docs + diagrams closed (unmerged, INV-005). api-event-contract.md -> v1.2: four Marid gateway routes (/marid/attach, /marid/detach, /marid/bindings [admin], /marid/self-bindings [non-admin]), binding-aware owns-UNION-bound visibility on /event + /global/event (mirroring; view-via-binding, act-via-ownership), the route-not-header SSE isolation fix (ADR-0016/0017), and two behaviours on already-committed routes: channel tool calling (sync /session/{id}/message driven detached) + outbound multipart file sending. NO new replay path (re-fetch, not seq/id - consistent with the v1.1 correction). architecture.md -> v1.1: new 'Marid Gateway & cross-surface mirroring' section (gateway, @marid/channel-client, mirroring; ZERO new P-*), and the stale seq-replay line in the section-7 sequence corrected to re-fetch. New Tarseem diagram 20-gateway-mirroring (spec + PNG/SVG + diagrams README row 20). Stale ci.yml 'pump has no reconnect' comment corrected (the firehose pump reconnects via @marid/channel-client, WBS-6.5); stale 'PH-4 next' status pointers in CLAUDE.md/AGENTS.md corrected to PH-6. /marid/self-bindings now pinned in the merged-/doc contract test (marid-auth gateway.test, 10 pass). validate_package.py docs/ = OK. Root docs (README/CODEMAPS) flagged to operator, not expanded (checkpoint stop). Remaining for MS-007 exit: operator merge only (INV-005). On feat/ph6-test-tiers, NOT merged."
+    },
+    {
+      "date": "2026-07-12",
+      "author": "execution-agent",
+      "summary": "PR #48 merged into develop (squash 4409d92f, all 20 CI checks green) -> MS-007 MET; PH-6 (Telegram-first) complete. Landed the PH-6 stack: WBS-6.6 live test tiers (AC-017/019/020/021/024 all Met), the INV-001 firehose isolation fix (ADR-0016/0017), and WBS-6.7 docs + 20-gateway-mirroring diagram + docs/usage.md user guide. Trackers flipped from the pre-merge 'unmerged / exit gated on operator merge' language to Met/merged (status-report, acceptance-audit evidence, work-breakdown 6.1-6.7, milestones MS-007, roadmap). Residual 'unmerged' tails on WBS-6.1-6.5 also dropped (they landed on develop via earlier PRs #44/#46/#47, not #48). PH-7 (WhatsApp) operator-gated, not started.",
+      "items_completed": [
+        "MS-007 MET (2026-07-12) via PR #48 squash 4409d92f",
+        "PH-6 phase status flipped in-progress -> done",
+        "WBS-6.6 status flipped to done (merged, PR #48); WBS-6.1-6.7 unmerged tails dropped",
+        "AC-017/019/020/021/024 evidence appended: landed on develop via PR #48"
+      ]
     }
   ],
   "change_log": [
@@ -4493,6 +4504,12 @@
       "actor": "execution-agent",
       "action": "WBS-6.7 PH-6 docs + diagrams closed (unmerged, INV-005). api-event-contract.md -> v1.2 (four /marid/* gateway routes; owns-UNION-bound mirroring on /event+/global/event; route-not-header SSE isolation ADR-0016/0017; tool calling via sync /session/{id}/message detached + outbound multipart, both behaviours on committed routes; NO new replay path - re-fetch not seq/id). architecture.md -> v1.1 (new 'Marid Gateway & cross-surface mirroring' section: gateway + @marid/channel-client + mirroring; ZERO new P-*; stale seq-replay section-7 line corrected). New Tarseem diagram 20-gateway-mirroring + diagrams README row. Stale ci.yml reconnect comment + CLAUDE.md/AGENTS.md 'PH-4 next' pointers corrected. /marid/self-bindings pinned in the merged-/doc contract test (marid-auth gateway.test, 10 pass). validate_package.py docs/ = OK. Remaining for MS-007 exit: operator merge only. NOT merged (INV-003/005).",
       "target": "docs/architecture/{api-event-contract,architecture}+docs/architecture/diagrams/Marid/specs/20-gateway-mirroring.json+docs/architecture/diagrams/Marid/20-gateway-mirroring.{png,svg}+docs/architecture/diagrams/README+.github/workflows/ci.yml+CLAUDE.md+docs/AGENTS.md+packages/marid-auth/test/gateway.test.ts+docs/planning/{work-breakdown,milestones,roadmap}+docs/progress/{progress-log,status-report}+keystone-state(progress/change_log)"
+    },
+    {
+      "timestamp": "2026-07-12T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "MS-007 EXIT: flipped trackers to Met/merged after operator merged PR #48 (squash 4409d92f, all 20 CI green). PH-6 (Telegram-first) complete; AC-017/019/020/021/024 all Met. PH-6 phase status in-progress -> done; WBS-6.1-6.7 unmerged tails dropped.",
+      "target": "docs/progress/{progress-log,status-report}+docs/validation/acceptance-audit+docs/planning/{work-breakdown,milestones,roadmap}+keystone-state(progress/change_log/phases[PH-6].status)"
     }
   ]
 }
