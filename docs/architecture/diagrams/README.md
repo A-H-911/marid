@@ -70,7 +70,9 @@ These answer *"if I change X, what moves?"* — use them when modifying, not jus
 - **Tools:** `packages/opencode/src/tool/` · **Providers:** `…/provider/` · **LLM:** `packages/llm/src/`
 - **Database:** `packages/core/src/database/`
 
-See [`../CODEMAPS/`](../CODEMAPS/) for the token-lean text companion to these diagrams.
+The text companion to these diagrams is the design package itself — [`architecture.md`](../architecture.md)
+(target architecture + patch-surface register) and [`api-event-contract.md`](../api-event-contract.md) (the
+route/event surface). A generated token-lean codemap set (`/update-codemaps`) is not yet part of this package.
 
 ## Regenerate
 

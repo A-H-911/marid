@@ -1,6 +1,6 @@
 ---
-status: Draft
-version: 0.1.0
+status: Approved
+version: 1.0.0
 updated: 2026-07-12
 owner: operator (STK-001)
 ---
@@ -12,7 +12,7 @@ is the **full CLI reference, the concepts behind it, and worked recipes**. For *
 is, see the design package in [`docs/`](README.md) (charter, architecture, ADRs) — that is the source of truth;
 this guide describes how to *use* the result.
 
-> **Draft.** Operator-owned; not yet ratified. Commands and flags below are grounded in the shipped CLI.
+> Commands and flags below are grounded in the shipped CLI.
 
 ## Contents
 
