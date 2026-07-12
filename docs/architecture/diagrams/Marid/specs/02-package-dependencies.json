@@ -151,10 +151,20 @@
       ]
     },
     {
+      "id": "mcc",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/channel-client"
+      },
+      "styleRefs": [
+        "ccpkg"
+      ]
+    },
+    {
       "id": "mlegend",
       "shape": "rect",
       "label": {
-        "text": "Marid-added: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+        "text": "Marid-added: red = marid-auth, orange = marid-telegram, amber = @marid/channel-client (shared, PH-7 reuses), dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
       }
     }
   ],
@@ -348,6 +358,16 @@
       "id": "m_mtg_sdk",
       "source": "mtg",
       "target": "sdk"
+    },
+    {
+      "id": "m_mtg_mcc",
+      "source": "mtg",
+      "target": "mcc"
+    },
+    {
+      "id": "m_mcc_sdk",
+      "source": "mcc",
+      "target": "sdk"
     }
   ],
   "styles": {
@@ -376,6 +396,15 @@
       },
       "text": {
         "color": "#ffffff"
+      }
+    },
+    "ccpkg": {
+      "fill": "#F0A81F",
+      "border": {
+        "color": "#C4871A"
+      },
+      "text": {
+        "color": "#0B1220"
       }
     },
     "auth": {

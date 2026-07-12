@@ -111,6 +111,31 @@ graph LR
     classDef deny fill:#3a1512,stroke:#DC2A16,color:#ffd9d0;
 ```
 
+Beyond relaying, the gateway gives a channel **full TUI/Web parity** — tool calling + MCP (each sensitive call
+gated by an inline **Approve/Deny** keyboard, per the channel agent's ruleset), **files both ways**, and
+**cross-surface mirroring**: an operator *attaches* a session and it streams live to the bound surface — Telegram,
+web, or TUI — while acting on it stays owner-only (*view-via-binding, act-via-ownership*, INV-001). Recovery is
+re-fetch-on-reconnect (no event replay). The reusable channel runtime is `@marid/channel-client`; the full flow:
+
+```mermaid
+graph LR
+    TG["✈️ Telegram"]:::channel -->|"message · file"| GW["marid-telegram gateway<br/><i>+ @marid/channel-client</i>"]:::channel
+    GW -->|"sync POST /session/:id/message"| AUTH["🔐 marid-auth gateway<br/>owns ∪ bound filter · /marid/attach"]:::auth
+    AUTH -->|"authorized (owns)<br/>full toolset + MCP"| ENGINE["⚙️ session engine"]:::core
+    ENGINE -->|"SSE events"| AUTH
+    AUTH -->|"owns ∪ bound firehose"| GW
+    GW -->|"reply · file · Approve/Deny"| TG
+    ADMIN["🖥️ operator admin<br/>TUI / Web / CLI"]:::client -->|"POST /marid/attach"| AUTH
+    AUTH -->|"bind"| BIND[("BindingStore")]:::core
+
+    classDef client fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
+    classDef channel fill:#F0731F,stroke:#D9611A,color:#ffffff;
+    classDef auth fill:#DC2A16,stroke:#A81f10,color:#ffffff;
+    classDef core fill:#1C1714,stroke:#000,color:#F4F1EA;
+```
+
+<sub>Full-detail version (channel-client internals, poll/re-fetch recovery): [`docs/architecture/diagrams/Marid/20-gateway-mirroring.png`](docs/architecture/diagrams/Marid/20-gateway-mirroring.png).</sub>
+
 ## Install & verify
 
 Marid ships as **signed, checksummed binaries** on the [GitHub Releases](../../releases) page — public, anonymous
@@ -195,7 +220,9 @@ the token as HTTP Basic, which marid-auth accepts. Without it every request retu
 
 ### ✈️ Telegram
 
-The same agent, from your phone. A **gateway process outside the core** bridges Telegram ↔ the agent; it holds
+The same agent, from your phone — with **full TUI/Web parity**: Markdown replies, tool calling + MCP (each
+sensitive call gated by an inline **Approve/Deny** keyboard), files both ways, and cross-surface mirroring (see
+[Architecture](#architecture)). A **gateway process outside the core** bridges Telegram ↔ the agent; it holds
 **no provider keys** and authenticates with a **restricted `channel:` token** (see the security model). Secrets
 come from the environment (never flags, per INV-002).
 

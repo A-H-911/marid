@@ -297,12 +297,13 @@ jobs:
       # AC-011 streamed reply) against a real `marid serve` + fake LLM + local fake
       # Telegram server. Gated by MARID_TELEGRAM=1 (describe.skip otherwise).
       - name: Run Telegram gateway live suite
-        # Bounded retry-wrapper (operator-chosen). This live E2E rides the SSE firehose over
-        # loopback; on cold Windows CI the connection intermittently drops and the gateway
-        # `pump` has no reconnect (gateway.ts:181-189), so a single drop stalls the reply path
-        # (~100s, no message) — RISK-006 / deferred-work #8. Each attempt re-runs setup fresh;
-        # a hang fails fast at ~110s (the 100s waitFor), so 3× is ~6min worst case. Deterministic
-        # AC-010/011/012 coverage lives in router/stream/permission/gateway-integration tests.
+        # Bounded retry-wrapper (operator-chosen, defence-in-depth). This live E2E rides the SSE
+        # firehose over loopback; on cold Windows CI the connection can be slow/flaky to establish.
+        # The firehose pump now RECONNECTS on drop (capped backoff, @marid/channel-client, WBS-6.5),
+        # so a mid-stream drop auto-recovers — the retry wrapper remains only as a backstop against
+        # first-subscribe/cold-start flake. Each attempt re-runs setup fresh; a hang fails fast at
+        # ~110s (the 100s waitFor), so 3× is ~6min worst case. Deterministic AC-010/011/012 coverage
+        # lives in router/stream/permission/gateway-integration tests.
         run: |
           for attempt in 1 2 3; do
             echo "::group::telegram live E2E — attempt ${attempt}/3"

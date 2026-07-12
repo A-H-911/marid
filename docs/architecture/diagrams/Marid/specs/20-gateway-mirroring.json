@@ -1,0 +1,225 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "flowchart",
+  "direction": "TB",
+  "meta": {
+    "title": "Marid Gateway & Cross-Surface Mirroring (PH-6)"
+  },
+  "nodes": [
+    {
+      "id": "tg",
+      "shape": "stadium",
+      "label": {
+        "text": "Telegram (operator)"
+      }
+    },
+    {
+      "id": "gw",
+      "shape": "rect",
+      "label": {
+        "text": "marid-telegram gateway - render - inline keyboards - multipart files"
+      },
+      "styleRefs": [
+        "channel"
+      ]
+    },
+    {
+      "id": "cc",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/channel-client - subscribe - reconnect - re-fetch - poll self-bindings"
+      },
+      "styleRefs": [
+        "ccpkg"
+      ]
+    },
+    {
+      "id": "auth",
+      "shape": "rect",
+      "label": {
+        "text": "marid-auth gateway - /marid/attach-detach-bindings-self-bindings - owns U bound SSE filter"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "bind",
+      "shape": "roundrect",
+      "label": {
+        "text": "BindingStore (binding.json, 0600)"
+      }
+    },
+    {
+      "id": "sess",
+      "shape": "rect",
+      "label": {
+        "text": "Session run loop + tools + MCP"
+      },
+      "styleRefs": [
+        "core"
+      ]
+    },
+    {
+      "id": "sse",
+      "shape": "roundrect",
+      "label": {
+        "text": "SSE firehose (/event - /global/event)"
+      }
+    },
+    {
+      "id": "admin",
+      "shape": "roundrect",
+      "label": {
+        "text": "Operator admin surface (TUI / Web / CLI)"
+      },
+      "styleRefs": [
+        "client"
+      ]
+    },
+    {
+      "id": "legend",
+      "shape": "rect",
+      "label": {
+        "text": "red = marid-auth gateway; orange = marid-telegram; amber = @marid/channel-client (shared, PH-7 reuses); dark = session core (reused). Mirroring = owns U bound; view-via-binding, act-via-ownership."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "tg",
+      "target": "gw",
+      "label": {
+        "text": "message / file"
+      }
+    },
+    {
+      "id": "e2",
+      "source": "gw",
+      "target": "auth",
+      "label": {
+        "text": "sync /session/{id}/message (detached)"
+      }
+    },
+    {
+      "id": "e3",
+      "source": "auth",
+      "target": "sess",
+      "label": {
+        "text": "authorized (owns) - full toolset + MCP"
+      }
+    },
+    {
+      "id": "e4",
+      "source": "sess",
+      "target": "sse",
+      "label": {
+        "text": "emit events"
+      }
+    },
+    {
+      "id": "e5",
+      "source": "sse",
+      "target": "auth",
+      "label": {
+        "text": "frames"
+      }
+    },
+    {
+      "id": "e6",
+      "source": "auth",
+      "target": "cc",
+      "label": {
+        "text": "owns U bound filtered"
+      }
+    },
+    {
+      "id": "e7",
+      "source": "cc",
+      "target": "gw",
+      "label": {
+        "text": "rendered parts (edit-in-place)"
+      }
+    },
+    {
+      "id": "e8",
+      "source": "gw",
+      "target": "tg",
+      "label": {
+        "text": "reply - file - Approve/Deny keyboard"
+      }
+    },
+    {
+      "id": "e9",
+      "source": "admin",
+      "target": "auth",
+      "label": {
+        "text": "POST /marid/attach"
+      }
+    },
+    {
+      "id": "e10",
+      "source": "auth",
+      "target": "bind",
+      "label": {
+        "text": "write / read binding"
+      }
+    },
+    {
+      "id": "e11",
+      "source": "cc",
+      "target": "auth",
+      "label": {
+        "text": "GET /marid/self-bindings (poll)"
+      }
+    }
+  ],
+  "styles": {
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "ccpkg": {
+      "fill": "#F0A81F",
+      "border": {
+        "color": "#C4871A"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

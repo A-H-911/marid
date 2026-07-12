@@ -102,7 +102,7 @@
         "auth"
       ],
       "label": {
-        "text": "marid-auth (bearer tokens - scopes - rate-limit - audit)"
+        "text": "marid-auth gateway (tokens - scopes - rate-limit - audit - /marid attach + owns-union-bound mirroring)"
       }
     },
     {

@@ -11,6 +11,24 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-12 — WBS-6.7 PH-6 docs + diagrams close (MS-007 exit pending operator merge) — unmerged, gated
+- **Done:** documented the PH-6 channel platform. `architecture/api-event-contract.md` → **v1.2**: the four Marid
+  gateway routes (`/marid/attach`·`detach`·`bindings` admin, `/marid/self-bindings` non-admin), binding-aware
+  **`owns ∪ bound`** visibility on `/event`+`/global/event` (mirroring; view-via-binding, act-via-ownership), the
+  route-not-header SSE isolation fix (ADR-0016/0017), and the two behaviours on already-committed routes — channel
+  **tool calling** (sync `/session/{id}/message` detached) + **outbound multipart files**. **No new replay path**
+  (re-fetch, not seq/id — consistent with the v1.1 correction). `architecture/architecture.md` → **v1.1**: new
+  *Marid Gateway & cross-surface mirroring* section (gateway, `@marid/channel-client`, mirroring; **zero new P-\***),
+  and the stale seq-replay line in the §7 sequence corrected to re-fetch. New Tarseem diagram
+  **20-gateway-mirroring** (spec + PNG/SVG + README row). Stale `ci.yml` comment ("pump has no reconnect")
+  corrected — the firehose pump reconnects (channel-client, WBS-6.5). Stale "PH-4 next" pointers in
+  CLAUDE.md/AGENTS.md corrected to PH-6.
+- **Pinned:** `/marid/self-bindings` now asserted in the merged-`/doc` contract test
+  (`marid-auth/test/gateway.test.ts`, 10 pass) so the newly-documented route is contract-backed.
+- **Decisions:** documented shipped reality over the stale WBS DoD ("fan-out seq→id" was superseded by re-fetch at
+  WBS-6.5). Root docs (README/CODEMAPS) flagged to operator, not expanded (checkpoint stop). **Deviations:** none.
+  **Blockers:** none. **Next:** operator merge of the PH-6 stack → MS-007 exit (INV-005). `validate_package.py docs/` = OK.
+
 ## 2026-07-12 — Telegram tool calling + MCP + file sending; AC-017 Met — unmerged, gated
 - **Done:** the Telegram bot now has full TUI/Web tool parity (built-in + MCP), gated by the channel agent's
   allow/ask/deny ruleset, plus outbound file sending. **Root cause found + fixed:** the gateway drove turns via

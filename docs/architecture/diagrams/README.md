@@ -56,6 +56,7 @@ These answer *"if I change X, what moves?"* — use them when modifying, not jus
 | 17 | [Permission flow](Marid/17-permission-flow.png) | activity | Tool call → rule eval (`allow`/`deny`/`ask`) → question → reply (`once`/`always`/`reject`) — the human-in-the-loop path |
 | 18 | [Contributor workflow](Marid/18-contributor-workflow.png) | swimlane | The Marid dev loop across You / Local repo / GitHub-CI lanes (install → dev → check → test → generate → **PR to `develop`** → 17 checks → operator merge). Uses the `corporate` (cool blue/slate/teal) theme to avoid colliding with the Marid red/orange palette. |
 | 19 | [Codegen pipelines](OpenCode/19-codegen-pipeline.png) | flowchart | The two generate-then-commit chains: API (`./script/generate.ts` → openapi + SDK) and DB (`bun db generate` → `schema.gen.ts`) |
+| 20 | [Gateway & mirroring](Marid/20-gateway-mirroring.png) | flowchart | **PH-6**: the marid-auth **gateway** (`/marid/*` binding routes + `owns ∪ bound` SSE filter) + **`@marid/channel-client`** (subscribe / reconnect / re-fetch) + **cross-surface mirroring** + Telegram tool calling over the sync `/session/{id}/message` route — the channel platform on top of the Gate-5 design |
 
 > Verified wiring: OTel lives in `packages/core/src/observability/otlp.ts` (spans via `Effect.withSpan`);
 > boot is `packages/opencode/src/cli/bootstrap`; streaming persists to `event_sequence`/`event` and the
