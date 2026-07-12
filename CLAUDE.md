@@ -65,7 +65,8 @@ Six dependency-ordered phases, each exiting at a measurable milestone:
 - **Ending a phase:** operator review checkpoint. Review PRs against `docs/handoff/review-prompts.md`
   (esp. patch-surface discipline — flag any upstream edit not registered as a `P-*`).
 - **Current status:** see `docs/progress/status-report.md` (the live snapshot) + `docs/planning/roadmap.md`.
-  (As of this writing: PH-0..3 done / MS-004 met; **PH-4 / MS-005 next**.)
+  (As of this writing: PH-0..5 done; **PH-6 Telegram gateway** in progress — all PH-6 acceptance criteria
+  Met and WBS-6.7 docs done; awaiting operator merge to exit **MS-007**.)
 
 ## Tracking protocol (MANDATORY — do not let the trackers drift)
 

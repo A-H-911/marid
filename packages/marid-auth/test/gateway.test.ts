@@ -183,5 +183,6 @@ describe("GET /doc augmentation (WBS-6.1b, AC-024, EXP-014)", () => {
     expect(spec.paths["/marid/attach"]?.post).toBeDefined() // Marid path merged in
     expect(spec.paths["/marid/detach"]?.post).toBeDefined()
     expect(spec.paths["/marid/bindings"]?.get).toBeDefined()
+    expect(spec.paths["/marid/self-bindings"]?.get).toBeDefined() // non-admin reconnect poll (WBS-6.5); contract-pinned
   })
 })

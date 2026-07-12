@@ -56,14 +56,14 @@ describe("owningSession: sessionID is the top-level aggregate key (v1 + v2)", ()
 
 describe("keepFrame: session-less passes, session frames gated by ownership", () => {
   const owns = (id: string) => id === "ses_mine"
-  test("keeps an owned session frame", () => {
-    expect(keepFrame({ type: "session.status", properties: { sessionID: "ses_mine" } }, owns)).toBe(true)
+  test("keeps an owned session frame", async () => {
+    expect(await keepFrame({ type: "session.status", properties: { sessionID: "ses_mine" } }, owns)).toBe(true)
   })
-  test("drops a non-owned session frame", () => {
-    expect(keepFrame({ type: "session.status", properties: { sessionID: "ses_other" } }, owns)).toBe(false)
+  test("drops a non-owned session frame", async () => {
+    expect(await keepFrame({ type: "session.status", properties: { sessionID: "ses_other" } }, owns)).toBe(false)
   })
-  test("keeps a session-less frame (infrastructure the client needs)", () => {
-    expect(keepFrame({ type: "server.connected", properties: {} }, owns)).toBe(true)
+  test("keeps a session-less frame (infrastructure the client needs)", async () => {
+    expect(await keepFrame({ type: "server.connected", properties: {} }, owns)).toBe(true)
   })
 })
 

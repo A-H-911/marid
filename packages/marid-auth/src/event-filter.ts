@@ -56,13 +56,17 @@ export function owningSessionGlobal(frame: unknown): string | undefined {
 // Keep a parsed frame iff it is session-less (infrastructure/global) or owned. `pick`
 // maps a frame to its owning session id (defaults to the raw /event shape; /global/event
 // passes owningSessionGlobal for the wrapped shape).
-export function keepFrame(
+// `owns` may be async: the SSE filter resolves a session's visibility LAZILY on first sight
+// (one ownership read for an id not yet cached — ADR-0017), so a session the token creates
+// mid-stream appears on its OWN firehose without a re-subscribe. The list-route filter
+// (filterOwnedArray) keeps its own synchronous predicate.
+export async function keepFrame(
   frame: unknown,
-  owns: (sessionID: string) => boolean,
+  owns: (sessionID: string) => boolean | Promise<boolean>,
   pick: (frame: unknown) => string | undefined = owningSession,
-): boolean {
+): Promise<boolean> {
   const session = pick(frame)
-  return session === undefined || owns(session)
+  return session === undefined || (await owns(session))
 }
 
 const FRAME_DELIMITER = "\n\n"
@@ -72,25 +76,25 @@ const FRAME_DELIMITER = "\n\n"
 // payloads pass through unchanged — only well-formed non-owned session frames drop.
 const keepRawFrame = async (
   raw: string,
-  owns: (sessionID: string) => boolean,
+  owns: (sessionID: string) => boolean | Promise<boolean>,
   pick: (frame: unknown) => string | undefined,
 ): Promise<boolean> => {
   const dataLine = raw.split("\n").find((line) => line.startsWith("data:"))
   if (!dataLine) return true
   const parsed = await safeJson(dataLine.slice("data:".length).trim())
   if (parsed === undefined) return true
-  return keepFrame(parsed, owns, pick)
+  return await keepFrame(parsed, owns, pick)
 }
 
 // Wrap an SSE byte stream, dropping event frames the token does not own. Buffers
 // across chunk boundaries — a single frame can be split across reads, and a read
-// can carry several frames. Ownership is a snapshot passed by the caller.
-// ponytail: ownership is snapshotted at subscribe time; a session the same client
-// creates on another request mid-stream is visible only after reconnect. Acceptable
-// for MVP strict isolation; per-frame ownership re-read would add I/O per event.
+// can carry several frames. `owns` may re-read ownership lazily (ADR-0017): the caller's
+// closure resolves an id on first sight and caches it, so a mid-stream-created owned
+// session becomes visible on its own stream without a re-subscribe — bounded to one read
+// per distinct session id (a token only ever owns sessions it created, so absence is stable).
 export function filterSseStream(
   body: ReadableStream<Uint8Array>,
-  owns: (sessionID: string) => boolean,
+  owns: (sessionID: string) => boolean | Promise<boolean>,
   pick: (frame: unknown) => string | undefined = owningSession,
 ): ReadableStream<Uint8Array> {
   const reader = body.getReader()

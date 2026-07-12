@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { inboundFileParts, inboundNote, largestPhotoFileId, resolveDownloadUrl } from "../src/media"
+import { inboundFileParts, inboundNote, largestPhotoFileId, resolveDownloadUrl, resolveOutboundBytes } from "../src/media"
 import { createBotApi } from "../src/bot-api"
 import { redact } from "../src/redact"
 import type { TgMessage } from "../src/telegram"
@@ -107,5 +107,32 @@ describe("resolveDownloadUrl (AC-016: the download URL embeds the token and must
     expect(url).toBe("https://api.telegram.org/file/bot123:AAsecretTokenValue/photos/x.jpg")
     expect(url!.includes(TOKEN)).toBe(true)
     expect(redact(url!, TOKEN)).toBe("https://api.telegram.org/file/bot<redacted>/photos/x.jpg")
+  })
+})
+
+describe("resolveOutboundBytes (outbound file → raw bytes for multipart)", () => {
+  const dec = (b?: Uint8Array) => (b ? new TextDecoder().decode(b) : undefined)
+
+  test("decodes a base64 data: URL to the exact bytes", async () => {
+    const url = `data:application/pdf;base64,${Buffer.from("HELLO-PDF").toString("base64")}`
+    expect(dec(await resolveOutboundBytes(url))).toBe("HELLO-PDF")
+  })
+
+  test("decodes a non-base64 (percent-encoded) data: URL", async () => {
+    expect(dec(await resolveOutboundBytes("data:text/plain,hi%20there"))).toBe("hi there")
+  })
+
+  test("returns undefined for a malformed data: URL (no comma)", async () => {
+    expect(await resolveOutboundBytes("data:application/pdf;base64")).toBeUndefined()
+  })
+
+  test("reads bytes from a file:// URL", async () => {
+    const fs = await import("node:fs/promises")
+    const os = await import("node:os")
+    const path = await import("node:path")
+    const { pathToFileURL } = await import("node:url")
+    const p = path.join(await fs.mkdtemp(path.join(os.tmpdir(), "ob-")), "f.bin")
+    await fs.writeFile(p, "FILE-BYTES")
+    expect(dec(await resolveOutboundBytes(pathToFileURL(p).href))).toBe("FILE-BYTES")
   })
 })

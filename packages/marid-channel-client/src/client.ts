@@ -61,6 +61,14 @@ export interface Streamer {
   finish(fullText: string): Promise<void>
 }
 
+// An assistant FILE part to render on the channel (Telegram sendDocument/sendPhoto, WhatsApp
+// media, …). Normalized from the v1 FilePart schema (packages/schema/src/v1/session.ts).
+export interface OutboundFile {
+  url: string
+  mime: string
+  filename?: string
+}
+
 export interface ChannelClientDeps {
   sdk: OpencodeClient
   signal: AbortSignal
@@ -69,6 +77,10 @@ export interface ChannelClientDeps {
   createStreamer(sessionID: string): Streamer
   // Surface a permission ask on the channel (inline keyboard / reply-token / …).
   onAsk(ask: PermissionAsk): void
+  // Surface an assistant FILE part on the channel (Telegram sendDocument/sendPhoto, …),
+  // ONCE per part (deduped by part.id). Optional — a channel without outbound files omits it.
+  // Symmetric with onAsk; view-via-binding applies (a bound session's file mirrors too).
+  onFile?(sessionID: string, file: OutboundFile): void
   // WBS-6.5c: the channel token's OWN bound-session set (from the server's admin-free
   // self-bindings route). Polled so an operator attach/detach that lands while the stream
   // is healthy triggers a re-subscribe (the re-subscribe re-reads owns∪bound fresh).
@@ -93,6 +105,9 @@ interface SessionState {
   streamers: Map<string, Streamer>
   textByPart: Map<string, string>
   userMessages: Set<string>
+  // Assistant file part ids already surfaced via onFile — a file part.updated can fire more
+  // than once (empty → ready); we send it exactly once when it first has a url.
+  sentFiles: Set<string>
   // OWNED (beginTurn — the channel created/prompted it) vs BOUND (lazily tracked from a
   // mirrored-in frame). Only owned sessions are safe to re-fetch on reconnect: a bound
   // session's history route is owns-gated (403, INV-001). See start()'s refetchOwned.
@@ -150,7 +165,7 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
       // ponytail: state maps grow across a long-lived bound session's turns (no beginTurn
       // reset); bounded cleanup is future work, not needed for MVP correctness (each turn's
       // parts still render to their own messages). owned=false → never re-fetched (INV-001).
-      state = { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), owned: false }
+      state = { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), sentFiles: new Set(), owned: false }
       sessions.set(sessionID, state)
     }
 
@@ -162,6 +177,38 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
       if (info?.role === "user" && typeof info.id === "string") state.userMessages.add(info.id)
       if (info?.role === "assistant" && info.time?.completed) finishAll(sessionID, state)
       return
+    }
+
+    // Outbound FILE part (WBS-6.2 residual): an assistant file part (mime + url) mirrors to the
+    // channel via onFile, ONCE per part.id. Excludes the operator's own inbound file echo (user
+    // message). refetchOwned re-flushes only TEXT parts, so a file is not re-sent on reconnect —
+    // ponytail: a file that arrives during an SSE gap is not gap-recovered (text is); add a
+    // file-aware refetch if that gap matters.
+    if (payload.type === "message.part.updated") {
+      const part = props.part as
+        | { id?: string; type?: string; url?: string; mime?: string; filename?: string; messageID?: string }
+        | undefined
+      if (
+        part &&
+        part.type === "file" &&
+        typeof part.id === "string" &&
+        typeof part.url === "string" &&
+        typeof part.messageID === "string" &&
+        // Never echo the operator's own inbound file back. Inherits the text path's ordering
+        // assumption: the user's message.updated (which records the id in userMessages) precedes
+        // the user's file part — same assumption already load-bearing for user-text exclusion.
+        !state.userMessages.has(part.messageID)
+      ) {
+        if (!state.sentFiles.has(part.id)) {
+          state.sentFiles.add(part.id)
+          deps.onFile?.(sessionID, {
+            url: part.url,
+            mime: typeof part.mime === "string" ? part.mime : "application/octet-stream",
+            filename: typeof part.filename === "string" ? part.filename : undefined,
+          })
+        }
+        return
+      }
     }
 
     if (TEXT_EVENTS.has(payload.type)) {
@@ -320,7 +367,7 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
 
   return {
     beginTurn(sessionID) {
-      sessions.set(sessionID, { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), owned: true })
+      sessions.set(sessionID, { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), sentFiles: new Set(), owned: true })
     },
     async start() {
       // Subscribe FIRST and AWAIT it before returning (the firehose is live-only and the

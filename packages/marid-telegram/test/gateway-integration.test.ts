@@ -99,7 +99,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
       global: { event: async () => ({ stream: events.iterator() }) },
       session: {
         create: async () => ({ data: { id: "ses_1" } }),
-        promptAsync: async () => {
+        prompt: async () => {
           promptCount += 1
           return { data: {} }
         },
@@ -185,7 +185,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
 
     const sdk = {
       global: { event: async () => ({ stream: events.iterator() }) },
-      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => { prompted = true; return { data: {} } } },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => { prompted = true; return { data: {} } } },
       permission: { respond: async () => ({ data: true }) },
     } as unknown as OpencodeClient
 
@@ -251,7 +251,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
 
     const sdk = {
       global: { event: async () => ({ stream: events.iterator() }) },
-      session: { create: async () => ({ data: { id: "ses_x" } }), promptAsync: async () => ({ data: {} }) },
+      session: { create: async () => ({ data: { id: "ses_x" } }), prompt: async () => ({ data: {} }) },
       permission: { respond: async () => ({ data: true }) },
     } as unknown as OpencodeClient
 
@@ -315,7 +315,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
           return { stream: q.iterator() }
         },
       },
-      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => ({ data: {} }), messages: async () => ({ data: [] }) },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => ({ data: {} }), messages: async () => ({ data: [] }) },
       permission: { respond: async () => ({ data: true }) },
     } as unknown as OpencodeClient
 
@@ -382,7 +382,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
           createCount += 1
           return { data: { id: `ses_${createCount}` } }
         },
-        promptAsync: async () => {
+        prompt: async () => {
           promptCount += 1
           return { data: {} }
         },
@@ -417,6 +417,83 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
       updates.push({ update_id: 2, message: { message_id: 2, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "/new" } })
       expect(await waitFor(() => sent.includes("Started a new session."))).toBe(true)
       expect(promptCount).toBe(0)
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
+
+  // WBS-6.2 residual (AC-017): outbound files. An assistant FILE part is rendered into the
+  // session's chat — image mimes via sendPhoto, everything else via sendDocument, with the
+  // filename as the caption. The served-LLM E2E cannot emit assistant file parts (same limit
+  // as the permission round trip), so this deterministic faked-SDK tier owns the coverage.
+  test("an assistant file part is sent outbound as decoded bytes (image → sendPhotoBytes, other → sendDocumentBytes, filename = caption)", async () => {
+    const events = eventQueue()
+    const updates: unknown[] = []
+    const decode = (b: Uint8Array) => new TextDecoder().decode(b)
+    const photos: Array<{ chatId: number; text: string; filename: string; caption?: string }> = []
+    const docs: Array<{ chatId: number; text: string; filename: string; caption?: string }> = []
+    let prompted = false
+
+    const bot = {
+      getUpdates: async () => {
+        if (updates.length) return updates.splice(0) as never
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async () => ({ message_id: 1, chat: { id: OPERATOR, type: "private" } }) as never,
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+      sendPhotoBytes: async (chatId: number, bytes: Uint8Array, filename: string, caption?: string) => {
+        photos.push({ chatId, text: decode(bytes), filename, caption })
+        return { message_id: 10, chat: { id: chatId, type: "private" } } as never
+      },
+      sendDocumentBytes: async (chatId: number, bytes: Uint8Array, filename: string, caption?: string) => {
+        docs.push({ chatId, text: decode(bytes), filename, caption })
+        return { message_id: 11, chat: { id: chatId, type: "private" } } as never
+      },
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => { prompted = true; return { data: {} } } },
+      permission: { respond: async () => ({ data: true }) },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // Operator prompts so ses_1 is bound to the operator's chat.
+      updates.push({ update_id: 1, message: { message_id: 1, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "make me a file" } })
+      expect(await waitFor(() => prompted)).toBe(true)
+
+      // The assistant emits a document part and an image part on its message. Real file parts
+      // carry `data:<mime>;base64,…` URLs (bytes inline) — the gateway decodes + uploads bytes.
+      const docUrl = `data:application/pdf;base64,${Buffer.from("REPORT-PDF-BYTES").toString("base64")}`
+      const imgUrl = `data:image/png;base64,${Buffer.from("CHART-PNG-BYTES").toString("base64")}`
+      events.push({ payload: { id: "e1", type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "pf1", type: "file", url: docUrl, mime: "application/pdf", filename: "report.pdf", messageID: "m1" } } } })
+      events.push({ payload: { id: "e2", type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "pf2", type: "file", url: imgUrl, mime: "image/png", filename: "chart.png", messageID: "m1" } } } })
+
+      expect(await waitFor(() => docs.length === 1 && photos.length === 1)).toBe(true)
+      expect(docs[0]).toEqual({ chatId: OPERATOR, text: "REPORT-PDF-BYTES", filename: "report.pdf", caption: "report.pdf" })
+      expect(photos[0]).toEqual({ chatId: OPERATOR, text: "CHART-PNG-BYTES", filename: "chart.png", caption: "chart.png" })
     } finally {
       controller.abort()
       events.close()

@@ -1,7 +1,7 @@
 ---
-status: Approved (gate 5, 2026-07-03)
-version: v1.0
-updated: 2026-07-08
+status: Approved (gate 5, 2026-07-03; amended 2026-07-12 — PH-6 gateway + mirroring realized, additive)
+version: v1.1
+updated: 2026-07-12
 owner: operator (STK-001)
 ---
 
@@ -77,7 +77,10 @@ graph TB
 | P-CI | CI test-timing/env edits for GitHub-hosted runners — enumerated in `upstream-sync-strategy.md` (P-CI-1..4); prefer fixes in `ci.yml` over upstream test edits (P-CI-4 = env-scaled timing, knob in `ci.yml`). Surface as of PH-2: scaled read-sites in `packages/opencode` tests **and** `packages/core/test/util/flock.test.ts`, plus a one-line `turbo.json` `globalPassThroughEnv` entry (knob transport — turbo strict env mode otherwise strips the scale from non-opencode test tasks) | Free 2-core runners are slower/variable vs upstream's runners | Small, per-test + 1 config line | Low (re-apply on conflict) |
 | P-ENTRY (additive) | marid binary entry `packages/opencode/src/marid.ts` + profile build `packages/opencode/script/marid-build.ts` — **new files, zero upstream edits**. `src/marid.ts` mirrors `src/index.ts`'s command wiring (branded `marid`, authenticated `serve`, adds `token` + `instance`); `marid-build.ts` mirrors `build.ts`'s defines/worker-paths (swaps entrypoint + binary name). Chosen over a parameterizing edit to `index.ts`/`build.ts` (operator decision 2026-07-04). | `index.ts`/`build.ts` execute on import and aren't reusable builders; additive is more sync-durable than an edit that conflicts | 0 upstream lines (2 new files) | **Drift**: an upstream command added to `index.ts`, or a defines change in `build.ts`, is NOT auto-reflected — reconcile both on each sync (checklist in `upstream-sync-strategy.md`) |
 
-Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync. **marid-auth ingress altitude (RESOLVED 2026-07-05, PR #15):** the outer-wrapper seam sees HTTP only, so `client`-scope enforcement was originally per-session *route* ownership. The follow-up landed as option (b): `@marid/auth`'s `event-filter.ts` now body-filters at the wrapper for any non-admin token — dropping non-owned SSE frames from `GET /event` and non-owned entries from `GET /session` / `GET /permission` (all additive, zero upstream edit; invariant pinned by a contract test). Residual: `POST /permission/:requestID/reply` is keyed by an opaque `per_` id the wrapper cannot map to a session — documented in `decisions/open-decision-register.md` as a future in-pipeline follow-up (same seam boundary as deferred FR-030 trace correlation).
+Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
+**PH-6 (gateway + mirroring) added no `P-*`:** the four `/marid/*` routes and the `owns ∪ bound` SSE filter
+are served in the marid-auth wrapper (additive, zero upstream edit); the Principle-2 server-extension seam
+was not needed (see *Marid Gateway & cross-surface mirroring* below). **marid-auth ingress altitude (RESOLVED 2026-07-05, PR #15):** the outer-wrapper seam sees HTTP only, so `client`-scope enforcement was originally per-session *route* ownership. The follow-up landed as option (b): `@marid/auth`'s `event-filter.ts` now body-filters at the wrapper for any non-admin token — dropping non-owned SSE frames from `GET /event` and non-owned entries from `GET /session` / `GET /permission` (all additive, zero upstream edit; invariant pinned by a contract test). Residual: `POST /permission/:requestID/reply` is keyed by an opaque `per_` id the wrapper cannot map to a session — documented in `decisions/open-decision-register.md` as a future in-pipeline follow-up (same seam boundary as deferred FR-030 trace correlation).
 
 ## Cross-interface flow (the §7 example, realized)
 
@@ -92,10 +95,41 @@ sequenceDiagram
     S-->>T: SSE: session created/updated (TUI already subscribed)
     Note over T: session appears; operator continues in TUI
     T->>S: prompt via same API
-    S-->>App: SSE: message/part deltas (v2 replay via ?after=seq on reconnect)
+    S-->>App: SSE: message/part deltas (re-fetch authoritative state on reconnect — no seq cursor)
     S-->>G: SSE: updates → gateway edits Telegram message (2-3 s coalescing)
     G->>S: POST /permission/:id/reply (operator tapped Approve)
 ```
+
+## Marid Gateway & cross-surface mirroring (PH-6, realized)
+
+PH-6 realizes the channel platform on top of the Gate-5 design — **entirely additively, with zero new
+`P-*`**. Principle 2's "server extension seam" was **not** needed: `marid-auth` is an outer wrapper around
+the exported handler, and every PH-6 route is served in that wrapper. Three additions:
+
+- **The Gateway.** `marid-auth` becomes the channel gateway: besides bearer-auth / rate-limit / audit /
+  `owns`-isolation, the wrapper now serves four Marid routes — `POST /marid/attach`, `POST /marid/detach`,
+  `GET /marid/bindings` (admin), `GET /marid/self-bindings` (any token, own set only) — that bind a session
+  to a channel surface. A durable `BindingStore` (`binding.json`, 0600 sidecar) persists the bindings.
+- **`@marid/channel-client`** (new pkg) — the reusable channel runtime extracted from `marid-telegram`:
+  firehose subscribe + event-pump with **reconnect** (capped backoff 500 ms–30 s), cross-generation event
+  interpretation, `parseAskEvent`, per-part streamer coordination, and **re-fetch-on-reconnect** recovery
+  (owned sessions re-read the durable store and flush edit-in-place; bound sessions resume live only). It
+  polls `/marid/self-bindings` to pick up a mid-stream attach. PH-7 (WhatsApp) inherits it unchanged.
+- **Mirroring** = binding-aware **`owns ∪ bound`** visibility at the `/event` + `/global/event` filter site
+  (`middleware.ts`; `event-filter.ts`'s `filterSseStream` already takes a pluggable predicate, so the swap
+  is at the call site — no upstream edit). **View-via-binding, act-via-ownership:** a bound surface observes
+  but cannot approve/prompt a non-owned session (INV-001). Closing this filter also closed a pre-existing
+  INV-001 firehose gap (unfiltered for *every* non-admin token), later hardened by ADR-0016 (recognise the
+  firehose by route, not the `Accept` header) + ADR-0017 (own-session lazy visibility).
+
+**Telegram experience** (`marid-telegram`, the gateway process) now has full TUI/Web parity: Markdown via
+`telegramify-markdown`, files **both ways** (inbound `resolveDownloadUrl` → `FilePartInput`; outbound tool
+media attachments decoded from `data:` URLs and sent as **multipart** bytes), whitelisted slash commands,
+inline permission keyboards, and **tool calling + MCP** — driven over the sync `/session/{id}/message`
+route **detached** (the async `prompt_async` route forks the turn off its request scope and resolves an
+empty toolset; the sync route keeps the request alive so the full toolset resolves). Per-tool gating is the
+channel agent's `permission` ruleset, not a channel-side strip (`../execution/telegram-channel-tools.md`).
+The full route/event contract is in `api-event-contract.md` (v1.2).
 
 ## Deployment & isolation view
 

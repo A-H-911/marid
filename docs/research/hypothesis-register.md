@@ -27,6 +27,7 @@ planning — this package only defines them.
 | HYP-012 | A second-account burner probe can smoke-test the real WhatsApp protocol off-CI without an unacceptable per-run ban rate for an inbound-only responder bot | EXP-012 | ADR-0014 tier 3 |
 | HYP-013 | mobilewright drives the native WhatsApp Android app repeatably enough for an occasional manual render check (incl. whether an optional list message actually displays) | EXP-013 | ADR-0014 tier 4 |
 | HYP-014 | The gateway's attach/binding endpoints can be OpenAPI-documented **additively** — a Marid-owned `HttpApiGroup`'s `OpenApi.fromApi` fragment merged into the `marid-auth`-intercepted `/doc` response — with **no upstream edit (no `P-*`)**; the route is served by the wrapper | EXP-014 | ADR-0011; AC-024; NFR-001 |
+| HYP-015 | The owns∪bound SSE isolation (WBS-6.1 slice b) holds on the **live** path a non-admin token actually uses — a channel/client token subscribing via `sdk.global.event()` / `/event` receives only frames for sessions it owns or is bound to | EXP-015 (**REFUTED**) | ADR-0016; INV-001; AC-004/019/024; RISK-025 |
 
 ## Experiment plans
 
@@ -136,3 +137,16 @@ collision and stays serializable → `marid-auth` can serve an augmented `/doc` 
 edit = enumerate one `P-*`, STOP for operator approval.
 **Result: PASS** (2026-07-11, 3/3) — see [exp-014-report](../experiments/exp-014-report.md). Production TEST-CONTRACT
 (the `/doc`-merge + a live round-trip) lands in slice b.
+
+### EXP-015 — Live SSE firehose isolation probe (owns∪bound on the real SDK path) · TEST-SEC · surfaced at WBS-6.6
+Setup: mint an admin token + a channel token against a live `marid serve`; subscribe the **channel** token to
+`/global/event` three ways (raw fetch with `Accept: text/event-stream`, raw fetch without it, and the real
+`sdk.global.event()`); create an **admin-only** session after each subscribe; observe whether it leaks into the
+channel's stream (`packages/opencode/scripts/global-event-isolation-repro.ts`, model-free, deterministic).
+**PASS (hypothesis holds):** the admin session is invisible on all three paths. **FAIL/REFUTED:** it leaks on any
+path a real client uses.
+**Result: REFUTED** (2026-07-11) — leaks WITHOUT the header and via `sdk.global.event()` (the SDK omits the header),
+isolated only WITH the header. Root cause: `isStream()` gates the owns∪bound filter on a client-supplied `Accept`
+header the SDK doesn't send → firehose served unfiltered to non-admin tokens (both `/event`+`/global/event`, channel
+AND client scope). See [exp-015-report](../experiments/exp-015-report.md), [ADR-0016](../adrs/adr-0016-sse-isolation-route-not-header.md),
+[RISK-025](../risks/risk-register.md). **STOP for operator approval of the fix (INV-005).**

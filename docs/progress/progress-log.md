@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-11
+updated: 2026-07-12
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,101 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-12 — WBS-6.7 PH-6 docs + diagrams close (MS-007 exit pending operator merge) — unmerged, gated
+- **Done:** documented the PH-6 channel platform. `architecture/api-event-contract.md` → **v1.2**: the four Marid
+  gateway routes (`/marid/attach`·`detach`·`bindings` admin, `/marid/self-bindings` non-admin), binding-aware
+  **`owns ∪ bound`** visibility on `/event`+`/global/event` (mirroring; view-via-binding, act-via-ownership), the
+  route-not-header SSE isolation fix (ADR-0016/0017), and the two behaviours on already-committed routes — channel
+  **tool calling** (sync `/session/{id}/message` detached) + **outbound multipart files**. **No new replay path**
+  (re-fetch, not seq/id — consistent with the v1.1 correction). `architecture/architecture.md` → **v1.1**: new
+  *Marid Gateway & cross-surface mirroring* section (gateway, `@marid/channel-client`, mirroring; **zero new P-\***),
+  and the stale seq-replay line in the §7 sequence corrected to re-fetch. New Tarseem diagram
+  **20-gateway-mirroring** (spec + PNG/SVG + README row). Stale `ci.yml` comment ("pump has no reconnect")
+  corrected — the firehose pump reconnects (channel-client, WBS-6.5). Stale "PH-4 next" pointers in
+  CLAUDE.md/AGENTS.md corrected to PH-6.
+- **Pinned:** `/marid/self-bindings` now asserted in the merged-`/doc` contract test
+  (`marid-auth/test/gateway.test.ts`, 10 pass) so the newly-documented route is contract-backed.
+- **Decisions:** documented shipped reality over the stale WBS DoD ("fan-out seq→id" was superseded by re-fetch at
+  WBS-6.5). Root docs (README/CODEMAPS) flagged to operator, not expanded (checkpoint stop). **Deviations:** none.
+  **Blockers:** none. **Next:** operator merge of the PH-6 stack → MS-007 exit (INV-005). `validate_package.py docs/` = OK.
+
+## 2026-07-12 — Telegram tool calling + MCP + file sending; AC-017 Met — unmerged, gated
+- **Done:** the Telegram bot now has full TUI/Web tool parity (built-in + MCP), gated by the channel agent's
+  allow/ask/deny ruleset, plus outbound file sending. **Root cause found + fixed:** the gateway drove turns via
+  `sdk.session.promptAsync`, whose opencode handler forks the turn off its request (`Effect.forkIn`) and returns
+  immediately — the forked turn outlives the request-scoped tool/agent/MCP context and resolved a **ZERO
+  toolset**, so the bot could never use tools (this was the long-standing "served run has no tools" observation;
+  isolated deterministically by `scripts`→`test/marid/step0-tools-probe.test.ts`: channel+sync = full toolset,
+  channel+promptAsync = 0). **Fix (`marid-telegram/src/gateway.ts` onMessage, additive, no upstream edit):** drive
+  the sync `session.prompt` route **detached** — the SDK drains the response stream in the background so the
+  request stays alive for the whole turn (tools resolve) while the poll loop is never blocked; the reply renders
+  via the SSE firehose as before. **File sending:** assistant/tool `data:` file parts are decoded + uploaded as
+  **multipart bytes** (`bot-api` `sendPhotoBytes`/`sendDocumentBytes` + `media.resolveOutboundBytes` + `onFile`).
+  **Config recipe:** `docs/execution/telegram-channel-tools.md` — default `{"*":"ask", read/glob/grep/list:"allow",
+  task:"deny"}` (task denied to close a subagent-escalation hole: subagents inherit only parent *deny* rules).
+- **Proof — deterministic + LIVE:** `telegram.test.ts` drives a real bash tool call through the real gateway and
+  asserts the Approve/Deny inline keyboard reaches the operator (3 pass); `gateway-integration` multipart outbound
+  file; `bot-api`/`media` units; marid-telegram **99 green**, typecheck 0, lint clean. **LIVE** (`scripts/tg-tool-e2e.ts`,
+  real GLM over real MTProto): a live text turn round-trips (sync-route regression is live-safe) **and** a real
+  model bash call surfaces `[✅ Approve \| 🚫 Deny]` in Telegram → Approve tapped → tool runs → turn completes.
+- **AC-017 → Met (2026-07-12, operator-accepted, INV-005):** the two prior "live-impossible" parts (inline keyboard
+  + outbound file) are resolved. All MS-007 acceptance criteria (AC-017/019/020/021/024) now Met.
+- **Decisions:** permissions come from the **agent config**, not the channel (verified — channel scope does NOT
+  strip tools); the fix is **Marid-side** (route switch), not an upstream `promptAsync` patch. **Deviations:** none.
+  **Blockers:** none. **Next for MS-007 exit:** WBS-6.7 docs + operator merge (INV-005). Native-mobile EXP-010 deferred.
+
+## 2026-07-12 — AC-021 TEST-TG-UI (Telegram-Web render tier) Met — unmerged, gated
+- **Done:** built the AC-021 Telegram-Web-Playwright render tier and closed it live vs **production**
+  web.telegram.org. `scripts/tg-web-e2e.ts` (Bun) boots a real `marid serve` + a channel token + `runGateway`
+  driven by an **inline fake LLM** emitting fixed markdown (bold/inline-code/fenced, per-run nonce) through the
+  **real** `telegramify-markdown` formatter + **real** Bot API; `scripts/tg-web-driver.mjs` (Node) drives a
+  logged-in Telegram Web account and asserts the **rendered DOM**: `<strong>` + `<code>` + `<pre>` + **no literal
+  `**…**`** (the direct guard on the ADR-0008 defect-1 regression) + `<img>` media (`bot.sendPhoto` public URL).
+  **4/4 stable runs.** One-time headed login (`scripts/tg-web-login.mjs`, QR) persists `.pw-telegram/`; operator
+  id captured via a getUpdates probe. **[EXP-009](../experiments/exp-009-report.md) PASS** → **AC-021 Met**.
+  Playwright + chromium added as an opencode devDep (bun.lock: single clean add). typecheck 0, lint clean, INV-002
+  clean (no token/session/key printed). Zero upstream edit, no `P-*` (three additive scripts).
+- **Decisions (operator-confirmed 2026-07-12, INV-005 — evidence notes, not ADRs):** run on **production** Telegram
+  not the test-DC/`?test=1` (as [EXP-007](../experiments/exp-007-report.md) already superseded the test-DC premise);
+  **dedicated Playwright userDataDir + one-time headed login** (Telegram Web keeps its session in IndexedDB, which
+  `storageState` does NOT capture → `launchPersistentContext`); **native-mobile EXP-010 deferred** (no Android
+  tooling here; ADR-0013 keeps it manual/never-a-gate, not in the MS-007 exit).
+- **Deviations:** Playwright's browser launch **hangs under Bun** → the browser half is a **Node** child (the
+  `@marid/*` half stays Bun), coordinated over a spawned-process JSON handshake. The meaningful **outbound-file
+  `onFile`** render is NOT exercised (zero-tools served run + instance-local URL Telegram can't fetch,
+  `gateway.ts:111`) — the media assertion uses the Bot API public-URL path; `onFile` stays deferred future work.
+  TEST-TG-UI runs **local pre-PR** only (like the userbot/model live tiers) — **not** wired into `ci.yml`; GitHub
+  on-demand deferred (ephemeral runner lacks the logged-in IndexedDB profile).
+- **Blockers:** none for AC-021. **Next (gate → operator, INV-005):** MS-007's exit lists AC-017 green but **AC-017
+  stays Partial** — render fidelity is now proven by AC-021, but inline-kbd/outbound-file parts remain
+  live-impossible (zero-tools ceiling; faked-SDK `gateway-integration` tier). The open decision is whether that
+  faked-SDK tier suffices to accept AC-017 Partial → then MS-007. Also: operator merge of the PH-6 stack.
+
+## 2026-07-11 — WBS-6.6 test tiers + live E2E; INV-001 firehose leak found & fixed (ADR-0016/0017) — unmerged, gated
+- **Done:** WBS-6.6 agent-ownable + live tiers. **Deterministic:** SSE-drop E2E (drives the 6.5 reconnect+refetch
+  through the real `@marid/channel-client` vs a live `marid serve`); outbound-file feature (WBS-6.2 residual DoD
+  gap — `onFile` in channel-client + gateway); inbound-file E2E. **Live (operator-run, creds in git-ignored `.env`):**
+  `scripts/tg-userbot-e2e.ts` — real GramJS userbot ↔ REAL gateway slash round-trip (`/help`, deny-by-default
+  refusal, `/new`) → **AC-020 Met**; DEP-014 (GramJS-on-Bun) resolved. `scripts/tg-model-e2e.ts` — real GLM
+  (OpenRouter) over the real gateway + real MTProto: text round-trip (AC-017 evidence) + **bidirectional mirror +
+  unattached-invisible + attach re-subscribe → AC-019 Met**.
+- **🔒 Security (INV-001):** the live model tier surfaced a **realized firehose isolation leak** — `/event`+
+  `/global/event` served UNFILTERED to any non-admin token (channel AND client scope) because the SDK's SSE client
+  omits `Accept: text/event-stream` and marid-auth gated the owns∪bound filter on that header (`isStream`).
+  Defeated AC-004/019/024 isolation on the live path; the unit suite missed it (function/header-ful frames only).
+  [EXP-015](../experiments/exp-015-report.md) REFUTED HYP-015; [RISK-025](../risks/risk-register.md). **Fixed:**
+  [ADR-0016](../adrs/adr-0016-sse-isolation-route-not-header.md) — `isStream` recognises firehose routes by
+  **pathname** (header-independent). That exposed a companion defect (own-session visibility had depended on the
+  leak): [ADR-0017](../adrs/adr-0017-firehose-own-session-lazy-visibility.md) — the filter resolves a token's own
+  mid-stream sessions **lazily** (first-sight, positive-cache only). Both proven deterministically (real-request
+  regression test + isolation repro + `telegram.test.ts` + the live re-run); marid-auth **123** green. Zero
+  upstream edit, no `P-*`.
+- **Decisions:** ADR-0016 + ADR-0017 Approved; Option B (server lazy re-read) chosen over channel-client
+  re-subscribe (advisor-evaluated — A insufficient for web/TUI on the same client scope + a multi-session teardown
+  defect). **Deviations:** `own-session-visibility-repro.ts` confirms the CAUSE only, not the fix (a channel can't
+  emit a post-ownership frame model-free). **Blockers:** none for the delivered tiers. **Next (WBS-6.6 residual):**
+  AC-021 TEST-TG-UI (EXP-009 Telegram-Web/Playwright — NOT yet built) + native-mobile manual → then MS-007.
 
 ## 2026-07-11 — WBS-6.5 SSE reconnect + re-fetch recovery DONE (unmerged, gated)
 - **Done:** all recovery in **`@marid/channel-client`** (shared → PH-7 inherits) + one non-admin route in

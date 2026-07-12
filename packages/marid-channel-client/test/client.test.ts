@@ -85,27 +85,31 @@ describe("parseAskEvent", () => {
 })
 
 describe("createChannelClient pump", () => {
+  type CapturedFile = { sessionID: string; url: string; mime: string; filename?: string }
   async function withClient(
     body: (ctx: {
       events: ReturnType<typeof eventQueue>
       created: ReturnType<typeof recordingStreamers>["created"]
       asks: PermissionAsk[]
+      files: CapturedFile[]
       begin: (id: string) => void
     }) => Promise<void>,
   ) {
     const events = eventQueue()
     const { created, createStreamer } = recordingStreamers()
     const asks: PermissionAsk[] = []
+    const files: CapturedFile[] = []
     const controller = new AbortController()
     const client = createChannelClient({
       sdk: fakeSdk(events),
       signal: controller.signal,
       createStreamer,
       onAsk: (ask) => void asks.push(ask),
+      onFile: (sessionID, file) => void files.push({ sessionID, ...file }),
     })
     const { done } = await client.start()
     try {
-      await body({ events, created, asks, begin: (id) => client.beginTurn(id) })
+      await body({ events, created, asks, files, begin: (id) => client.beginTurn(id) })
     } finally {
       controller.abort()
       events.close()
@@ -165,6 +169,32 @@ describe("createChannelClient pump", () => {
       expect(
         await waitFor(() => created.length === 1 && created[0]!.sessionID === "ses_bound" && created[0]!.pushes.at(-1) === "mirrored-in"),
       ).toBe(true)
+    })
+  })
+
+  // WBS-6.2 residual (AC-017): an assistant FILE part mirrors to the channel via onFile,
+  // exactly once (a file part.updated can fire more than once: empty → ready).
+  test("an assistant file part is surfaced to onFile once (deduped by part.id)", async () => {
+    await withClient(async ({ events, files, begin }) => {
+      begin("ses_1")
+      const filePart = { id: "pf1", type: "file", url: "https://inst/file/report.pdf", mime: "application/pdf", filename: "report.pdf", messageID: "m1" }
+      events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: filePart } } })
+      events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: filePart } } })
+      expect(await waitFor(() => files.length === 1)).toBe(true)
+      expect(files[0]).toEqual({ sessionID: "ses_1", url: "https://inst/file/report.pdf", mime: "application/pdf", filename: "report.pdf" })
+      // A beat to prove the duplicate frame produced no second onFile.
+      await new Promise((r) => setTimeout(r, 30))
+      expect(files.length).toBe(1)
+    })
+  })
+
+  test("the operator's own inbound file (user message) is never echoed to onFile", async () => {
+    await withClient(async ({ events, files, begin }) => {
+      begin("ses_1")
+      events.push({ payload: { type: "message.updated", properties: { sessionID: "ses_1", info: { id: "m_user", role: "user" } } } })
+      events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "pf_user", type: "file", url: "https://inst/file/in.jpg", mime: "image/jpeg", messageID: "m_user" } } } })
+      await new Promise((r) => setTimeout(r, 50))
+      expect(files.length).toBe(0)
     })
   })
 

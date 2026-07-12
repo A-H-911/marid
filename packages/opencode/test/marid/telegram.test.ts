@@ -44,6 +44,7 @@ function configContent(llmUrl: string): string {
   return JSON.stringify({
     ...testProviderConfig(llmUrl),
     model: "test/test-model", // default model so a prompt without an explicit model runs
+    permission: { bash: "ask" }, // a bash tool call surfaces a permission prompt (inline keyboard)
   })
 }
 
@@ -64,7 +65,13 @@ function overlay(fakeHome: string, llmUrl: string): Record<string, string> {
 
 interface FakeUpdate {
   update_id: number
-  message?: { message_id: number; from: { id: number; is_bot: boolean }; chat: { id: number; type: string }; text: string }
+  message?: {
+    message_id: number
+    from: { id: number; is_bot: boolean }
+    chat: { id: number; type: string }
+    text?: string
+    document?: { file_id: string; file_name?: string; mime_type?: string }
+  }
   callback_query?: { id: string; from: { id: number; is_bot: boolean }; data: string }
 }
 type Sent = { chat_id: number; text: string; reply_markup?: { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> } }
@@ -80,7 +87,11 @@ function fakeTelegram() {
     port: 0,
     idleTimeout: 120,
     async fetch(req) {
-      const method = new URL(req.url).pathname.split("/").pop() ?? ""
+      const pathname = new URL(req.url).pathname
+      // Inbound file download: getFile resolves to `${base}/file/bot<token>/<path>`, which the
+      // server may fetch when the file part lands. A GET (no JSON body) — serve raw bytes.
+      if (pathname.includes("/file/")) return new Response("FAKE_INBOUND_FILE_BYTES", { status: 200 })
+      const method = pathname.split("/").pop() ?? ""
       const body = (await req.json().catch(() => ({}))) as Record<string, any>
       if (method === "getUpdates") {
         const batch = queue.splice(0)
@@ -96,6 +107,10 @@ function fakeTelegram() {
         edits.push({ chat_id: body.chat_id, text: body.text })
         return Response.json({ ok: true, result: true })
       }
+      if (method === "getFile") {
+        // Resolve any inbound file_id to a stable download path (bot-api builds the URL from it).
+        return Response.json({ ok: true, result: { file_id: body.file_id, file_path: `documents/${body.file_id}.bin` } })
+      }
       return Response.json({ ok: true, result: true }) // sendChatAction, answerCallbackQuery, editMessageReplyMarkup, etc.
     },
   })
@@ -104,6 +119,9 @@ function fakeTelegram() {
     stop: () => server.stop(true),
     deliverMessage: (from: number, updateId: number, text: string) =>
       queue.push({ update_id: updateId, message: { message_id: updateId, from: { id: from, is_bot: false }, chat: { id: from, type: "private" }, text } }),
+    // Deliver an inbound DOCUMENT (attachment) so the gateway resolves + lands it as a file part.
+    deliverDocument: (from: number, updateId: number, doc: { file_id: string; file_name?: string; mime_type?: string }) =>
+      queue.push({ update_id: updateId, message: { message_id: updateId, from: { id: from, is_bot: false }, chat: { id: from, type: "private" }, document: doc } }),
     sent,
     edits,
   }
@@ -130,6 +148,7 @@ async function waitFor(predicate: () => boolean, timeoutMs = 20_000): Promise<bo
 // wire a gateway to both, and register teardown. Returns the fake + abort handle.
 function setup(llm: TestLLMServer["Service"], agent: string = AGENT) {
   return Effect.gen(function* () {
+    const logs: string[] = []
     const root = yield* Effect.promise(() => fs.mkdtemp(path.join(os.tmpdir(), "marid-tg-")))
     const dir = path.join(root, "inst")
     const fakeHome = path.join(root, "home")
@@ -156,7 +175,7 @@ function setup(llm: TestLLMServer["Service"], agent: string = AGENT) {
       cadenceMs: 0, // fast edits so progressive streaming is observable within the test window
       permissionTimeoutMs: 30_000,
       pollTimeoutSec: 1,
-      log: () => {},
+      log: (line) => logs.push(line),
       signal: controller.signal,
     })
     yield* Effect.addFinalizer(() =>
@@ -168,7 +187,7 @@ function setup(llm: TestLLMServer["Service"], agent: string = AGENT) {
         await fs.rm(root, { recursive: true, force: true }).catch(() => {})
       }),
     )
-    return { tg, url: `http://127.0.0.1:${record.port}`, headers: { authorization: `Bearer ${token}` } }
+    return { tg, url: `http://127.0.0.1:${record.port}`, headers: { authorization: `Bearer ${token}` }, logs }
   })
 }
 
@@ -197,14 +216,52 @@ suite("TEST-TG: Telegram round trip + policy denial (live)", () => {
     300_000,
   )
 
-  // AC-012's permission ROUND TRIP is proven end-to-end (event → keyboard → Deny →
-  // server reply) in packages/marid-telegram/test/gateway-integration.test.ts, which
-  // drives the real runGateway with a fully faked SDK that emits a schema-shaped
-  // permission.asked. It is NOT driven here as a real LLM tool call: EVIDENCE
-  // (diagnosed, not assumed) — the served run resolves ZERO tools (the fake LLM is
-  // called, calls=1/misses=0, but the request carries no `tools` field, verified with
-  // the build agent AND a custom tools:{bash:true} agent; GET /permission stays empty).
-  // This is an opencode HTTP-run tool-resolution limit (internal prompt.loop() has
-  // tools; served promptAsync does not), not a provider issue and not a gateway bug.
-  // Server-side INV-001 policy denial is proven in marid-auth channel-binding/scope.
+  // AC-017 (files land INBOUND): a delivered document is resolved through the real bot-api
+  // (getFile → fileDownloadUrl) into an SDK file part and handed to promptAsync — the defect-2
+  // fix, end-to-end against a real `marid serve`. Asserted via the gateway's own log (the file
+  // part reaching the session precedes the log line). Outbound file send is covered
+  // deterministically in marid-telegram/test/gateway-integration.test.ts (the served fake LLM
+  // cannot emit assistant file parts). Full media RENDERING is the live TEST-TG-UI tier.
+  it.live(
+    "AC-017: an inbound document is resolved and lands as a file part in the session prompt",
+    () =>
+      Effect.gen(function* () {
+        const llm = yield* TestLLMServer
+        const { tg, logs } = yield* setup(llm)
+        yield* wait(500)
+        yield* llm.text("received your file") // so the prompted turn completes cleanly
+
+        tg.deliverDocument(OPERATOR, 3, { file_id: "doc_abc", file_name: "notes.txt", mime_type: "text/plain" })
+        const landed = yield* Effect.promise(() =>
+          waitFor(() => logs.some((l) => /attached \d+ inbound file part/.test(l)), 25_000),
+        )
+        expect(landed).toBe(true)
+      }).pipe(Effect.provide(TestLLMServer.layer)),
+    300_000,
+  )
+
+  // A LIVE tool call now surfaces the Approve/Deny inline keyboard end-to-end through the real
+  // gateway. This was long IMPOSSIBLE: the gateway used `promptAsync`, whose forked turn resolves
+  // ZERO tools (the forked turn outlives the request-scoped tool/agent/MCP context — root cause in
+  // docs/execution/telegram-channel-tools.md). The gateway now drives the sync `session.prompt`
+  // route (detached), which resolves tools in-request, so a bash tool call (gated to "ask") reaches
+  // the operator as an inline keyboard. (Prior note here — "served run resolves ZERO tools" — is
+  // superseded; that was the promptAsync route, not the sync route.) Callback handling + server
+  // reply on Deny/Approve are proven deterministically in marid-telegram/gateway-integration.test.ts.
+  it.live(
+    "AC-012/AC-017: a live bash tool call surfaces an Approve/Deny inline keyboard (sync-route fix restores tools)",
+    () =>
+      Effect.gen(function* () {
+        const llm = yield* TestLLMServer
+        const { tg } = yield* setup(llm)
+        yield* wait(500)
+        yield* llm.tool("bash", { command: "echo hi" }) // fires ONLY if the served turn resolved tools
+        tg.deliverMessage(OPERATOR, 20, "please run echo hi")
+        const gotKeyboard = yield* Effect.promise(() =>
+          waitFor(() => tg.sent.some((m) => (m.reply_markup?.inline_keyboard?.length ?? 0) > 0), 25_000),
+        )
+        expect(gotKeyboard).toBe(true)
+      }).pipe(Effect.provide(TestLLMServer.layer)),
+    300_000,
+  )
 })

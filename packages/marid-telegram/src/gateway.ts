@@ -2,7 +2,7 @@ import type { OpencodeClient } from "@opencode-ai/sdk/v2"
 import { createChannelClient } from "@marid/channel-client"
 import type { BotApi } from "./bot-api"
 import { createDedup } from "./dedup"
-import { inboundFileParts, inboundNote } from "./media"
+import { inboundFileParts, inboundNote, resolveOutboundBytes } from "./media"
 import { createPermissions, type ReplyDecision, type Timer } from "./permission"
 import { restrictedPrompt } from "./policy"
 import { runRouter } from "./router"
@@ -39,6 +39,8 @@ export interface RunGatewayDeps {
   // operator attach/detach that lands mid-stream triggers a firehose re-subscribe. Unset →
   // no poll (attach is still picked up on the next natural reconnect).
   pollBindings?: () => Promise<Set<string>>
+  // Cadence of the self-bindings poll above (ms). Unset → the channel-client default (45s).
+  bindingPollMs?: number
   dedupFile: string
   now(): number
   sleep(ms: number): Promise<void>
@@ -83,6 +85,7 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
     signal: deps.signal,
     sleep: deps.sleep,
     pollBindings: deps.pollBindings,
+    bindingPollMs: deps.bindingPollMs,
     createStreamer: (sessionID) => {
       // A session the operator prompted has its own chat; a BOUND (attached, non-owned)
       // session mirrored in from web/TUI (WBS-6.1b) has none, so fall back to the single
@@ -99,6 +102,29 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
       })
     },
     onAsk: (ask) => void permissions.onAsk(ask),
+    // Outbound files (WBS-6.2 residual, AC-017): render an assistant file part into the
+    // session's chat (or the bound session's defaultChatId). Image mimes → sendPhoto, else
+    // sendDocument; the filename is the caption.
+    onFile: (sessionID, file) => {
+      const chatId = sessionChat.get(sessionID) ?? deps.defaultChatId
+      if (chatId === undefined) return
+      // Assistant/tool file parts carry `url: "data:<mime>;base64,…"` (bytes inline) — Telegram
+      // cannot fetch a data: URL, so decode to bytes and upload multipart. `file://`/`http(s)`
+      // are handled too (resolveOutboundBytes). Image mimes → sendPhoto, else sendDocument; the
+      // filename is both the upload name and the caption.
+      const name = file.filename ?? (file.mime.startsWith("image/") ? "image" : "file")
+      void resolveOutboundBytes(file.url)
+        .then((bytes) => {
+          if (!bytes) {
+            deps.log("outbound file: could not resolve bytes; skipped")
+            return
+          }
+          return file.mime.startsWith("image/")
+            ? deps.bot.sendPhotoBytes(chatId, bytes, name, file.filename)
+            : deps.bot.sendDocumentBytes(chatId, bytes, name, file.filename)
+        })
+        .catch((e) => deps.log(`outbound file send failed: ${String(e)}`))
+    },
   })
 
   // Execute a whitelisted slash command. /new resets the chat→session binding so the
@@ -145,7 +171,16 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
     // event for this session finds its chat and a clean streamer set (one message per part).
     sessionChat.set(sessionID, chatId)
     client.beginTurn(sessionID)
-    await deps.sdk.session.promptAsync(restrictedPrompt({ sessionID, text, agent: deps.agent, files }), { throwOnError: true })
+    // Drive the SYNC prompt route (/session/:id/message) DETACHED. `promptAsync` forks the turn
+    // off its request (Effect.forkIn), so the forked turn outlives the request-scoped tool/agent/
+    // MCP context and resolves a ZERO toolset — the bot could never use tools. The sync route
+    // awaits the turn in-request, so tools resolve. We fire-and-forget (no await): the SDK drives +
+    // drains the response stream to completion in the background, keeping the request alive for the
+    // whole turn; the reply renders via the SSE firehose exactly as before, and the poll loop is
+    // never blocked. See docs/execution/telegram-channel-tools.md.
+    void deps.sdk.session
+      .prompt(restrictedPrompt({ sessionID, text, agent: deps.agent, files }), { throwOnError: true })
+      .catch((e) => deps.log(`prompt failed: ${String(e)}`))
   }
 
   const onCallback = (query: TgCallbackQuery): Promise<void> => permissions.onCallback({ id: query.id, data: query.data })

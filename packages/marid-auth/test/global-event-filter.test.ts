@@ -153,3 +153,65 @@ describe("PART 2 · /global/event is fine-filtered owns∪bound (INV-001) for no
     expect(out).toContain("ses_b")
   })
 })
+
+// ── PART 2b (ADR-0016 / EXP-015 / RISK-025) — isolation must NOT depend on a client header ──
+// The generated SDK SSE client (`sdk.global.event()`) does NOT send `Accept: text/event-stream`.
+// Gating the owns∪bound filter on that header (via `isStream()`) served the firehose UNFILTERED to
+// non-admin tokens — a realized INV-001 leak. These pin the fix: a HEADER-LESS non-admin firehose
+// request must still be filtered. On the pre-fix middleware these FAIL (the frames pass through).
+const bearerNoAccept = (secret: string) => ({ authorization: `Bearer ${secret}` })
+// Raw /event frame shape (owningSession reads properties.sessionID at the top level, no {payload} wrap).
+const rawEvent = (sessionID: string) =>
+  `event: message\ndata: ${JSON.stringify({ id: "e", type: "message.part.updated", properties: { sessionID } })}\n\n`
+
+async function subscribeNoAccept(auth: MaridAuth, secret: string, pathname: string, frames: string[]): Promise<string> {
+  const res = await auth.handle(new Request(`http://x${pathname}`, { headers: bearerNoAccept(secret) }), eventNext(frames))
+  return res.body ? await new Response(res.body).text() : ""
+}
+
+describe("PART 2b · owns∪bound isolation does not depend on the Accept header (ADR-0016 regression)", () => {
+  test("header-less /global/event for a non-admin STILL drops another session's regular + sync twin", async () => {
+    const { auth, tokens, ownership } = await build()
+    const { secret } = await tokens.create("web", "client")
+    await ownership.record("web", "ses_web")
+    const out = await subscribeNoAccept(auth, secret, "/global/event", [
+      wrapped("server.connected", {}),
+      wrapped("message.part.updated", { sessionID: "ses_web" }), // owned
+      wrapped("message.part.updated", { sessionID: "ses_other" }), // not owned — MUST drop
+      syncTwin("ses_other", { text: "leaked-secret" }), // durable twin — MUST drop
+    ])
+    expect(out).toContain("server.connected")
+    expect(out).toContain("ses_web")
+    expect(out).not.toContain("ses_other")
+    expect(out).not.toContain("leaked-secret")
+  })
+
+  test("header-less /event (raw firehose) for a non-admin STILL drops a non-owned session's frame", async () => {
+    const { auth, tokens, ownership } = await build()
+    const { secret } = await tokens.create("web", "client")
+    await ownership.record("web", "ses_web")
+    const out = await subscribeNoAccept(auth, secret, "/event", [rawEvent("ses_web"), rawEvent("ses_other")])
+    expect(out).toContain("ses_web")
+    expect(out).not.toContain("ses_other")
+  })
+
+  // ADR-0017: a session created MID-STREAM (recorded AFTER the subscribe-time owns snapshot) must
+  // still be delivered on its owner's firehose. Simulated by an ownership store whose snapshot
+  // (list) is empty but whose owns() reports ses_mid — the lazy re-read must admit it.
+  test("lazy re-read: a session owned but ABSENT from the subscribe snapshot is delivered", async () => {
+    const tokens = createTokenStore(dir)
+    const { secret } = await tokens.create("web", "client")
+    const ownership = {
+      list: async () => new Set<string>(), // subscribe snapshot: owns nothing
+      owns: async (_t: string, id: string) => id === "ses_mid", // but ses_mid IS owned (lazy)
+      record: async () => {},
+    }
+    const auth = createMaridAuth({ tokens, ownership, bindings: createBindingStore(dir), audit: createAuditLog(dir, { date: () => "2026-07-11" }), limiter: createRateLimiter() })
+    const out = await subscribeNoAccept(auth, secret, "/global/event", [
+      wrapped("message.part.updated", { sessionID: "ses_mid" }), // owned lazily → delivered
+      wrapped("message.part.updated", { sessionID: "ses_other" }), // never owned → dropped
+    ])
+    expect(out).toContain("ses_mid")
+    expect(out).not.toContain("ses_other")
+  })
+})
