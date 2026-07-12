@@ -178,6 +178,9 @@ marid instance status work       # show its port / pid / state
 marid instance attach work       # open the TUI as a client of that instance
 ```
 
+> **Full usage guide** — every command and flag, worked recipes (Telegram bot, cross-surface mirroring,
+> multi-instance), configuration, and troubleshooting: **[`docs/usage.md`](docs/usage.md)**.
+
 ## The four interfaces
 
 ### 🖥️ TUI — `marid`
