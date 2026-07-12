@@ -7,18 +7,17 @@ owner: operator (STK-001)
 
 # Telegram channel — tool calling, MCP, and file sending (operator setup)
 
-> **⚠ KNOWN GAP (2026-07-12, pending fix):** the config below is correct, but tool calling is **not yet live** on
-> the gateway path. **Root cause (pinned):** the gateway drives turns via `sdk.session.promptAsync`
-> (`gateway.ts:165`), whose server handler
-> (`opencode …/httpapi/handlers/session.ts:311`) does `Effect.forkIn(scope)` to return immediately — the forked
-> turn runs *after* the request returns, outliving the request-scoped context that tool/agent/MCP resolution
-> needs, and resolves an **empty toolset** (isolated by `test/marid/step0-tools-probe.test.ts`; corroborates the
-> prior `telegram.test.ts` note). The **sync** `session.prompt` route (`/session/:id/message`, handler 295) awaits
-> the turn in-request and resolves the **full toolset** for a channel token + this agent config (ruleset applied,
-> `task` hidden). Only the `forkIn` differs. **Fix (Marid-side, additive, operator-gated):** have the gateway
-> drive the sync `session.prompt` route in a detached task (draining the response stream to keep the request alive
-> until the turn completes) instead of `promptAsync`. File sending (below) is implemented and green independent of
-> this.
+> **✅ FIXED (2026-07-12):** tool calling is now live on the gateway path. **Background:** the gateway previously
+> drove turns via `sdk.session.promptAsync`, whose handler does `Effect.forkIn(scope)` to return immediately — the
+> forked turn ran *after* the request returned, outliving the request-scoped tool/agent/MCP context, and resolved
+> an **empty toolset** (root cause pinned by `test/marid/step0-tools-probe.test.ts`). **Fix (`gateway.ts` onMessage,
+> Marid-side, additive, no upstream edit):** the gateway now drives the **sync** `session.prompt` route
+> (`/session/:id/message`) **detached** — the SDK drains the response stream to completion in the background, so the
+> request stays alive for the whole turn (tools resolve) while the poll loop is never blocked; the reply renders via
+> the SSE firehose exactly as before. Proven live: `test/marid/telegram.test.ts` now drives a real `bash` tool call
+> through the real gateway and asserts the **Approve/Deny inline keyboard** reaches the operator (was impossible
+> under `promptAsync`). Sync-route tool resolution + the `task`-deny ruleset are proven by
+> `test/marid/step0-tools-probe.test.ts` (STEP0b).
 
 How to give the Telegram bot **full TUI/Web capability parity** — every built-in tool and every MCP tool —
 gated per-tool by an **allow / ask / deny** policy, plus outbound file sending. This is **configuration**, not new

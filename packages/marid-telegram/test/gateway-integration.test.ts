@@ -99,7 +99,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
       global: { event: async () => ({ stream: events.iterator() }) },
       session: {
         create: async () => ({ data: { id: "ses_1" } }),
-        promptAsync: async () => {
+        prompt: async () => {
           promptCount += 1
           return { data: {} }
         },
@@ -185,7 +185,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
 
     const sdk = {
       global: { event: async () => ({ stream: events.iterator() }) },
-      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => { prompted = true; return { data: {} } } },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => { prompted = true; return { data: {} } } },
       permission: { respond: async () => ({ data: true }) },
     } as unknown as OpencodeClient
 
@@ -251,7 +251,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
 
     const sdk = {
       global: { event: async () => ({ stream: events.iterator() }) },
-      session: { create: async () => ({ data: { id: "ses_x" } }), promptAsync: async () => ({ data: {} }) },
+      session: { create: async () => ({ data: { id: "ses_x" } }), prompt: async () => ({ data: {} }) },
       permission: { respond: async () => ({ data: true }) },
     } as unknown as OpencodeClient
 
@@ -315,7 +315,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
           return { stream: q.iterator() }
         },
       },
-      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => ({ data: {} }), messages: async () => ({ data: [] }) },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => ({ data: {} }), messages: async () => ({ data: [] }) },
       permission: { respond: async () => ({ data: true }) },
     } as unknown as OpencodeClient
 
@@ -382,7 +382,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
           createCount += 1
           return { data: { id: `ses_${createCount}` } }
         },
-        promptAsync: async () => {
+        prompt: async () => {
           promptCount += 1
           return { data: {} }
         },
@@ -459,7 +459,7 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
 
     const sdk = {
       global: { event: async () => ({ stream: events.iterator() }) },
-      session: { create: async () => ({ data: { id: "ses_1" } }), promptAsync: async () => { prompted = true; return { data: {} } } },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => { prompted = true; return { data: {} } } },
       permission: { respond: async () => ({ data: true }) },
     } as unknown as OpencodeClient
 
