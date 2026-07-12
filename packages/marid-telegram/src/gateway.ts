@@ -2,7 +2,7 @@ import type { OpencodeClient } from "@opencode-ai/sdk/v2"
 import { createChannelClient } from "@marid/channel-client"
 import type { BotApi } from "./bot-api"
 import { createDedup } from "./dedup"
-import { inboundFileParts, inboundNote } from "./media"
+import { inboundFileParts, inboundNote, resolveOutboundBytes } from "./media"
 import { createPermissions, type ReplyDecision, type Timer } from "./permission"
 import { restrictedPrompt } from "./policy"
 import { runRouter } from "./router"
@@ -108,13 +108,22 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
     onFile: (sessionID, file) => {
       const chatId = sessionChat.get(sessionID) ?? deps.defaultChatId
       if (chatId === undefined) return
-      // ponytail: the part URL is sent as-is — Telegram fetches HTTP(S) URLs. A non-public
-      // instance file URL won't be reachable by Telegram's servers; a public relay/upload path
-      // is future work if instance file URLs turn out not to be externally fetchable.
-      const send = file.mime.startsWith("image/")
-        ? deps.bot.sendPhoto(chatId, file.url, file.filename)
-        : deps.bot.sendDocument(chatId, file.url, file.filename)
-      void send.catch((e) => deps.log(`outbound file send failed: ${String(e)}`))
+      // Assistant/tool file parts carry `url: "data:<mime>;base64,…"` (bytes inline) — Telegram
+      // cannot fetch a data: URL, so decode to bytes and upload multipart. `file://`/`http(s)`
+      // are handled too (resolveOutboundBytes). Image mimes → sendPhoto, else sendDocument; the
+      // filename is both the upload name and the caption.
+      const name = file.filename ?? (file.mime.startsWith("image/") ? "image" : "file")
+      void resolveOutboundBytes(file.url)
+        .then((bytes) => {
+          if (!bytes) {
+            deps.log("outbound file: could not resolve bytes; skipped")
+            return
+          }
+          return file.mime.startsWith("image/")
+            ? deps.bot.sendPhotoBytes(chatId, bytes, name, file.filename)
+            : deps.bot.sendDocumentBytes(chatId, bytes, name, file.filename)
+        })
+        .catch((e) => deps.log(`outbound file send failed: ${String(e)}`))
     },
   })
 

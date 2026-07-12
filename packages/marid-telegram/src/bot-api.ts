@@ -36,6 +36,11 @@ export interface BotApi {
   fileDownloadUrl(filePath: string): string
   sendPhoto(chatId: number, photo: string, caption?: string): Promise<TgMessage>
   sendDocument(chatId: number, document: string, caption?: string): Promise<TgMessage>
+  // Multipart byte uploads — for a file whose bytes we hold locally (e.g. an assistant file
+  // part's `data:` URL, decoded) and Telegram cannot fetch by URL. Sends raw bytes as
+  // multipart/form-data, so no public URL / relay is needed.
+  sendPhotoBytes(chatId: number, bytes: Uint8Array, filename: string, caption?: string): Promise<TgMessage>
+  sendDocumentBytes(chatId: number, bytes: Uint8Array, filename: string, caption?: string): Promise<TgMessage>
 }
 
 // A Bot API call that returned ok:false. 429s carry retry_after (seconds) so the
@@ -85,6 +90,25 @@ export function createBotApi(config: BotApiConfig): BotApi {
     return body.result as T
   }
 
+  // Multipart send: the file rides as raw bytes in a FormData part. Do NOT set content-type
+  // manually — fetch derives `multipart/form-data; boundary=…` from the FormData body.
+  async function callMultipart<T>(method: string, form: FormData): Promise<T> {
+    const res = await doFetch(`${base}/bot${config.token}/${method}`, { method: "POST", body: form })
+    const body = (await res.json().catch(() => ({ ok: false, description: "invalid JSON" }))) as TgResponse<T>
+    if (!body.ok) {
+      throw new TelegramError(body.error_code ?? res.status, body.description ?? "Telegram error", body.parameters?.retry_after)
+    }
+    return body.result as T
+  }
+
+  function fileForm(chatId: number, field: string, bytes: Uint8Array, filename: string, caption?: string): FormData {
+    const form = new FormData()
+    form.append("chat_id", String(chatId))
+    if (caption) form.append("caption", caption)
+    form.append(field, new Blob([bytes as BlobPart]), filename)
+    return form
+  }
+
   return {
     getUpdates: (offset, timeoutSec) => call<TgUpdate[]>("getUpdates", { offset, timeout: timeoutSec }),
     sendMessage: (chatId, text, opts) =>
@@ -110,5 +134,9 @@ export function createBotApi(config: BotApiConfig): BotApi {
     fileDownloadUrl: (filePath) => `${base}/file/bot${config.token}/${filePath}`,
     sendPhoto: (chatId, photo, caption) => call<TgMessage>("sendPhoto", { chat_id: chatId, photo, caption }),
     sendDocument: (chatId, document, caption) => call<TgMessage>("sendDocument", { chat_id: chatId, document, caption }),
+    sendPhotoBytes: (chatId, bytes, filename, caption) =>
+      callMultipart<TgMessage>("sendPhoto", fileForm(chatId, "photo", bytes, filename, caption)),
+    sendDocumentBytes: (chatId, bytes, filename, caption) =>
+      callMultipart<TgMessage>("sendDocument", fileForm(chatId, "document", bytes, filename, caption)),
   }
 }
