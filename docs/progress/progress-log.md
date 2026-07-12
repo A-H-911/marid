@@ -11,6 +11,31 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-12 — Telegram tool calling + MCP + file sending; AC-017 Met — unmerged, gated
+- **Done:** the Telegram bot now has full TUI/Web tool parity (built-in + MCP), gated by the channel agent's
+  allow/ask/deny ruleset, plus outbound file sending. **Root cause found + fixed:** the gateway drove turns via
+  `sdk.session.promptAsync`, whose opencode handler forks the turn off its request (`Effect.forkIn`) and returns
+  immediately — the forked turn outlives the request-scoped tool/agent/MCP context and resolved a **ZERO
+  toolset**, so the bot could never use tools (this was the long-standing "served run has no tools" observation;
+  isolated deterministically by `scripts`→`test/marid/step0-tools-probe.test.ts`: channel+sync = full toolset,
+  channel+promptAsync = 0). **Fix (`marid-telegram/src/gateway.ts` onMessage, additive, no upstream edit):** drive
+  the sync `session.prompt` route **detached** — the SDK drains the response stream in the background so the
+  request stays alive for the whole turn (tools resolve) while the poll loop is never blocked; the reply renders
+  via the SSE firehose as before. **File sending:** assistant/tool `data:` file parts are decoded + uploaded as
+  **multipart bytes** (`bot-api` `sendPhotoBytes`/`sendDocumentBytes` + `media.resolveOutboundBytes` + `onFile`).
+  **Config recipe:** `docs/execution/telegram-channel-tools.md` — default `{"*":"ask", read/glob/grep/list:"allow",
+  task:"deny"}` (task denied to close a subagent-escalation hole: subagents inherit only parent *deny* rules).
+- **Proof — deterministic + LIVE:** `telegram.test.ts` drives a real bash tool call through the real gateway and
+  asserts the Approve/Deny inline keyboard reaches the operator (3 pass); `gateway-integration` multipart outbound
+  file; `bot-api`/`media` units; marid-telegram **99 green**, typecheck 0, lint clean. **LIVE** (`scripts/tg-tool-e2e.ts`,
+  real GLM over real MTProto): a live text turn round-trips (sync-route regression is live-safe) **and** a real
+  model bash call surfaces `[✅ Approve \| 🚫 Deny]` in Telegram → Approve tapped → tool runs → turn completes.
+- **AC-017 → Met (2026-07-12, operator-accepted, INV-005):** the two prior "live-impossible" parts (inline keyboard
+  + outbound file) are resolved. All MS-007 acceptance criteria (AC-017/019/020/021/024) now Met.
+- **Decisions:** permissions come from the **agent config**, not the channel (verified — channel scope does NOT
+  strip tools); the fix is **Marid-side** (route switch), not an upstream `promptAsync` patch. **Deviations:** none.
+  **Blockers:** none. **Next for MS-007 exit:** WBS-6.7 docs + operator merge (INV-005). Native-mobile EXP-010 deferred.
+
 ## 2026-07-12 — AC-021 TEST-TG-UI (Telegram-Web render tier) Met — unmerged, gated
 - **Done:** built the AC-021 Telegram-Web-Playwright render tier and closed it live vs **production**
   web.telegram.org. `scripts/tg-web-e2e.ts` (Bun) boots a real `marid serve` + a channel token + `runGateway`
