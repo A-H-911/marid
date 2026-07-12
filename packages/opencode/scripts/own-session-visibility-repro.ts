@@ -9,7 +9,7 @@ import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { createOpencodeClient } from "@opencode-ai/sdk/v2"
-import { createTokenStore, createOwnershipStore } from "@marid/auth"
+import { createTokenStore, createOwnershipStore } from "@marid/gateway"
 import { instanceMaridDir, start, stop, type LaunchResolver } from "@marid/instance"
 
 const AGENT = "build"

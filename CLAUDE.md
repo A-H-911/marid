@@ -19,8 +19,10 @@ carries the invariants, hard constraints, and the tracking protocol. The `docs/`
 DEC-008). One runtime serves a TUI, a token-secured HTTP+SSE API, the web UI, and a Telegram bot —
 runnable as multiple fully isolated instances on one machine, on a private network, for a single
 operator. The planning phase found most of the target already exists upstream, so Marid builds only
-**four things**: `marid-auth` (bearer tokens, rate limits, audit), `marid-instance` (isolated runtimes),
-`marid-telegram` (a gateway process outside the core), and a **distribution profile** that ships the
+**four things**: `marid-gateway` (the **Marid Gateway** — bearer tokens, rate limits, audit, and the `/marid/*`
+attach/binding/mirroring routes fronting the reused HTTP+SSE API; `marid-auth` is its auth module, ADR-0011),
+`marid-instance` (isolated runtimes), `marid-telegram` (a *channel* gateway process — a **client** of
+`marid-gateway`, not the API gateway — outside the core), and a **distribution profile** that ships the
 keep-list without deleting anything. Guiding principle: **reuse upstream capability; anything
 Marid-specific lives in NEW packages speaking existing interfaces** (DEC-009). Attribution: Marid is a
 private downstream distribution of [OpenCode](https://github.com/anomalyco/opencode) (MIT), not

@@ -3,9 +3,9 @@
 **Marid** is a private, single-operator distribution built as a **tracking fork of
 [OpenCode](https://github.com/anomalyco/opencode)** (MIT). "Private" means the *intended usage* — one
 operator, on a private network — **not** the repository: the repo and the signed releases are **public**
-(DEC-010). Marid adds only four things on top of the inherited OpenCode runtime — `marid-auth`,
-`marid-instance`, `marid-telegram`, and a distribution profile — as **new packages speaking existing
-interfaces** (DEC-009).
+(DEC-010). Marid adds only four things on top of the inherited OpenCode runtime — `marid-gateway`
+(the Marid Gateway; `marid-auth` is its auth module), `marid-instance`, `marid-telegram`, and a distribution
+profile — as **new packages speaking existing interfaces** (DEC-009).
 
 Because of that, the single most important thing to understand before contributing is **how work is
 driven here**: docs first.
@@ -87,7 +87,7 @@ configs and the JavaScript Debug Terminal can map breakpoints incorrectly — pr
 - Keep PRs **small and focused**; explain the change and **how you verified it** (what you tested, how a
   reviewer reproduces it). Include screenshots for UI changes.
 - **PR titles** follow conventional commits (enforced by `marid-pr-title`): `feat` / `fix` / `docs` /
-  `chore` / `refactor` / `test`, optional scope, e.g. `feat(marid-auth): …`, `fix(app): …`, `docs: …`.
+  `chore` / `refactor` / `test`, optional scope, e.g. `feat(marid-gateway): …`, `fix(app): …`, `docs: …`.
 
 ## Style
 

@@ -108,11 +108,11 @@ jobs:
           # path-permission tests via the environment (no test edits) so syncs never reintroduce them.
           TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
           TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
-      # marid (WBS-1.2/1.3): TEST-AUTH. @marid/auth is not enumerated in turbo.json,
+      # marid (WBS-1.2/1.3): TEST-AUTH. @marid/gateway is not enumerated in turbo.json,
       # so run its suite directly. Dependency-free + OS-agnostic (posix-only 0600
       # assertions self-skip on Windows), so no extra env needed.
-      - name: Run marid-auth tests
-        run: bun --cwd packages/marid-auth test
+      - name: Run marid-gateway tests
+        run: bun --cwd packages/marid-gateway test
       # marid (WBS-2.1/2.2): TEST-INST fast unit tier — env composition (every
       # R-05 row), registry, and lifecycle via a tiny fake server (no opencode
       # boot). Dependency-free, cross-OS. The heavy live 2-instance proof runs in

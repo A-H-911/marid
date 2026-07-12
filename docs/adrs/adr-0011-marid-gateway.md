@@ -1,8 +1,8 @@
 ---
 id: ADR-0011
 status: Approved
-version: 1.1.0
-updated: 2026-07-10
+version: 1.2.0
+updated: 2026-07-12
 supersedes: none
 superseded_by: none
 owner: operator (STK-001)
@@ -88,3 +88,14 @@ standalone proxy process** in front of `marid serve` — heaviest; buys nothing 
 do additively. (3) **Importing OpenClaw's WS + in-process-channel model wholesale** — wrong transport (Marid is
 HTTP+SSE) and wrong isolation (Marid channels are separate processes); its *nodes* model + Shaheen topology are the
 right adaptation.
+
+**Realization note (2026-07-12).** The package that carried this component was renamed to match the decision:
+**`@marid/auth` → `@marid/gateway`** (`packages/marid-auth/` → `packages/marid-gateway/`). This is a
+**behaviour-neutral** realization of the Decision above — the package now *is* the Marid Gateway, and `marid-auth`
+(authn/authz/rate-limit/audit/event-filter) remains one **module** within it (unchanged source; the 13 suites pass
+identically under the new name). Nothing depends on the literal string `"marid-auth"` at runtime (the on-disk token
+store path is `${Global.Path.data}/marid`, not the package name), so the rename touched only the package name, the
+`@opencode-ai/opencode` workspace dep, the `@marid/gateway` import specifiers, the `ci.yml` test-step `--cwd` path,
+and `bun.lock`. **Zero new patch surface** — the wrapper seam (P-1 resolved, EXP-004) is unchanged. Historical
+references to `marid-auth`/`@marid/auth` in prior ADRs, experiment reports, and the progress log are left intact as
+dated records; they name the auth module, which persists.
