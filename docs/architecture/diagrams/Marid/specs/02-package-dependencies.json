@@ -124,7 +124,7 @@
       "id": "mauth",
       "shape": "rect",
       "label": {
-        "text": "@marid/auth"
+        "text": "@marid/gateway"
       },
       "styleRefs": [
         "auth"
@@ -164,7 +164,7 @@
       "id": "mlegend",
       "shape": "rect",
       "label": {
-        "text": "Marid-added: red = marid-auth, orange = marid-telegram, amber = @marid/channel-client (shared, PH-7 reuses), dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+        "text": "Marid-added: red = @marid/gateway (marid-auth is its auth module), orange = marid-telegram, amber = @marid/channel-client (shared, PH-7 reuses), dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
       }
     }
   ],

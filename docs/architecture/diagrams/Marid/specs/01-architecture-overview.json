@@ -102,7 +102,7 @@
         "auth"
       ],
       "label": {
-        "text": "marid-auth gateway (tokens - scopes - rate-limit - audit - /marid attach + owns-union-bound mirroring)"
+        "text": "Marid Gateway - @marid/gateway (API/ingress: tokens - scopes - rate-limit - audit - /marid attach + owns-union-bound mirroring; fronts reused HTTP+SSE API)"
       }
     },
     {
@@ -129,7 +129,7 @@
         "channel"
       ],
       "label": {
-        "text": "marid-telegram gateway (separate process - no provider keys)"
+        "text": "marid-telegram - channel gateway, a client (separate process - no provider keys)"
       }
     },
     {
@@ -194,7 +194,7 @@
       "id": "legend",
       "shape": "rect",
       "label": {
-        "text": "Marid-added packages: red = marid-auth, orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+        "text": "Marid-added packages: red = @marid/gateway (Marid Gateway; marid-auth is its auth module), orange = marid-telegram (channel gateway, a client), dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
       }
     }
   ],

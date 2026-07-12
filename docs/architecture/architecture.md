@@ -1,6 +1,6 @@
 ---
-status: Approved (gate 5, 2026-07-03; amended 2026-07-12 — PH-6 gateway + mirroring realized, additive)
-version: v1.1
+status: Approved (gate 5, 2026-07-03; amended 2026-07-12 — PH-6 gateway + mirroring realized, additive; @marid/gateway rename + gateway/channel-gateway disambiguation)
+version: v1.2
 updated: 2026-07-12
 owner: operator (STK-001)
 ---
@@ -30,7 +30,7 @@ patch-surface register below.
 graph TB
     subgraph machine["Operator machine (private network)"]
         subgraph inst1["Marid instance 'work' (isolated runtime: own XDG dirs, DB, port, secrets, logs)"]
-            S1["marid serve<br/>(upstream server + Marid auth/audit middleware)"]
+            S1["marid serve — Marid Gateway (@marid/gateway)<br/>auth · scope · rate-limit · audit · /marid/* · owns ∪ bound mirroring<br/><i>fronts the reused upstream HTTP+SSE API — never absorbs it</i>"]
             DB1[("SQLite<br/>opencode.db")]
             S1 --- DB1
         end
@@ -38,13 +38,14 @@ graph TB
             S2["marid serve"] --- DB2[("SQLite")]
         end
         IM["marid instance<br/>(instance manager CLI — launchers, ports, PID, lifecycle)"]
-        TUI["Marid TUI"] -->|HTTP+SSE| S1
-        WEB["Web UI (packages/app)"] -->|HTTP+SSE| S1
-        TG["marid-telegram gateway<br/>(separate process)"] -->|HTTP+SSE, scoped token| S1
+        TUI["Marid TUI"] -.->|"in-process · no token"| S1
+        TUI -.->|"attach · client token"| S1
+        WEB["Web UI (packages/app)"] -->|"HTTP+SSE · client token"| S1
+        TG["marid-telegram<br/>channel gateway (separate process · a client)"] -->|"HTTP+SSE · channel: token"| S1
         IM -.->|spawn/stop/status| S1
         IM -.-> S2
     end
-    APPS["Operator's applications<br/>(SDK / HTTP)"] -->|bearer token| S1
+    APPS["SDK / API clients"] -->|"bearer token"| S1
     TG <-->|long polling, outbound only| TGAPI["Telegram Bot API"]
     S1 -->|provider APIs| LLM["LLM providers"]
 ```
@@ -57,7 +58,7 @@ graph TB
 | Server + SSE (v1 surface) | Upstream, unchanged | FR-022..029, FR-034 partial | R-02: 7 FRs as-is |
 | **marid-gateway** (new pkg; marid-auth is its auth module, ADR-0011) | Middleware via server extension seam | FR-031 bearer-token auth (per-client tokens with scopes), FR-032 rate limiting, FR-033 audit log, FR-030 request-ID correlation | Shaheen `Server.extend` pattern; single enumerated seam |
 | **marid-instance** (new pkg, CLI) | Instance manager | FR-053 (IDs, launchers, port allocation, per-instance XDG/OPENCODE env, PID files, start/stop/status/logs, locks) | claudectl pattern (R-11) + R-05 conflict inventory |
-| **marid-telegram** (new pkg, process) | Channel gateway | FR-045..052: long-polling ingress, `update_id` dedup, operator allowlist, HTML formatting, edit-coalesced streaming (≥2 s cadence), permission prompts as inline keyboards, media within Bot-API caps | R-09; slack-prototype loop; Shaheen gateway pattern |
+| **marid-telegram** (new pkg, process) | Channel gateway (a client of `marid-gateway`) | FR-045..052: long-polling ingress, `update_id` dedup, operator allowlist, HTML formatting, edit-coalesced streaming (≥2 s cadence), permission prompts as inline keyboards, media within Bot-API caps | R-09; slack-prototype loop; Shaheen gateway pattern |
 | Channel capability policy | Config (instance-level) + gateway enforcement | FR-052, INV-001: channel maps to a dedicated restricted agent (tool/permission ruleset), scoped API token, model+cost caps at the gateway | R-04 permission rulesets; C-7 |
 | TUI / Web UI (packages/app) | Upstream, config-rebranded | FR-003, CON-005 | R-06: app rides the same API |
 | Config layer | Upstream + Marid defaults | FR-054/055; instance layer supplied by marid-instance via env (`OPENCODE_CONFIG`, XDG overrides); secret redaction rules | R-05 precedence chain |
@@ -103,13 +104,17 @@ sequenceDiagram
 ## Marid Gateway & cross-surface mirroring (PH-6, realized)
 
 PH-6 realizes the channel platform on top of the Gate-5 design — **entirely additively, with zero new
-`P-*`**. Principle 2's "server extension seam" was **not** needed: `marid-auth` is an outer wrapper around
+`P-*`**. Principle 2's "server extension seam" was **not** needed: `@marid/gateway` is an outer wrapper around
 the exported handler, and every PH-6 route is served in that wrapper. Three additions:
 
-- **The Gateway.** `marid-auth` becomes the channel gateway: besides bearer-auth / rate-limit / audit /
-  `owns`-isolation, the wrapper now serves four Marid routes — `POST /marid/attach`, `POST /marid/detach`,
-  `GET /marid/bindings` (admin), `GET /marid/self-bindings` (any token, own set only) — that bind a session
-  to a channel surface. A durable `BindingStore` (`binding.json`, 0600 sidecar) persists the bindings.
+- **The Marid Gateway (`@marid/gateway`)** is the **API / ingress gateway** — the single authenticated front
+  door (marid-auth is its auth module, ADR-0011). It **fronts** the reused upstream HTTP+SSE API — sessions,
+  events, permissions, config, the OpenAPI `/doc`, and health `/global/health` — never absorbing or forking it
+  (DEC-009). Besides bearer-auth / rate-limit / audit / `owns`-isolation, the wrapper now serves four Marid
+  routes — `POST /marid/attach`, `POST /marid/detach`, `GET /marid/bindings` (admin), `GET /marid/self-bindings`
+  (any token, own set only) — that bind a session to a channel surface. A durable `BindingStore`
+  (`binding.json`, 0600 sidecar) persists the bindings. (Distinct from `marid-telegram`, the **channel**
+  gateway — a *client* of this API gateway, below.)
 - **`@marid/channel-client`** (new pkg) — the reusable channel runtime extracted from `marid-telegram`:
   firehose subscribe + event-pump with **reconnect** (capped backoff 500 ms–30 s), cross-generation event
   interpretation, `parseAskEvent`, per-part streamer coordination, and **re-fetch-on-reconnect** recovery
@@ -122,7 +127,7 @@ the exported handler, and every PH-6 route is served in that wrapper. Three addi
   INV-001 firehose gap (unfiltered for *every* non-admin token), later hardened by ADR-0016 (recognise the
   firehose by route, not the `Accept` header) + ADR-0017 (own-session lazy visibility).
 
-**Telegram experience** (`marid-telegram`, the gateway process) now has full TUI/Web parity: Markdown via
+**Telegram experience** (`marid-telegram`, the **channel** gateway process — a client of the Marid Gateway) now has full TUI/Web parity: Markdown via
 `telegramify-markdown`, files **both ways** (inbound `resolveDownloadUrl` → `FilePartInput`; outbound tool
 media attachments decoded from `data:` URLs and sent as **multipart** bytes), whitelisted slash commands,
 inline permission keyboards, and **tool calling + MCP** — driven over the sync `/session/{id}/message`

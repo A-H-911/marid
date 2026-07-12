@@ -60,36 +60,49 @@ Everything else is upstream capability, reused as-is.
 
 ## Architecture
 
-One runtime, one session engine, four interfaces. The **only** authenticated boundary is the HTTP+SSE surface
-(`marid serve`); the local TUI talks to the engine in-process. Untrusted ingress (Telegram) is bridged by a
-gateway **outside** the core and speaks to the server with a restricted `channel:` token.
+One runtime, one session engine, four interfaces. The **only** authenticated boundary is the **Marid Gateway**
+(`@marid/gateway`) — it *fronts* the reused HTTP+SSE API (`marid serve`) with bearer auth, scopes, rate-limit,
+audit, the `/marid/*` attach/binding routes, and `owns ∪ bound` mirroring (it fronts the upstream API, never
+absorbs it — DEC-009). The local TUI talks to the engine **in-process, no token** (and only becomes a gateway
+client when you `attach`). Untrusted ingress (Telegram) is bridged by a **channel gateway** (`marid-telegram`)
+**outside** the core that is itself a **client** of the Marid Gateway, speaking to it with a restricted
+`channel:` token.
 
 ```mermaid
 graph TB
     subgraph ops["single operator · private network"]
       TUI["🖥️ TUI<br/><b>marid</b>"]:::local
       WEB["🌐 Web UI"]:::client
-      API["🔌 HTTP + SSE API / SDK"]:::client
-      TG["✈️ Telegram"]:::channel
+      SDK["🔌 SDK / API clients"]:::client
+      TG["✈️ Telegram"]:::ext
     end
 
-    GW["marid-telegram gateway<br/><i>outside the core · holds no provider keys</i>"]:::channel
-    AUTH["🔐 marid-auth<br/>bearer tokens · scopes · rate-limit · audit"]:::auth
+    TGGW["marid-telegram<br/><i>channel gateway · a client · holds no provider keys</i>"]:::channel
+
+    subgraph gw["🔐 Marid Gateway — @marid/gateway"]
+      AUTH["auth · scopes · rate-limit · audit<br/>/marid/* attach · bind · owns ∪ bound mirroring"]:::auth
+      API["HTTP + SSE API · /doc · /global/health<br/><i>reused upstream — fronted, not absorbed</i>"]:::reused
+    end
+
     ENGINE["⚙️ session engine<br/><i>one runtime, reused from OpenCode</i>"]:::core
     INST["📦 isolated instances<br/><i>per-instance data · cache · config · state</i>"]:::core
 
     TUI -. "in-process · no token" .-> ENGINE
+    TUI -. "attach · client token" .-> AUTH
     WEB -- "client token" --> AUTH
-    API -- "client / admin token" --> AUTH
-    TG --> GW
-    GW -- "channel: token (restricted)" --> AUTH
-    AUTH -- "authorized request" --> ENGINE
+    SDK -- "client / admin token" --> AUTH
+    TG --> TGGW
+    TGGW -- "channel: token (restricted)" --> AUTH
+    AUTH -- "fronts" --> API
+    API -- "authorized request" --> ENGINE
     ENGINE --> INST
 
     classDef local fill:#2F6BFF,stroke:#1E4FD0,color:#ffffff;
     classDef client fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
+    classDef ext fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
     classDef channel fill:#F0731F,stroke:#D9611A,color:#ffffff;
     classDef auth fill:#DC2A16,stroke:#A81f10,color:#ffffff;
+    classDef reused fill:#3a2a1e,stroke:#8a6a4a,color:#F4F1EA;
     classDef core fill:#1C1714,stroke:#000000,color:#F4F1EA;
 ```
 
@@ -99,8 +112,8 @@ reach privileged routes.
 
 ```mermaid
 graph LR
-    U["Telegram user"]:::ext -->|message| GW["gateway"]:::channel
-    GW -->|"POST session/:id/message<br/>Bearer channel: token"| G{"marid-auth<br/>scope gate"}:::auth
+    U["Telegram user"]:::ext -->|message| GW["marid-telegram<br/>channel gateway"]:::channel
+    GW -->|"POST session/:id/message<br/>Bearer channel: token"| G{"Marid Gateway<br/>scope gate"}:::auth
     G -->|"allowed: bound agent,<br/>owned session only"| OK["✅ prompt runs"]:::core
     G -->|"denied: /shell, /command,<br/>tool/permission override,<br/>other agents"| NO["⛔ 403"]:::deny
 
@@ -119,8 +132,8 @@ re-fetch-on-reconnect (no event replay). The reusable channel runtime is `@marid
 
 ```mermaid
 graph LR
-    TG["✈️ Telegram"]:::channel -->|"message · file"| GW["marid-telegram gateway<br/><i>+ @marid/channel-client</i>"]:::channel
-    GW -->|"sync POST /session/:id/message"| AUTH["🔐 marid-auth gateway<br/>owns ∪ bound filter · /marid/attach"]:::auth
+    TG["✈️ Telegram"]:::channel -->|"message · file"| GW["marid-telegram<br/><i>channel gateway · + @marid/channel-client</i>"]:::channel
+    GW -->|"sync POST /session/:id/message"| AUTH["🔐 Marid Gateway — @marid/gateway<br/>owns ∪ bound filter · /marid/attach"]:::auth
     AUTH -->|"authorized (owns)<br/>full toolset + MCP"| ENGINE["⚙️ session engine"]:::core
     ENGINE -->|"SSE events"| AUTH
     AUTH -->|"owns ∪ bound firehose"| GW
@@ -323,7 +336,7 @@ what it doesn't ship (ADR-0002), so upstream syncs stay clean.
 |---|---|---|
 | Session engine · 15+ LLM providers · LSP · MCP · git · config · SQLite | `marid-gateway` — the Marid Gateway (bearer tokens, scopes, rate-limit, audit; marid-auth is its auth module) | Desktop (Electron), cloud/console/function/stats/enterprise |
 | The TUI, the web UI, the HTTP+SSE API | `marid-instance` — isolated instance lifecycle | Slack integration, marketing/docs sites |
-| The v1 session/event contract & SDK | `marid-telegram` — Telegram gateway (outside the core) | Experimental `codemode` (externalized), the v2/next chain |
+| The v1 session/event contract & SDK | `marid-telegram` — Telegram *channel* gateway, a client of `marid-gateway` (outside the core) | Experimental `codemode` (externalized), the v2/next chain |
 
 **Notable decisions**
 
