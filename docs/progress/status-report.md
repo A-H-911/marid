@@ -16,10 +16,10 @@ generation: derived
 | | |
 |---|---|
 | Reporting date | 2026-07-12 |
-| Current phase | **PH-6 in execution (Telegram-first).** De-risking done: **EXP-005/007/008 PASS**. **WBS-6.2 done** (4 Telegram UX defects; marid-telegram **68→89 green**). **WBS-6.3 done** (mirroring mechanism: durable `BindingStore` + binding-aware `isVisible`; marid-auth **87→100**, merged #44). **WBS-6.4 done** (cross-surface permission verified: first-responder-wins server invariant, ask-mirrors-to-bound-surface, act-via-ownership; concurrency = EXP-001; opencode permission **79→80**, marid-auth **→101**). **WBS-6.1 slice a done** (channel-client extracted: new additive `@marid/channel-client` ← `gateway.ts`; behavior-preserving, marid-auth **101** / marid-telegram **89** unchanged & green, channel-client **+10**; zero upstream edit, no P-\*). **WBS-6.1 slice b done** — part 1 admin-gated attach endpoint + `/doc` OpenAPI merge; part 2 fine-filtered `/global/event` (owns ∪ bound — closes the pre-existing `/global/event` INV-001 gap AND delivers mirroring; wrapped picker drops the durable `sync` twin of a non-owned session); part 3 channel-client consumes bound sessions + Telegram `defaultChatId`; owed live `/doc` assertion. **AC-024 Met; AC-019 Partial (blockers cleared — real-account live bidirectional E2E = WBS-6.6).** marid-auth **101→119**, channel-client **10→11**, marid-telegram **89→90**; zero upstream edit, no P-\*. On `feat/ph6-gateway`, **unmerged** (INV-003/005). **WBS-6.5 done** (reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe via non-admin `/marid/self-bindings` poll; channel-client 16 / marid-auth 121 / marid-telegram 91 green; AC verdicts unchanged), on `feat/ph6-reconnect`, unmerged. **WBS-6.6 in progress (2026-07-11)** — live tiers PASS: userbot↔real-gateway slash round-trip (**AC-020 Met**, DEP-014 resolved); real-GLM bidirectional mirror + unattached-invisible + attach re-subscribe over real MTProto (**AC-019 Met**); live text round-trip + **live tool calling** (**AC-017 Met (2026-07-12)** — root-caused the gateway's `promptAsync` (forks the turn off its request scope → ZERO tools) and fixed it by driving the sync `session.prompt` route detached (Marid-side, no upstream edit); **inline keyboard proven LIVE** `scripts/tg-tool-e2e.ts` real-GLM bash call → Approve → tool runs; **outbound files as multipart bytes**; tool + MCP parity via the agent-config ruleset); blast-radius (**AC-024 Met**); **AC-021 Met (2026-07-12)** — TEST-TG-UI Telegram-Web-Playwright render tier live vs production (`scripts/tg-web-e2e.ts` Bun + `scripts/tg-web-driver.mjs` Node: real `telegramify-markdown` → real Bot API → web.telegram.org rendered DOM — `<strong>`/`<code>`/`<pre>`/no-literal + `<img>`; 4/4 stable; [EXP-009] PASS). **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`; the SDK omits `Accept: text/event-stream`, which had bypassed the owns∪bound filter for all non-admin tokens) + ADR-0017 (lazy own-session visibility, the companion defect the leak had masked); EXP-015/RISK-025; real-request regression test; marid-auth **121→123** green; zero upstream edit, no P-\*. **All MS-007 ACs (AC-017/019/020/021/024) now Met.** **WBS-6.7 docs done (2026-07-12)** — contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` diagram + `ci.yml`/manual staleness fixes; `validate = OK`. **Remaining for MS-007 exit: operator merge only (INV-005)**; native-mobile EXP-010 **deferred**. All unmerged (INV-005) |
-| Overall status | **MVP COMPLETE (gate 14, 2026-07-09).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. **PH-6 code underway** (WBS-6.2 + 6.3 merged/done; 6.4 + **6.1 slice a+b** done unmerged — **AC-024 Met; AC-019 Partial, blockers cleared**) |
-| Last milestone met | **MS-006 (2026-07-09)** — public `v0.1.0` release, MVP release-ready |
-| Next milestone | **MS-007 (PH-6 Telegram-first)** — in progress; WBS-6.2/6.3/6.4 + **6.1 slice a+b** + **6.5 (reconnect + re-fetch recovery + attach-triggered re-subscribe)** done + EXP-005/007/008 PASS; **WBS-6.6 in progress** — live tiers PASS: **AC-017/019/020/021/024 all Met**; **AC-017 Met (2026-07-12)** — live tool calling: root-caused + fixed the gateway's `promptAsync` 0-tools defect (→ sync route detached, Marid-side), inline keyboard proven LIVE (`tg-tool-e2e.ts`) + outbound multipart files; **AC-021 Met** (Web-Playwright render tier); INV-001 firehose leak found via the live tier & fixed (ADR-0016/0017; EXP-015/RISK-025). **MS-007: all acceptance criteria now Met; WBS-6.7 docs done (2026-07-12)** — remaining for exit: **operator merge only (INV-005)**; native-mobile EXP-010 deferred |
+| Current phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
+| Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
+| Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
+| Next milestone | **MS-008 (PH-7 WhatsApp)** — **not started; operator-gated** (ADR-0010 / DEC-015/016 Proposed). AC-018 + EXP-006 PASS (fake-WA) then a PH-7-start live probe. PH-6-independent. |
 
 ## Phase progress
 
@@ -31,6 +31,7 @@ generation: derived
 | PH-3 Cross-interface | done | yes | MS-004 (PR #19) | 3-OS `marid-sync`; contract v1.1 |
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
 | PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
+| PH-6 Telegram-first | **done** | yes | **MS-007 (2026-07-12)**: Marid Gateway + full Telegram + bidirectional mirroring + 4 live test tiers; WBS-6.3 (#44) · 6.1 (#46) · 6.5 (#47) · 6.2/6.4/6.6/6.7 (#48 `4409d92f`) | AC-017/019/020/021/024 all Met; EXP-005/007/008/009 PASS; INV-001 leak fixed (ADR-0016/0017); zero upstream edit, no P-\* |
 
 ## Acceptance snapshot
 
@@ -39,6 +40,9 @@ ADR-0007), **1 Not-met** (AC-007 — premise superseded). AC-014 Met via the pub
 AC-015 Met via the one real sync cycle (PR #31, KPI-004). AC-010/011 Met via
 the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `parseAskEvent` + `permission.test`
 + marid-auth `channel-binding`. Detail in the [acceptance audit](../validation/acceptance-audit.md).
+
+PH-6 (Telegram-first): **AC-017/019/020/021/024 all Met** (2026-07-12, PR #48) — live tool calling, bidirectional
+mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP-005/007/008/009 PASS.
 
 ## Completed since last report
 - **WBS-5.2 / AC-014 / KPI-006** (PR #36 finalize, #35 RC → main, #38 smoke fix): **public `v0.1.0` release** —
@@ -50,22 +54,12 @@ the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `par
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-**PH-6 (Telegram-first).** MVP (PH-0..5) complete since gate 14. **WBS-6.2 implemented** (all 4 Telegram UX defects fixed
-in place; marid-telegram 89 green, typecheck clean) + **EXP-005/007/008 PASS** — all on `feat/ph6-marid-gateway`,
-**unmerged** (awaiting operator merge, INV-003/005). **WBS-6.3/6.4 done** (mirroring mechanism + cross-surface
-permission verified) and **WBS-6.1 slice a+b done** (`@marid/channel-client` extracted + attach endpoint +
-`/global/event` fine-filter + bound-session consume; **AC-024 Met; AC-019 Partial (blockers cleared)**; marid-auth 119 / channel-client 11 /
-marid-telegram 90 green; zero upstream edit, no P-\*), all unmerged. **WBS-6.5 done** (SSE reconnect + backoff +
-re-fetch recovery for owned sessions + attach-triggered mid-stream re-subscribe via a new non-admin
-`GET /marid/self-bindings` poll; channel-client 11→16, marid-auth 119→121, marid-telegram 90→91 green; zero
-upstream edit, no P-\*; AC verdicts unchanged — 6.5 is FR-036/043 + RISK-006, not an AC flip), on
-`feat/ph6-reconnect`, unmerged. **WBS-6.6 live tiers done** (AC-017/019/020/021/024 all Met; INV-001 firehose leak
-found & fixed, ADR-0016/0017); **AC-021 Met** (Telegram-Web-Playwright render tier, EXP-009 PASS); **AC-017 Met
-(2026-07-12)** — live tool calling: the gateway's `promptAsync` resolved 0 tools (forks the turn off its request
-scope); fixed by driving the sync `session.prompt` route detached (Marid-side, no upstream edit) — inline keyboard
-proven LIVE (`tg-tool-e2e.ts`) + outbound multipart files + tool/MCP parity via the agent-config ruleset. On
-`feat/ph6-test-tiers`, unmerged. **All MS-007 acceptance criteria Met.** Outstanding for MS-007 exit: WBS-6.7
-(docs) + operator merge; native-mobile EXP-010 deferred.
+**Nothing in active execution.** PH-0..6 complete; PH-7 (WhatsApp) is operator-gated and not started. The full
+PH-6 (Telegram-first) stack is merged to `develop` (see the Phase progress table and the
+[progress log](progress-log.md)) — Marid Gateway + `@marid/channel-client`, full Telegram experience, bidirectional
+cross-surface mirroring, SSE reconnect/re-fetch recovery, four live test tiers, and the PH-6 docs/diagrams. All
+MS-007 acceptance criteria (AC-017/019/020/021/024) Met; INV-001 firehose leak found via the live tier & fixed
+(ADR-0016/0017). Native-mobile EXP-010 deferred (never an MS-007 gate).
 
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18
@@ -82,11 +76,9 @@ spec). First RC → **`v0.1.0`** on an independent `0.x` line (package.json stay
 release↔upstream mapping is the baseline SHA per sync).
 
 ## Upcoming
-Gate-14 accepted (2026-07-09) — MS-006 formally closed. **Post-MVP channels package (Proposed, awaiting operator
-gate):** **PH-6 (expanded 2026-07-10, all-in-one)** = **Marid Gateway** (marid-auth as a component, ADR-0011) +
-**full Telegram experience** (fix-in-place, ADR-0009) + **full bidirectional cross-client mirroring**
-(explicit-attach, ADR-0012) + **four-tier real-client test strategy** (ADR-0013); DEC-014/017/018/019. **PH-7
-WhatsApp** = unofficial client behind pinned WAHA (ADR-0010 / DEC-015/016). All **Proposed — awaiting operator gate**
-before any code; mirroring verified **additive** (`event-filter.ts`), INV-001-safe (view-via-binding/act-via-
-ownership). Remaining backlog: egress secret-redactor (ADR-0007 / AC-016), AC-007 formal supersede, stats
-mechanism (deferred #10), upstream sync cadence.
+MS-007 met (2026-07-12) — PH-6 (Telegram-first) formally closed. **Next candidate phase, operator-gated:** **PH-7
+WhatsApp** = new `@marid/whatsapp` unofficial client behind pinned WAHA, separate process, `channel:` token (ADR-0010
+/ DEC-015/016) — **Proposed, awaiting operator gate** before any code; MS-008 = AC-018 + EXP-006 PASS (fake-WA) then a
+PH-7-start live probe. Optional near-term: a `develop → main` sync PR (merge-commit) to fold PH-6 into a release.
+Remaining backlog: egress secret-redactor (ADR-0007 / AC-016), AC-007 formal supersede, stats mechanism
+(deferred #10), upstream sync cadence.
