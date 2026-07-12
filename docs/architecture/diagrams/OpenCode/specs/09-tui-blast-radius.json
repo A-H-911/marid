@@ -1,0 +1,172 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "dependency",
+  "direction": "TB",
+  "meta": {
+    "title": "Marid on OpenCode - TUI Blast Radius (reused as-is)"
+  },
+  "styles": {
+    "focus": {
+      "fill": "#FDECEA",
+      "border": {
+        "color": "#C0392B"
+      }
+    },
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "opencode",
+      "label": {
+        "text": "opencode (bin)"
+      }
+    },
+    {
+      "id": "clitui",
+      "label": {
+        "text": "cli/cmd/tui.ts"
+      }
+    },
+    {
+      "id": "boot",
+      "label": {
+        "text": "cli/cmd/run/runtime.boot.ts"
+      }
+    },
+    {
+      "id": "plugtui",
+      "label": {
+        "text": "plugin/tui/runtime.ts"
+      }
+    },
+    {
+      "id": "tui",
+      "styleRefs": [
+        "focus"
+      ],
+      "label": {
+        "text": "@opencode-ai/tui  <-- remove this"
+      }
+    },
+    {
+      "id": "core",
+      "label": {
+        "text": "core"
+      }
+    },
+    {
+      "id": "ui",
+      "label": {
+        "text": "ui"
+      }
+    },
+    {
+      "id": "plugin",
+      "label": {
+        "text": "plugin"
+      }
+    },
+    {
+      "id": "sdk",
+      "label": {
+        "text": "sdk"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "b1",
+      "source": "opencode",
+      "target": "clitui"
+    },
+    {
+      "id": "b2",
+      "source": "opencode",
+      "target": "boot"
+    },
+    {
+      "id": "b3",
+      "source": "opencode",
+      "target": "plugtui"
+    },
+    {
+      "id": "b4",
+      "source": "clitui",
+      "target": "tui"
+    },
+    {
+      "id": "b5",
+      "source": "boot",
+      "target": "tui"
+    },
+    {
+      "id": "b6",
+      "source": "plugtui",
+      "target": "tui"
+    },
+    {
+      "id": "b7",
+      "source": "tui",
+      "target": "core"
+    },
+    {
+      "id": "b8",
+      "source": "tui",
+      "target": "ui"
+    },
+    {
+      "id": "b9",
+      "source": "tui",
+      "target": "plugin"
+    },
+    {
+      "id": "b10",
+      "source": "tui",
+      "target": "sdk"
+    }
+  ]
+}

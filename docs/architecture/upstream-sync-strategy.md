@@ -28,6 +28,12 @@ ownership (P-CI-1) — Marid-owned files win on sync. (Note: `CLAUDE.md` was imp
 package (commit `29038f6bc`, WBS-0.2) and describes the OpenCode codebase, but is absent from upstream's
 tree at the baseline — how it was originally authored is not otherwise verified.)
 
+**Marid-ized root docs (P-5, PH-5): `CONTRIBUTING.md`, `SECURITY.md`, `CONTEXT.md`, `STATS.md`.** These are
+upstream-tracked but rewritten for Marid — **Marid wins on reconcile** (`git checkout --ours`). **`AGENTS.md`
+is the exception:** take the upstream body on conflict and **re-apply the small Marid-precedence header +
+`develop`/branch-naming note** (kept minimal precisely so this re-apply is cheap). `README.md` follows the
+existing P-2 rule (Marid wins).
+
 ## The sync loop (automated where boring)
 
 1. Scheduled workflow fetches upstream, creates `sync/upstream-<date>` from `develop`, merges

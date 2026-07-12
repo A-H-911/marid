@@ -55,11 +55,29 @@ const StartCommand = cmd({
 
     const safeLog = (line: string) => console.log(redact(line, env.botToken))
     safeLog(`marid telegram gateway attached to "${args.instance}" (${url}); agent="${args.agent}"`)
+
+    // WBS-6.5c: the channel token's OWN bound sessions, from the non-admin self-view route
+    // (the admin /marid/bindings is off-limits to a channel token). Polled by the channel
+    // client so an operator attach/detach mid-stream triggers a firehose re-subscribe.
+    const pollBindings = async (): Promise<Set<string>> => {
+      const res = await fetch(`${url}/marid/self-bindings`, { headers: { authorization: `Bearer ${args.token}` } })
+      if (!res.ok) return new Set()
+      const body = (await res.json().catch(() => undefined)) as { sessions?: unknown } | undefined
+      const sessions = Array.isArray(body?.sessions) ? body.sessions.filter((s): s is string => typeof s === "string") : []
+      return new Set(sessions)
+    }
+
     await runGateway({
       sdk,
       bot,
       allow: env.allow,
       agent: args.agent,
+      pollBindings,
+      // One operator → their chat is the default sink for bound (attached) sessions mirrored
+      // in from web/TUI (WBS-6.1b). A private-chat id equals the user id, so a single-operator
+      // allowlist gives it for free. ponytail: multi-operator mirror-target selection is future
+      // work (WBS-6.5); with >1 operator, bound sessions render nowhere until then.
+      defaultChatId: env.allow.size === 1 ? [...env.allow][0] : undefined,
       dedupFile: path.join(instanceMaridDir(dir), "telegram-dedup.json"),
       now: () => Date.now(),
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),

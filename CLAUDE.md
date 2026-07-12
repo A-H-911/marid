@@ -19,12 +19,15 @@ carries the invariants, hard constraints, and the tracking protocol. The `docs/`
 DEC-008). One runtime serves a TUI, a token-secured HTTP+SSE API, the web UI, and a Telegram bot —
 runnable as multiple fully isolated instances on one machine, on a private network, for a single
 operator. The planning phase found most of the target already exists upstream, so Marid builds only
-**four things**: `marid-auth` (bearer tokens, rate limits, audit), `marid-instance` (isolated runtimes),
-`marid-telegram` (a gateway process outside the core), and a **distribution profile** that ships the
+**four things**: `marid-gateway` (the **Marid Gateway** — bearer tokens, rate limits, audit, and the `/marid/*`
+attach/binding/mirroring routes fronting the reused HTTP+SSE API; `marid-auth` is its auth module, ADR-0011),
+`marid-instance` (isolated runtimes), `marid-telegram` (a *channel* gateway process — a **client** of
+`marid-gateway`, not the API gateway — outside the core), and a **distribution profile** that ships the
 keep-list without deleting anything. Guiding principle: **reuse upstream capability; anything
 Marid-specific lives in NEW packages speaking existing interfaces** (DEC-009). Attribution: Marid is a
 private downstream distribution of [OpenCode](https://github.com/anomalyco/opencode) (MIT), not
-affiliated with or endorsed by it.
+affiliated with or endorsed by it. **"Private" = single-operator _usage_, not a closed repo — the repo and
+the signed releases are public (DEC-010); it names the intended deployment, one operator on a private network.**
 
 Orient from `docs/01-executive-summary.md` and `docs/00-charter.md`.
 
@@ -64,7 +67,8 @@ Six dependency-ordered phases, each exiting at a measurable milestone:
 - **Ending a phase:** operator review checkpoint. Review PRs against `docs/handoff/review-prompts.md`
   (esp. patch-surface discipline — flag any upstream edit not registered as a `P-*`).
 - **Current status:** see `docs/progress/status-report.md` (the live snapshot) + `docs/planning/roadmap.md`.
-  (As of this writing: PH-0..3 done / MS-004 met; **PH-4 / MS-005 next**.)
+  (As of this writing: **PH-0..6 done**; **MS-007 MET** (2026-07-12, PR #48 `4409d92f`) — all PH-6 acceptance
+  criteria Met and the Telegram gateway stack merged to `develop`. **PH-7 WhatsApp** is operator-gated, not started.)
 
 ## Tracking protocol (MANDATORY — do not let the trackers drift)
 
@@ -121,9 +125,10 @@ last-resort upstream-file edit**. Current surface:
   release branch. Local `main` may lag; use `develop` / `origin/develop` for diffs and PR bases.
 - Feature branch → **PR into `develop`, squash-merge**. `develop → main` via a **sync PR, merge-commit**
   (this leaves benign merge nodes on `main` that `develop` lacks — the "ahead/behind 2" is normal).
-- **Branch protection** (main + develop): 14 required checks — `lint`, `typecheck`, `unit` (ubuntu +
+- **Branch protection** (main + develop): 17 required checks — `lint`, `typecheck`, `unit` (ubuntu +
   windows), `smoke` (ubuntu/macos/windows), `pr-title`, `marid-isolation` (ubuntu/macos/windows, added
-  PH-2), `marid-sync` (ubuntu/macos/windows, added PH-3). You cannot self-merge.
+  PH-2), `marid-sync` (ubuntu/macos/windows, added PH-3), `marid-telegram` (ubuntu/macos/windows, added
+  PH-4). You cannot self-merge.
 - CI is `.github/workflows/ci.yml` (**Marid-owned**; upstream workflows are stripped by
   `script/strip-upstream-workflows.ts` with a KEEP allowlist). Marid's `marid-pr-title.yml` replaces
   upstream's PR-standards check.

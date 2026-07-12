@@ -32,3 +32,8 @@ UPCOMING_CHANGELOG.md
 logs/
 *.bun-build
 tsconfig.tsbuildinfo
+
+# Playwright Telegram-Web live tier (TEST-TG-UI): persistent login (IndexedDB session) + artifacts
+.pw-telegram/
+test-results/
+playwright-report/

@@ -1,0 +1,526 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "er",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Database (core SQLite, reused as-is; no Marid migrations)"
+  },
+  "nodes": [
+    {
+      "id": "project",
+      "label": {
+        "text": "project"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "worktree",
+          "label": {
+            "text": "worktree"
+          }
+        },
+        {
+          "id": "vcs",
+          "label": {
+            "text": "vcs"
+          }
+        },
+        {
+          "id": "name",
+          "label": {
+            "text": "name"
+          }
+        }
+      ]
+    },
+    {
+      "id": "project_directory",
+      "label": {
+        "text": "project_directory"
+      },
+      "attributes": [
+        {
+          "id": "project_id",
+          "label": {
+            "text": "project_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "directory",
+          "label": {
+            "text": "directory"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "type",
+          "label": {
+            "text": "type"
+          }
+        }
+      ]
+    },
+    {
+      "id": "workspace",
+      "label": {
+        "text": "workspace"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "project_id",
+          "label": {
+            "text": "project_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "branch",
+          "label": {
+            "text": "branch"
+          }
+        }
+      ]
+    },
+    {
+      "id": "session",
+      "label": {
+        "text": "session"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "project_id",
+          "label": {
+            "text": "project_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "parent_id",
+          "label": {
+            "text": "parent_id"
+          }
+        },
+        {
+          "id": "title",
+          "label": {
+            "text": "title"
+          }
+        },
+        {
+          "id": "agent",
+          "label": {
+            "text": "agent"
+          }
+        },
+        {
+          "id": "model",
+          "label": {
+            "text": "model (JSON)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "session_message",
+      "label": {
+        "text": "session_message"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "session_id",
+          "label": {
+            "text": "session_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "seq",
+          "label": {
+            "text": "seq"
+          }
+        },
+        {
+          "id": "data",
+          "label": {
+            "text": "data (JSON)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "session_input",
+      "label": {
+        "text": "session_input"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "session_id",
+          "label": {
+            "text": "session_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "prompt",
+          "label": {
+            "text": "prompt (JSON)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "todo",
+      "label": {
+        "text": "todo"
+      },
+      "attributes": [
+        {
+          "id": "session_id",
+          "label": {
+            "text": "session_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "position",
+          "label": {
+            "text": "position"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "status",
+          "label": {
+            "text": "status"
+          }
+        }
+      ]
+    },
+    {
+      "id": "session_share",
+      "label": {
+        "text": "session_share"
+      },
+      "attributes": [
+        {
+          "id": "session_id",
+          "label": {
+            "text": "session_id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "url",
+          "label": {
+            "text": "url"
+          }
+        }
+      ]
+    },
+    {
+      "id": "event_sequence",
+      "label": {
+        "text": "event_sequence"
+      },
+      "attributes": [
+        {
+          "id": "aggregate_id",
+          "label": {
+            "text": "aggregate_id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "seq",
+          "label": {
+            "text": "seq"
+          }
+        }
+      ]
+    },
+    {
+      "id": "event",
+      "label": {
+        "text": "event"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "aggregate_id",
+          "label": {
+            "text": "aggregate_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "type",
+          "label": {
+            "text": "type"
+          }
+        },
+        {
+          "id": "data",
+          "label": {
+            "text": "data (JSON)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "permission",
+      "label": {
+        "text": "permission"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "project_id",
+          "label": {
+            "text": "project_id"
+          },
+          "key": "FK"
+        },
+        {
+          "id": "action",
+          "label": {
+            "text": "action"
+          }
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "label": {
+        "text": "account"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "email",
+          "label": {
+            "text": "email"
+          }
+        }
+      ]
+    },
+    {
+      "id": "credential",
+      "label": {
+        "text": "credential"
+      },
+      "attributes": [
+        {
+          "id": "id",
+          "label": {
+            "text": "id"
+          },
+          "key": "PK"
+        },
+        {
+          "id": "integration_id",
+          "label": {
+            "text": "integration_id"
+          }
+        },
+        {
+          "id": "value",
+          "label": {
+            "text": "value (JSON)"
+          }
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "r1",
+      "source": "project_directory",
+      "target": "project",
+      "sourcePort": "project_id",
+      "targetPort": "id",
+      "label": {
+        "text": "N:1"
+      }
+    },
+    {
+      "id": "r2",
+      "source": "workspace",
+      "target": "project",
+      "sourcePort": "project_id",
+      "targetPort": "id",
+      "label": {
+        "text": "N:1"
+      }
+    },
+    {
+      "id": "r3",
+      "source": "session",
+      "target": "project",
+      "sourcePort": "project_id",
+      "targetPort": "id",
+      "label": {
+        "text": "N:1"
+      }
+    },
+    {
+      "id": "r4",
+      "source": "session_message",
+      "target": "session",
+      "sourcePort": "session_id",
+      "targetPort": "id",
+      "label": {
+        "text": "N:1"
+      }
+    },
+    {
+      "id": "r5",
+      "source": "session_input",
+      "target": "session",
+      "sourcePort": "session_id",
+      "targetPort": "id",
+      "label": {
+        "text": "N:1"
+      }
+    },
+    {
+      "id": "r6",
+      "source": "todo",
+      "target": "session",
+      "sourcePort": "session_id",
+      "targetPort": "id",
+      "label": {
+        "text": "N:1"
+      }
+    },
+    {
+      "id": "r7",
+      "source": "session_share",
+      "target": "session",
+      "sourcePort": "session_id",
+      "targetPort": "id",
+      "label": {
+        "text": "1:1"
+      }
+    },
+    {
+      "id": "r8",
+      "source": "event",
+      "target": "event_sequence",
+      "sourcePort": "aggregate_id",
+      "targetPort": "aggregate_id",
+      "label": {
+        "text": "N:1"
+      }
+    },
+    {
+      "id": "r9",
+      "source": "permission",
+      "target": "project",
+      "sourcePort": "project_id",
+      "targetPort": "id",
+      "label": {
+        "text": "N:1"
+      }
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

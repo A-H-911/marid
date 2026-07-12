@@ -3,7 +3,7 @@ import fs from "node:fs/promises"
 import fssync from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { createTokenStore } from "@marid/auth"
+import { createTokenStore } from "@marid/gateway"
 import {
   composeInstanceEnv,
   instanceDataDir,

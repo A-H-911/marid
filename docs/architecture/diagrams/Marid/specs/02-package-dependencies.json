@@ -1,0 +1,429 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "dependency",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Package Dependency Graph (@marid/* added)"
+  },
+  "nodes": [
+    {
+      "id": "opencode",
+      "label": {
+        "text": "opencode (bin)"
+      }
+    },
+    {
+      "id": "core",
+      "label": {
+        "text": "core"
+      }
+    },
+    {
+      "id": "server",
+      "label": {
+        "text": "server"
+      }
+    },
+    {
+      "id": "tui",
+      "label": {
+        "text": "tui"
+      }
+    },
+    {
+      "id": "protocol",
+      "label": {
+        "text": "protocol"
+      }
+    },
+    {
+      "id": "schema",
+      "label": {
+        "text": "schema"
+      }
+    },
+    {
+      "id": "client",
+      "label": {
+        "text": "client"
+      }
+    },
+    {
+      "id": "sdk",
+      "label": {
+        "text": "sdk"
+      }
+    },
+    {
+      "id": "sdknext",
+      "label": {
+        "text": "sdk-next"
+      }
+    },
+    {
+      "id": "llm",
+      "label": {
+        "text": "llm"
+      }
+    },
+    {
+      "id": "plugin",
+      "label": {
+        "text": "plugin"
+      }
+    },
+    {
+      "id": "script",
+      "label": {
+        "text": "script"
+      }
+    },
+    {
+      "id": "eds",
+      "label": {
+        "text": "effect-drizzle-sqlite"
+      }
+    },
+    {
+      "id": "esn",
+      "label": {
+        "text": "effect-sqlite-node"
+      }
+    },
+    {
+      "id": "app",
+      "label": {
+        "text": "app"
+      }
+    },
+    {
+      "id": "ui",
+      "label": {
+        "text": "ui"
+      }
+    },
+    {
+      "id": "sessionui",
+      "label": {
+        "text": "session-ui"
+      }
+    },
+    {
+      "id": "desktop",
+      "label": {
+        "text": "desktop"
+      }
+    },
+    {
+      "id": "enterprise",
+      "label": {
+        "text": "enterprise"
+      }
+    },
+    {
+      "id": "mauth",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/gateway"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "minst",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/instance"
+      },
+      "styleRefs": [
+        "core"
+      ]
+    },
+    {
+      "id": "mtg",
+      "shape": "rect",
+      "label": {
+        "text": "marid-telegram"
+      },
+      "styleRefs": [
+        "channel"
+      ]
+    },
+    {
+      "id": "mcc",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/channel-client"
+      },
+      "styleRefs": [
+        "ccpkg"
+      ]
+    },
+    {
+      "id": "mlegend",
+      "shape": "rect",
+      "label": {
+        "text": "Marid-added: red = @marid/gateway (marid-auth is its auth module), orange = marid-telegram, amber = @marid/channel-client (shared, PH-7 reuses), dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "d1",
+      "source": "opencode",
+      "target": "core"
+    },
+    {
+      "id": "d2",
+      "source": "opencode",
+      "target": "server"
+    },
+    {
+      "id": "d3",
+      "source": "opencode",
+      "target": "tui"
+    },
+    {
+      "id": "d4",
+      "source": "opencode",
+      "target": "protocol"
+    },
+    {
+      "id": "d5",
+      "source": "opencode",
+      "target": "schema"
+    },
+    {
+      "id": "d6",
+      "source": "opencode",
+      "target": "sdk"
+    },
+    {
+      "id": "d7",
+      "source": "opencode",
+      "target": "llm"
+    },
+    {
+      "id": "d8",
+      "source": "opencode",
+      "target": "plugin"
+    },
+    {
+      "id": "d9",
+      "source": "opencode",
+      "target": "script"
+    },
+    {
+      "id": "d10",
+      "source": "core",
+      "target": "schema"
+    },
+    {
+      "id": "d11",
+      "source": "core",
+      "target": "plugin"
+    },
+    {
+      "id": "d12",
+      "source": "core",
+      "target": "eds"
+    },
+    {
+      "id": "d13",
+      "source": "core",
+      "target": "esn"
+    },
+    {
+      "id": "d14",
+      "source": "server",
+      "target": "core"
+    },
+    {
+      "id": "d15",
+      "source": "server",
+      "target": "protocol"
+    },
+    {
+      "id": "d16",
+      "source": "tui",
+      "target": "core"
+    },
+    {
+      "id": "d17",
+      "source": "tui",
+      "target": "ui"
+    },
+    {
+      "id": "d18",
+      "source": "tui",
+      "target": "plugin"
+    },
+    {
+      "id": "d19",
+      "source": "tui",
+      "target": "sdk"
+    },
+    {
+      "id": "d20",
+      "source": "protocol",
+      "target": "schema"
+    },
+    {
+      "id": "d21",
+      "source": "client",
+      "target": "schema"
+    },
+    {
+      "id": "d22",
+      "source": "client",
+      "target": "protocol"
+    },
+    {
+      "id": "d23",
+      "source": "sdknext",
+      "target": "client"
+    },
+    {
+      "id": "d24",
+      "source": "sdknext",
+      "target": "server"
+    },
+    {
+      "id": "d25",
+      "source": "sdknext",
+      "target": "core"
+    },
+    {
+      "id": "d26",
+      "source": "app",
+      "target": "core"
+    },
+    {
+      "id": "d27",
+      "source": "app",
+      "target": "sdk"
+    },
+    {
+      "id": "d28",
+      "source": "app",
+      "target": "sessionui"
+    },
+    {
+      "id": "d29",
+      "source": "app",
+      "target": "ui"
+    },
+    {
+      "id": "d30",
+      "source": "desktop",
+      "target": "app"
+    },
+    {
+      "id": "d31",
+      "source": "desktop",
+      "target": "ui"
+    },
+    {
+      "id": "d32",
+      "source": "enterprise",
+      "target": "core"
+    },
+    {
+      "id": "d33",
+      "source": "enterprise",
+      "target": "sessionui"
+    },
+    {
+      "id": "d34",
+      "source": "enterprise",
+      "target": "ui"
+    },
+    {
+      "id": "d35",
+      "source": "plugin",
+      "target": "sdk"
+    },
+    {
+      "id": "m_mauth_server",
+      "source": "mauth",
+      "target": "server"
+    },
+    {
+      "id": "m_minst_server",
+      "source": "minst",
+      "target": "server"
+    },
+    {
+      "id": "m_mtg_sdk",
+      "source": "mtg",
+      "target": "sdk"
+    },
+    {
+      "id": "m_mtg_mcc",
+      "source": "mtg",
+      "target": "mcc"
+    },
+    {
+      "id": "m_mcc_sdk",
+      "source": "mcc",
+      "target": "sdk"
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "ccpkg": {
+      "fill": "#F0A81F",
+      "border": {
+        "color": "#C4871A"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

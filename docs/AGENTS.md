@@ -20,8 +20,9 @@ generation: derived
   [roadmap](planning/roadmap.md), [acceptance criteria](validation/acceptance-criteria.md). Decisions in the
   [ADRs](adrs/) and approved registers are FINAL.
 - **Where you are now:** the live [status report](progress/status-report.md) and
-  [acceptance audit](validation/acceptance-audit.md). PH-0..3 done (MS-004); **PH-4 (Telegram) is next, not
-  started.** Do not re-litigate settled decisions.
+  [acceptance audit](validation/acceptance-audit.md). **PH-0..6 done; MS-007 MET** (2026-07-12, PR #48
+  `4409d92f`) — all PH-6 acceptance criteria Met and the Telegram gateway stack merged to `develop`. **PH-7
+  WhatsApp** is operator-gated and not started. Do not re-litigate settled decisions.
 
 ## Invariants — never violate (a violation requires a new ADR)
 
@@ -57,4 +58,5 @@ generation: derived
 ## Kickoff
 
 Start from [handoff/initial-prompt.md](handoff/initial-prompt.md); subsequent phases use
-[handoff/follow-up-prompts.md](handoff/follow-up-prompts.md) (next: `PH-4 → start`).
+[handoff/follow-up-prompts.md](handoff/follow-up-prompts.md) (active phase: **PH-6 Telegram gateway** — see the
+live [status report](progress/status-report.md); PH-7 WhatsApp is operator-gated and not started).

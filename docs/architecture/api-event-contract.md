@@ -1,7 +1,7 @@
 ---
-status: Approved (gate 7, 2026-07-03; amended v1.1 2026-07-05 — PH-3, additive + reconnect correction)
-version: v1.1
-updated: 2026-07-05
+status: Approved (gate 7, 2026-07-03; amended v1.1 2026-07-05 — PH-3, additive + reconnect correction; amended v1.2 2026-07-12 — PH-6, Marid channel gateway surface)
+version: v1.2
+updated: 2026-07-12
 owner: operator (STK-001)
 ---
 
@@ -14,6 +14,14 @@ owner: operator (STK-001)
 > `event` httpapi group). The *Ordering & recovery* section below is corrected to the actual model
 > (authoritative-store re-fetch on reconnect; the event-sourced `sync` subsystem is the only replay path
 > and is out of the MVP contract). ADR-0004 and EXP-001 carry reconciling notes pointing here.
+
+> **v1.2 (2026-07-12, PH-6 — Marid channel gateway).** Additive. Documents the four Marid-added
+> `/marid/*` gateway routes (session↔surface binding), the binding-aware `owns ∪ bound` visibility on the
+> `/event` + `/global/event` firehoses (cross-surface mirroring), the route-based SSE-isolation fix
+> (ADR-0016/0017), and two *behaviours* on already-committed routes — channel tool calling (sync
+> `/session/{id}/message`) and outbound file sending (multipart, Marid-side). **No new replay path:**
+> mirroring rides the v1.1 authoritative-store re-fetch-on-reconnect model, not a `seq`/`id:` cursor. See
+> the new *Channel gateway surface & cross-surface mirroring* section.
 
 Basis: ADR-0003 (v1 + SSE behind marid-auth) and ADR-0004 (one server per instance). The contract below
 is what Marid **commits to** for apps, gateways, and UIs; upstream v1 provides the substance (evidence:
@@ -69,6 +77,59 @@ is what Marid **commits to** for apps, gateways, and UIs; upstream v1 provides t
   `id`. Because recovery is re-fetch rather than replay, exact-once event delivery is not promised.
 - Backpressure/disconnect: server emits `server.heartbeat` frames; clients reconnect with jittered
   backoff (the SDK does exponential backoff, base 1s cap 30s) and then re-read authoritative state.
+
+## Channel gateway surface & cross-surface mirroring (PH-6, v1.2)
+
+PH-6 evolves `marid-auth` into the **channel gateway**: the same authenticated wrapper now serves four
+Marid-owned routes (additive — no upstream edit, no `P-*`) that bind a session to a channel surface so
+that surface mirrors it. These are the only routes PH-6 adds to the committed surface. They are pinned by
+the **merged-`/doc` assertion** in `packages/marid-auth/test/gateway.test.ts`, not by `contract.test.ts`:
+the upstream `Server.openapi()` that `contract.test.ts` reads does not carry them, so the merged `/doc`
+(where the wrapper adds its OpenAPI fragment) is where the contract holds.
+
+| Route | Scope | Purpose |
+|---|---|---|
+| `POST /marid/attach` | admin | Bind a channel token to a session (operator explicitly attaches — ADR-0012) |
+| `POST /marid/detach` | admin | Remove a session↔surface binding |
+| `GET /marid/bindings?token=<t>` | admin | List the sessions a given channel token is bound to |
+| `GET /marid/self-bindings` | any authenticated token | List the **caller's own** bound sessions — keyed on the authenticated token, **no `?token=` override** (spoof-proof); the channel-client polls it to pick up a mid-stream attach/detach (WBS-6.5) |
+
+**Visibility = `owns ∪ bound` (the mirroring mechanism).** A non-admin token's `/event` and `/global/event`
+firehoses — and its `GET /session` / `GET /permission` lists — now show, in addition to the sessions it
+**owns**, the sessions explicitly **bound** to it. An attached surface (TUI, web, or channel) sees a bound
+session's frames live; an unattached surface never does. **Admin is still never filtered.**
+**View-via-binding, act-via-ownership:** a bound-but-not-owner surface can *observe* a session but cannot
+approve its permissions or prompt it (`authorize` / reply / prompt stay on `owns`) — no privilege
+escalation via mirroring (INV-001). A binding-store fault degrades safe to owns-only (RISK-024).
+
+**Recovery is unchanged from v1.1 — re-fetch, not replay.** Mirroring adds no `seq`/`id:` cursor. On a
+firehose drop the channel-client reconnects (capped exponential backoff 500 ms–30 s) and reconciles by
+re-reading authoritative state; a bound (non-owned) session is **never** re-fetched (`GET
+/session/{id}/message` is owns-gated → 403, INV-001), so it resumes live only with gap frames lost by
+design. Owned sessions re-read full history and flush the latest assistant message **edit-in-place**
+(`part.id`-keyed → the finished-during-gap turn renders once, no duplicate).
+
+**SSE isolation keys on the route, not the `Accept` header (ADR-0016/0017).** The `owns ∪ bound` filter
+must run on the firehose response. The wrapper originally detected the firehose by the request header
+`Accept: text/event-stream` — but the Marid SDK's SSE client omits it, which **bypassed the filter for
+every non-admin token** (a realized INV-001 leak surfaced by the WBS-6.6 live-account tier, EXP-015 /
+RISK-025). The fix recognises the firehose by **pathname** (`isStream` matches `/event` and `/global/event`
+regardless of `Accept`), so the filter always applies; ADR-0017 fixes the companion own-session
+lazy-visibility defect the leak had masked. Regression-pinned by a real-request test in `marid-auth`.
+
+**Two behaviours on already-committed routes (no new route):**
+
+- **Channel tool calling** rides the sync `POST /session/{id}/message` route (already committed). The
+  gateway drives it **detached** — the SDK drains the response stream to completion in the background, so
+  the request stays alive for the whole turn and the served turn resolves the **full toolset + MCP**. (The
+  async `prompt_async` route `Effect.forkIn`s the turn off its request scope → it runs after the request
+  returns, outliving the request-scoped tool/agent/MCP context, and resolves an *empty* toolset; root
+  cause pinned by `test/marid/step0-tools-probe.test.ts`.) Per-tool gating is the channel agent's
+  `permission` ruleset (`docs/execution/telegram-channel-tools.md`); `ask` surfaces the inline Approve/Deny
+  keyboard via the existing `permission.replied` cycle.
+- **Outbound file sending** is Marid-side, not a server route: when a tool returns a media attachment
+  (a `data:` URL part), the gateway decodes the bytes and uploads them to the channel as **multipart**
+  (image mime → photo, else document). No public URL / relay is involved.
 
 ## Concurrency semantics (EXP-001 — verified; §7 / FR-040/041)
 

@@ -32,7 +32,7 @@ is used for nothing in the MVP. Rollback for any exclusion = re-add the package 
 | Capability | Classification | Note |
 |---|---|---|
 | Agent loop, tools, permissions, skills/commands/rules, subagents, sessions/history, streaming, branching/cancel/resume, storage+migrations, MCP, providers, event bus | **Keep as-is** | FR-001..017 |
-| Server/API, SDK | **Keep with changes** | marid-auth middleware layer on the seam; v1 SDK reused |
+| Server/API, SDK | **Keep with changes** | `marid-gateway` middleware layer on the seam (marid-auth is its auth module, ADR-0011); v1 SDK reused |
 | Config | **Keep with changes** | Instance layer via env composition; secret-reference + redaction additions |
 | Plugins | **Keep with changes** | Trust policy at gate 8 (in-process, unsandboxed today) |
 | LSP | **Make optional** | `lsp:false` default in Marid profile; config re-enables |

@@ -1,16 +1,19 @@
 ---
 id: ADR-0008
-status: Approved
-version: v1.0
-updated: 2026-07-09
+status: Superseded
+version: v1.1
+updated: 2026-07-10
 supersedes: none
-superseded_by: none
+superseded_by: ADR-0009
 owner: operator (STK-001)
 ---
 
 # ADR-0008 — Post-MVP: replace the hand-rolled marid-telegram gateway with a fork of grinev/opencode-telegram-bot
 
-**Status:** Approved (2026-07-09, operator) · the Telegram channel gateway's **UX layer** is re-based onto a
+**Status:** **SUPERSEDED by [ADR-0009](adr-0009-telegram-channel-remediation.md) (2026-07-10, operator gate).** The
+fork direction is withdrawn in favor of **fix-in-place** (the hand-rolled gateway is zero-dep and already has the
+streaming machinery; the only gap is one MIT md library — grinev is Basic-auth + channel-scope-denied features).
+Original (now-superseded) decision below. · the Telegram channel gateway's **UX layer** is re-based onto a
 mature MIT bot rather than the hand-rolled implementation · **does not supersede
 [ADR-0005](adr-0005-channel-gateway-separate-process.md)** (separate-process gateway holding no provider keys
 still holds — the fork is still that process) · relates to FR-036/043, FR-065, INV-001, DEC-009 (reuse-first),

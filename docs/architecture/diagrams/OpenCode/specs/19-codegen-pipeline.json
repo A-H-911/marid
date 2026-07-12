@@ -1,0 +1,182 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "flowchart",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Codegen Pipelines (reused as-is)"
+  },
+  "styles": {
+    "gen": {
+      "fill": "#E8F0FF",
+      "border": {
+        "color": "#1976D2"
+      }
+    },
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "api",
+      "shape": "roundrect",
+      "label": {
+        "text": "Change API (protocol / server routes)"
+      }
+    },
+    {
+      "id": "genscript",
+      "shape": "roundrect",
+      "label": {
+        "text": "./script/generate.ts"
+      }
+    },
+    {
+      "id": "openapi",
+      "shape": "roundrect",
+      "styleRefs": [
+        "gen"
+      ],
+      "label": {
+        "text": "openapi.json (generated)"
+      }
+    },
+    {
+      "id": "sdk",
+      "shape": "roundrect",
+      "styleRefs": [
+        "gen"
+      ],
+      "label": {
+        "text": "sdk/js client (generated)"
+      }
+    },
+    {
+      "id": "commit",
+      "shape": "stadium",
+      "label": {
+        "text": "commit \"chore: generate\""
+      }
+    },
+    {
+      "id": "dbchange",
+      "shape": "roundrect",
+      "label": {
+        "text": "Change DB schema (core *.sql.ts)"
+      }
+    },
+    {
+      "id": "dbgen",
+      "shape": "roundrect",
+      "label": {
+        "text": "cd packages/core && bun db generate"
+      }
+    },
+    {
+      "id": "schemagen",
+      "shape": "roundrect",
+      "styleRefs": [
+        "gen"
+      ],
+      "label": {
+        "text": "schema.gen.ts + migration.gen.ts"
+      }
+    },
+    {
+      "id": "dbmigrate",
+      "shape": "roundrect",
+      "label": {
+        "text": "bun db migrate (runtime applies)"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "g1",
+      "source": "api",
+      "target": "genscript"
+    },
+    {
+      "id": "g2",
+      "source": "genscript",
+      "target": "openapi"
+    },
+    {
+      "id": "g3",
+      "source": "genscript",
+      "target": "sdk"
+    },
+    {
+      "id": "g4",
+      "source": "openapi",
+      "target": "commit"
+    },
+    {
+      "id": "g5",
+      "source": "sdk",
+      "target": "commit"
+    },
+    {
+      "id": "g6",
+      "source": "dbchange",
+      "target": "dbgen"
+    },
+    {
+      "id": "g7",
+      "source": "dbgen",
+      "target": "schemagen"
+    },
+    {
+      "id": "g8",
+      "source": "schemagen",
+      "target": "dbmigrate"
+    },
+    {
+      "id": "g9",
+      "source": "dbmigrate",
+      "target": "commit"
+    }
+  ]
+}

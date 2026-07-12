@@ -42,6 +42,10 @@
 It is designed for **one operator on a private network** who wants to reach the same agent — the same sessions,
 the same tools — from wherever they are: the terminal, a browser, a script, or a phone.
 
+> **"Private" means single-operator _usage_, not a closed repo.** The repository and the signed releases are
+> **public** (DEC-010); "private" refers to the intended deployment — one operator, private network. Contributing?
+> See [CONTRIBUTING.md](CONTRIBUTING.md) — Marid is built **docs-first** (the `docs/` Keystone package).
+
 A single runtime exposes **four interfaces** over **one session engine**, and can run as several **fully isolated
 instances** on one machine. Marid adds only what OpenCode doesn't already provide — a bearer-token auth layer,
 isolated instance lifecycle, and a Telegram gateway — plus a distribution profile that ships a lean keep-list.
@@ -56,36 +60,49 @@ Everything else is upstream capability, reused as-is.
 
 ## Architecture
 
-One runtime, one session engine, four interfaces. The **only** authenticated boundary is the HTTP+SSE surface
-(`marid serve`); the local TUI talks to the engine in-process. Untrusted ingress (Telegram) is bridged by a
-gateway **outside** the core and speaks to the server with a restricted `channel:` token.
+One runtime, one session engine, four interfaces. The **only** authenticated boundary is the **Marid Gateway**
+(`@marid/gateway`) — it *fronts* the reused HTTP+SSE API (`marid serve`) with bearer auth, scopes, rate-limit,
+audit, the `/marid/*` attach/binding routes, and `owns ∪ bound` mirroring (it fronts the upstream API, never
+absorbs it — DEC-009). The local TUI talks to the engine **in-process, no token** (and only becomes a gateway
+client when you `attach`). Untrusted ingress (Telegram) is bridged by a **channel gateway** (`marid-telegram`)
+**outside** the core that is itself a **client** of the Marid Gateway, speaking to it with a restricted
+`channel:` token.
 
 ```mermaid
 graph TB
     subgraph ops["single operator · private network"]
       TUI["🖥️ TUI<br/><b>marid</b>"]:::local
       WEB["🌐 Web UI"]:::client
-      API["🔌 HTTP + SSE API / SDK"]:::client
-      TG["✈️ Telegram"]:::channel
+      SDK["🔌 SDK / API clients"]:::client
+      TG["✈️ Telegram"]:::ext
     end
 
-    GW["marid-telegram gateway<br/><i>outside the core · holds no provider keys</i>"]:::channel
-    AUTH["🔐 marid-auth<br/>bearer tokens · scopes · rate-limit · audit"]:::auth
+    TGGW["marid-telegram<br/><i>channel gateway · a client · holds no provider keys</i>"]:::channel
+
+    subgraph gw["🔐 Marid Gateway — @marid/gateway"]
+      AUTH["auth · scopes · rate-limit · audit<br/>/marid/* attach · bind · owns ∪ bound mirroring"]:::auth
+      API["HTTP + SSE API · /doc · /global/health<br/><i>reused upstream — fronted, not absorbed</i>"]:::reused
+    end
+
     ENGINE["⚙️ session engine<br/><i>one runtime, reused from OpenCode</i>"]:::core
     INST["📦 isolated instances<br/><i>per-instance data · cache · config · state</i>"]:::core
 
     TUI -. "in-process · no token" .-> ENGINE
+    TUI -. "attach · client token" .-> AUTH
     WEB -- "client token" --> AUTH
-    API -- "client / admin token" --> AUTH
-    TG --> GW
-    GW -- "channel: token (restricted)" --> AUTH
-    AUTH -- "authorized request" --> ENGINE
+    SDK -- "client / admin token" --> AUTH
+    TG --> TGGW
+    TGGW -- "channel: token (restricted)" --> AUTH
+    AUTH -- "fronts" --> API
+    API -- "authorized request" --> ENGINE
     ENGINE --> INST
 
     classDef local fill:#2F6BFF,stroke:#1E4FD0,color:#ffffff;
     classDef client fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
+    classDef ext fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
     classDef channel fill:#F0731F,stroke:#D9611A,color:#ffffff;
     classDef auth fill:#DC2A16,stroke:#A81f10,color:#ffffff;
+    classDef reused fill:#3a2a1e,stroke:#8a6a4a,color:#F4F1EA;
     classDef core fill:#1C1714,stroke:#000000,color:#F4F1EA;
 ```
 
@@ -95,8 +112,8 @@ reach privileged routes.
 
 ```mermaid
 graph LR
-    U["Telegram user"]:::ext -->|message| GW["gateway"]:::channel
-    GW -->|"POST session/:id/message<br/>Bearer channel: token"| G{"marid-auth<br/>scope gate"}:::auth
+    U["Telegram user"]:::ext -->|message| GW["marid-telegram<br/>channel gateway"]:::channel
+    GW -->|"POST session/:id/message<br/>Bearer channel: token"| G{"Marid Gateway<br/>scope gate"}:::auth
     G -->|"allowed: bound agent,<br/>owned session only"| OK["✅ prompt runs"]:::core
     G -->|"denied: /shell, /command,<br/>tool/permission override,<br/>other agents"| NO["⛔ 403"]:::deny
 
@@ -106,6 +123,31 @@ graph LR
     classDef core fill:#1C1714,stroke:#000,color:#F4F1EA;
     classDef deny fill:#3a1512,stroke:#DC2A16,color:#ffd9d0;
 ```
+
+Beyond relaying, the gateway gives a channel **full TUI/Web parity** — tool calling + MCP (each sensitive call
+gated by an inline **Approve/Deny** keyboard, per the channel agent's ruleset), **files both ways**, and
+**cross-surface mirroring**: an operator *attaches* a session and it streams live to the bound surface — Telegram,
+web, or TUI — while acting on it stays owner-only (*view-via-binding, act-via-ownership*, INV-001). Recovery is
+re-fetch-on-reconnect (no event replay). The reusable channel runtime is `@marid/channel-client`; the full flow:
+
+```mermaid
+graph LR
+    TG["✈️ Telegram"]:::channel -->|"message · file"| GW["marid-telegram<br/><i>channel gateway · + @marid/channel-client</i>"]:::channel
+    GW -->|"sync POST /session/:id/message"| AUTH["🔐 Marid Gateway — @marid/gateway<br/>owns ∪ bound filter · /marid/attach"]:::auth
+    AUTH -->|"authorized (owns)<br/>full toolset + MCP"| ENGINE["⚙️ session engine"]:::core
+    ENGINE -->|"SSE events"| AUTH
+    AUTH -->|"owns ∪ bound firehose"| GW
+    GW -->|"reply · file · Approve/Deny"| TG
+    ADMIN["🖥️ operator admin<br/>TUI / Web / CLI"]:::client -->|"POST /marid/attach"| AUTH
+    AUTH -->|"bind"| BIND[("BindingStore")]:::core
+
+    classDef client fill:#5C93FF,stroke:#2F6BFF,color:#0b1220;
+    classDef channel fill:#F0731F,stroke:#D9611A,color:#ffffff;
+    classDef auth fill:#DC2A16,stroke:#A81f10,color:#ffffff;
+    classDef core fill:#1C1714,stroke:#000,color:#F4F1EA;
+```
+
+<sub>Full-detail version (channel-client internals, poll/re-fetch recovery): [`docs/architecture/diagrams/Marid/20-gateway-mirroring.png`](docs/architecture/diagrams/Marid/20-gateway-mirroring.png).</sub>
 
 ## Install & verify
 
@@ -149,6 +191,9 @@ marid instance status work       # show its port / pid / state
 marid instance attach work       # open the TUI as a client of that instance
 ```
 
+> **Full usage guide** — every command and flag, worked recipes (Telegram bot, cross-surface mirroring,
+> multi-instance), configuration, and troubleshooting: **[`docs/usage.md`](docs/usage.md)**.
+
 ## The four interfaces
 
 ### 🖥️ TUI — `marid`
@@ -191,7 +236,9 @@ the token as HTTP Basic, which marid-auth accepts. Without it every request retu
 
 ### ✈️ Telegram
 
-The same agent, from your phone. A **gateway process outside the core** bridges Telegram ↔ the agent; it holds
+The same agent, from your phone — with **full TUI/Web parity**: Markdown replies, tool calling + MCP (each
+sensitive call gated by an inline **Approve/Deny** keyboard), files both ways, and cross-surface mirroring (see
+[Architecture](#architecture)). A **gateway process outside the core** bridges Telegram ↔ the agent; it holds
 **no provider keys** and authenticates with a **restricted `channel:` token** (see the security model). Secrets
 come from the environment (never flags, per INV-002).
 
@@ -287,9 +334,9 @@ what it doesn't ship (ADR-0002), so upstream syncs stay clean.
 
 | Kept (reused from OpenCode) | Added by Marid (new packages) | Excluded from the distribution |
 |---|---|---|
-| Session engine · 15+ LLM providers · LSP · MCP · git · config · SQLite | `marid-auth` — bearer tokens, scopes, rate-limit, audit | Desktop (Electron), cloud/console/function/stats/enterprise |
+| Session engine · 15+ LLM providers · LSP · MCP · git · config · SQLite | `marid-gateway` — the Marid Gateway (bearer tokens, scopes, rate-limit, audit; marid-auth is its auth module) | Desktop (Electron), cloud/console/function/stats/enterprise |
 | The TUI, the web UI, the HTTP+SSE API | `marid-instance` — isolated instance lifecycle | Slack integration, marketing/docs sites |
-| The v1 session/event contract & SDK | `marid-telegram` — Telegram gateway (outside the core) | Experimental `codemode` (externalized), the v2/next chain |
+| The v1 session/event contract & SDK | `marid-telegram` — Telegram *channel* gateway, a client of `marid-gateway` (outside the core) | Experimental `codemode` (externalized), the v2/next chain |
 
 **Notable decisions**
 

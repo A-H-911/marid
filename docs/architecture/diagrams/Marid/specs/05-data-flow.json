@@ -1,0 +1,233 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "flowchart",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Runtime Data Flow (Marid Gateway in the request path)"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "shape": "stadium",
+      "label": {
+        "text": "User input"
+      }
+    },
+    {
+      "id": "ui",
+      "shape": "roundrect",
+      "label": {
+        "text": "TUI / Web UI"
+      }
+    },
+    {
+      "id": "api",
+      "shape": "roundrect",
+      "label": {
+        "text": "HTTP API :4096"
+      }
+    },
+    {
+      "id": "session",
+      "shape": "roundrect",
+      "label": {
+        "text": "Session run loop"
+      }
+    },
+    {
+      "id": "prompt",
+      "shape": "roundrect",
+      "label": {
+        "text": "Build prompt + cache policy"
+      }
+    },
+    {
+      "id": "llm",
+      "shape": "roundrect",
+      "label": {
+        "text": "LLM provider stream"
+      }
+    },
+    {
+      "id": "dec",
+      "shape": "diamond",
+      "label": {
+        "text": "Tool call?"
+      }
+    },
+    {
+      "id": "tool",
+      "shape": "roundrect",
+      "label": {
+        "text": "Execute tool (read/write/shell/mcp)"
+      }
+    },
+    {
+      "id": "persist",
+      "shape": "roundrect",
+      "label": {
+        "text": "Persist message + part -> SQLite"
+      }
+    },
+    {
+      "id": "events",
+      "shape": "roundrect",
+      "label": {
+        "text": "Emit events -> SSE"
+      }
+    },
+    {
+      "id": "done",
+      "shape": "stadium",
+      "label": {
+        "text": "Render to UI"
+      }
+    },
+    {
+      "id": "mauth",
+      "shape": "rect",
+      "label": {
+        "text": "Marid Gateway - @marid/gateway (authN / authZ)"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "mlegend",
+      "shape": "rect",
+      "label": {
+        "text": "Marid-added: red = @marid/gateway (Marid Gateway), orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "f1",
+      "source": "start",
+      "target": "ui"
+    },
+    {
+      "id": "f3",
+      "source": "api",
+      "target": "session"
+    },
+    {
+      "id": "f4",
+      "source": "session",
+      "target": "prompt"
+    },
+    {
+      "id": "f5",
+      "source": "prompt",
+      "target": "llm"
+    },
+    {
+      "id": "f6",
+      "source": "llm",
+      "target": "dec"
+    },
+    {
+      "id": "f7",
+      "source": "dec",
+      "target": "tool",
+      "label": {
+        "text": "yes"
+      }
+    },
+    {
+      "id": "f8",
+      "source": "tool",
+      "target": "llm",
+      "label": {
+        "text": "tool result"
+      }
+    },
+    {
+      "id": "f9",
+      "source": "dec",
+      "target": "persist",
+      "label": {
+        "text": "final"
+      }
+    },
+    {
+      "id": "f10",
+      "source": "persist",
+      "target": "events"
+    },
+    {
+      "id": "f11",
+      "source": "events",
+      "target": "done"
+    },
+    {
+      "id": "f12",
+      "source": "events",
+      "target": "ui",
+      "label": {
+        "text": "stream"
+      }
+    },
+    {
+      "id": "m_ui_mauth",
+      "source": "ui",
+      "target": "mauth",
+      "label": {
+        "text": "client"
+      }
+    },
+    {
+      "id": "m_mauth_api",
+      "source": "mauth",
+      "target": "api"
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

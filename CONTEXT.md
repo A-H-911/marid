@@ -1,6 +1,10 @@
-# OpenCode Session Runtime
+# Marid Session Runtime
 
-OpenCode sessions preserve durable conversational history while assembling the runtime context an agent needs to act correctly in its current environment.
+> **Marid reuses OpenCode's session runtime unchanged.** This document describes that inherited runtime.
+> The architectural term names below (**OpenCode Client**, **Embedded OpenCode**) name the upstream SDK
+> surfaces Marid consumes as-is — they are kept verbatim so they map to `@opencode-ai/*` identifiers.
+
+Marid sessions preserve durable conversational history while assembling the runtime context an agent needs to act correctly in its current environment.
 
 ## Language
 
@@ -55,7 +59,7 @@ One process-local execution span that promotes eligible input and runs required 
 The bounded projection of a Core-executed tool result persisted in Session history and replayed to the model. A tool may shape this projection semantically, but the Tool Registry enforces the final size limit.
 
 **Managed Tool Output File**:
-A temporary file created under OpenCode's shared tool-output directory to retain complete output that was too large for Session history.
+A temporary file created under the runtime's shared tool-output directory to retain complete output that was too large for Session history.
 
 **Model Request Options**:
 Provider-semantic model settings selected from the Catalog and active Session variant before the LLM protocol adapter encodes them for a provider request.

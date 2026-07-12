@@ -1,0 +1,56 @@
+# WBS-6.6 · TEST-TG-E2E — GramJS userbot ↔ the REAL Marid Telegram gateway (live, NON-GATING).
+#
+# ADR-0013 tier 2: real-MTProto coverage that a deterministic fake server can't give. Live-Telegram
+# flakiness must never block a merge, so this is a SEPARATE workflow (NOT a required check) run only
+# on demand: `workflow_dispatch`, or by adding the `test:telegram-live` label to a PR. It reuses the
+# proven programmatic gateway wiring and asserts model-free slash behaviour over real Telegram
+# (packages/opencode/scripts/tg-userbot-e2e.ts).
+#
+# Secrets (repo → Settings → Secrets and variables → Actions), never printed (INV-002):
+#   TELEGRAM_API_ID · TELEGRAM_API_HASH · TELEGRAM_TEST_SESSION · TELEGRAM_TEST_BOT_TOKEN
+# See docs/execution/telegram-userbot-e2e-setup.md.
+
+name: marid-telegram-userbot
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  # One live userbot at a time — the throwaway account + bot can't safely run concurrent sessions.
+  group: telegram-userbot
+  cancel-in-progress: false
+
+jobs:
+  userbot-e2e:
+    # workflow_dispatch always; on a PR only when explicitly labelled test:telegram-live.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.label.name == 'test:telegram-live' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: ./.github/actions/bun-install
+      - name: Run userbot ↔ real-gateway live E2E
+        # Skip cleanly (not fail) when secrets are unavailable — e.g. a fork PR — so the label/dispatch
+        # never turns red for lack of creds. The script itself exits 1 on a genuine round-trip failure.
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELEGRAM_TEST_SESSION: ${{ secrets.TELEGRAM_TEST_SESSION }}
+          TELEGRAM_TEST_BOT_TOKEN: ${{ secrets.TELEGRAM_TEST_BOT_TOKEN }}
+        run: |
+          if [ -z "$TELEGRAM_TEST_BOT_TOKEN" ] || [ -z "$TELEGRAM_TEST_SESSION" ]; then
+            echo "::warning::Telegram live secrets not configured — skipping the userbot E2E (non-gating)."
+            exit 0
+          fi
+          bun run scripts/tg-userbot-e2e.ts
+        working-directory: packages/opencode

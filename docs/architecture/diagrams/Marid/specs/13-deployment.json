@@ -1,0 +1,264 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "architecture",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Process & Telemetry (Marid instances + telegram)"
+  },
+  "styles": {
+    "ext": {
+      "fill": "#FFF4E5",
+      "border": {
+        "color": "#E67E22"
+      }
+    },
+    "store": {
+      "fill": "#E8F0FF",
+      "border": {
+        "color": "#1976D2"
+      }
+    },
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "cli",
+      "shape": "rect",
+      "label": {
+        "text": "opencode process (CLI / TUI)"
+      }
+    },
+    {
+      "id": "server",
+      "shape": "rect",
+      "label": {
+        "text": "HTTP server :4096 (HttpApi)"
+      }
+    },
+    {
+      "id": "web",
+      "shape": "rect",
+      "label": {
+        "text": "Web / Desktop client"
+      }
+    },
+    {
+      "id": "mcpstdio",
+      "shape": "rect",
+      "styleRefs": [
+        "ext"
+      ],
+      "label": {
+        "text": "MCP server (stdio subprocess)"
+      }
+    },
+    {
+      "id": "mcphttp",
+      "shape": "rect",
+      "styleRefs": [
+        "ext"
+      ],
+      "label": {
+        "text": "MCP server (remote HTTP/SSE)"
+      }
+    },
+    {
+      "id": "lsp",
+      "shape": "rect",
+      "styleRefs": [
+        "ext"
+      ],
+      "label": {
+        "text": "LSP servers (subprocess)"
+      }
+    },
+    {
+      "id": "db",
+      "shape": "cylinder",
+      "styleRefs": [
+        "store"
+      ],
+      "label": {
+        "text": "SQLite (one global file per machine)"
+      }
+    },
+    {
+      "id": "otlp",
+      "shape": "cylinder",
+      "styleRefs": [
+        "ext"
+      ],
+      "label": {
+        "text": "OTLP collector (traces/spans)"
+      }
+    },
+    {
+      "id": "mauth",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/gateway (Marid Gateway)"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "mtg",
+      "shape": "rect",
+      "label": {
+        "text": "marid-telegram - channel gateway, a client (separate process)"
+      },
+      "styleRefs": [
+        "channel"
+      ]
+    },
+    {
+      "id": "minst",
+      "shape": "rect",
+      "label": {
+        "text": "marid-instance (N XDG-isolated servers)"
+      },
+      "styleRefs": [
+        "core"
+      ]
+    },
+    {
+      "id": "mlegend",
+      "shape": "rect",
+      "label": {
+        "text": "Marid-added: red = @marid/gateway (Marid Gateway), orange = marid-telegram, dark = marid-instance. Neutral nodes are reused from OpenCode as-is."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "p1",
+      "source": "cli",
+      "target": "server",
+      "label": {
+        "text": "in-process / HTTP"
+      }
+    },
+    {
+      "id": "p3",
+      "source": "server",
+      "target": "db",
+      "label": {
+        "text": "SQL"
+      }
+    },
+    {
+      "id": "p4",
+      "source": "server",
+      "target": "mcpstdio",
+      "label": {
+        "text": "stdio"
+      }
+    },
+    {
+      "id": "p5",
+      "source": "server",
+      "target": "mcphttp",
+      "label": {
+        "text": "HTTP/SSE"
+      }
+    },
+    {
+      "id": "p6",
+      "source": "server",
+      "target": "lsp",
+      "label": {
+        "text": "JSON-RPC"
+      }
+    },
+    {
+      "id": "p7",
+      "source": "server",
+      "target": "otlp",
+      "label": {
+        "text": "spans"
+      }
+    },
+    {
+      "id": "p8",
+      "source": "cli",
+      "target": "otlp",
+      "label": {
+        "text": "spans"
+      }
+    },
+    {
+      "id": "m_web_mauth",
+      "source": "web",
+      "target": "mauth",
+      "label": {
+        "text": "client"
+      }
+    },
+    {
+      "id": "m_mauth_server",
+      "source": "mauth",
+      "target": "server"
+    },
+    {
+      "id": "m_mtg_mauth",
+      "source": "mtg",
+      "target": "mauth",
+      "label": {
+        "text": "channel"
+      }
+    },
+    {
+      "id": "m_minst_server",
+      "source": "minst",
+      "target": "server",
+      "label": {
+        "text": "spawns N"
+      }
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "flowchart",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Streaming Pipeline (reused as-is)"
+  },
+  "styles": {
+    "add": {
+      "fill": "#FFF7E0",
+      "border": {
+        "color": "#B7950B"
+      }
+    },
+    "store": {
+      "fill": "#E8F0FF",
+      "border": {
+        "color": "#1976D2"
+      }
+    },
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "schema",
+      "shape": "roundrect",
+      "styleRefs": [
+        "add"
+      ],
+      "label": {
+        "text": "1) schema/*-event.ts (define event)"
+      }
+    },
+    {
+      "id": "emit",
+      "shape": "roundrect",
+      "styleRefs": [
+        "add"
+      ],
+      "label": {
+        "text": "2) Service emits (Bus.publish)"
+      }
+    },
+    {
+      "id": "bus",
+      "shape": "roundrect",
+      "label": {
+        "text": "Event Bus"
+      }
+    },
+    {
+      "id": "db",
+      "shape": "cylinder",
+      "styleRefs": [
+        "store"
+      ],
+      "label": {
+        "text": "event_sequence + event (seq)"
+      }
+    },
+    {
+      "id": "proj",
+      "shape": "roundrect",
+      "styleRefs": [
+        "add"
+      ],
+      "label": {
+        "text": "3) Projector (server/projectors.ts)"
+      }
+    },
+    {
+      "id": "sse",
+      "shape": "roundrect",
+      "label": {
+        "text": "SSE endpoint (event route group)"
+      }
+    },
+    {
+      "id": "client",
+      "shape": "roundrect",
+      "styleRefs": [
+        "add"
+      ],
+      "label": {
+        "text": "4) Client subscribe (sync / server-sync)"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "f1",
+      "source": "schema",
+      "target": "emit",
+      "label": {
+        "text": "typed"
+      }
+    },
+    {
+      "id": "f2",
+      "source": "emit",
+      "target": "bus"
+    },
+    {
+      "id": "f3",
+      "source": "bus",
+      "target": "db",
+      "label": {
+        "text": "append"
+      }
+    },
+    {
+      "id": "f4",
+      "source": "bus",
+      "target": "proj"
+    },
+    {
+      "id": "f5",
+      "source": "proj",
+      "target": "sse"
+    },
+    {
+      "id": "f6",
+      "source": "sse",
+      "target": "client",
+      "label": {
+        "text": "SSE"
+      }
+    }
+  ]
+}

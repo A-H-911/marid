@@ -9,18 +9,27 @@
 // against redelivered updates is provided by the update_id dedup store (dedup.ts),
 // not a client message id.
 
+import type { FilePartInput } from "@opencode-ai/sdk/v2"
+
 export interface PromptBody {
   sessionID: string
   agent: string
-  parts: Array<{ type: "text"; text: string }>
+  parts: Array<{ type: "text"; text: string } | FilePartInput>
 }
 
 // Telegram message content is wrapped as a plain user text part — i.e. as DATA,
-// never as instructions or a system/tool position (INV-004).
-export function restrictedPrompt(input: { sessionID: string; text: string; agent: string }): PromptBody {
+// never as instructions or a system/tool position (INV-004). Inbound attachments ride
+// along as file parts (the file lands in the workspace as data, not executed); their
+// download URL embeds the bot token and must never be logged (INV-002, media.ts).
+export function restrictedPrompt(input: {
+  sessionID: string
+  text: string
+  agent: string
+  files?: FilePartInput[]
+}): PromptBody {
   return {
     sessionID: input.sessionID,
     agent: input.agent,
-    parts: [{ type: "text", text: input.text }],
+    parts: [{ type: "text", text: input.text }, ...(input.files ?? [])],
   }
 }

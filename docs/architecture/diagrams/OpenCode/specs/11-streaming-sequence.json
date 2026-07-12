@@ -1,0 +1,155 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "sequence",
+  "meta": {
+    "title": "Marid on OpenCode - Streaming with Replay (reused as-is)"
+  },
+  "nodes": [
+    {
+      "id": "svc",
+      "label": {
+        "text": "Service"
+      }
+    },
+    {
+      "id": "bus",
+      "label": {
+        "text": "Event Bus"
+      }
+    },
+    {
+      "id": "db",
+      "label": {
+        "text": "event table"
+      }
+    },
+    {
+      "id": "sse",
+      "label": {
+        "text": "SSE endpoint"
+      }
+    },
+    {
+      "id": "client",
+      "label": {
+        "text": "Client (sync)"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "m1",
+      "source": "svc",
+      "target": "bus",
+      "label": {
+        "text": "publish(event)"
+      }
+    },
+    {
+      "id": "m2",
+      "source": "bus",
+      "target": "db",
+      "label": {
+        "text": "append (aggregate_id, seq)"
+      }
+    },
+    {
+      "id": "m3",
+      "source": "bus",
+      "target": "sse",
+      "label": {
+        "text": "fan-out"
+      }
+    },
+    {
+      "id": "m4",
+      "source": "sse",
+      "target": "client",
+      "label": {
+        "text": "SSE: event"
+      },
+      "dashed": true
+    },
+    {
+      "id": "m5",
+      "source": "client",
+      "target": "sse",
+      "label": {
+        "text": "reconnect w/ last seq"
+      }
+    },
+    {
+      "id": "m6",
+      "source": "sse",
+      "target": "db",
+      "label": {
+        "text": "read events > seq"
+      }
+    },
+    {
+      "id": "m7",
+      "source": "db",
+      "target": "sse",
+      "label": {
+        "text": "backlog"
+      },
+      "dashed": true
+    },
+    {
+      "id": "m8",
+      "source": "sse",
+      "target": "client",
+      "label": {
+        "text": "replay"
+      },
+      "dashed": true
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

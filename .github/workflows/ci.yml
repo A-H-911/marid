@@ -108,11 +108,11 @@ jobs:
           # path-permission tests via the environment (no test edits) so syncs never reintroduce them.
           TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
           TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
-      # marid (WBS-1.2/1.3): TEST-AUTH. @marid/auth is not enumerated in turbo.json,
+      # marid (WBS-1.2/1.3): TEST-AUTH. @marid/gateway is not enumerated in turbo.json,
       # so run its suite directly. Dependency-free + OS-agnostic (posix-only 0600
       # assertions self-skip on Windows), so no extra env needed.
-      - name: Run marid-auth tests
-        run: bun --cwd packages/marid-auth test
+      - name: Run marid-gateway tests
+        run: bun --cwd packages/marid-gateway test
       # marid (WBS-2.1/2.2): TEST-INST fast unit tier — env composition (every
       # R-05 row), registry, and lifecycle via a tiny fake server (no opencode
       # boot). Dependency-free, cross-OS. The heavy live 2-instance proof runs in
@@ -126,6 +126,11 @@ jobs:
       # marid-telegram job below (KPI-002).
       - name: Run marid-telegram unit tests
         run: bun --cwd packages/marid-telegram test
+      # marid (WBS-6.1): the channel-agnostic firehose client extracted from the
+      # Telegram gateway (ADR-0011) — event-pump + per-part streaming + permission-ask
+      # parse. Dependency-free, cross-OS, injected fakes (no network).
+      - name: Run marid-channel-client unit tests
+        run: bun --cwd packages/marid-channel-client test
 
   smoke:
     name: smoke (${{ matrix.os }})
@@ -292,12 +297,13 @@ jobs:
       # AC-011 streamed reply) against a real `marid serve` + fake LLM + local fake
       # Telegram server. Gated by MARID_TELEGRAM=1 (describe.skip otherwise).
       - name: Run Telegram gateway live suite
-        # Bounded retry-wrapper (operator-chosen). This live E2E rides the SSE firehose over
-        # loopback; on cold Windows CI the connection intermittently drops and the gateway
-        # `pump` has no reconnect (gateway.ts:181-189), so a single drop stalls the reply path
-        # (~100s, no message) — RISK-006 / deferred-work #8. Each attempt re-runs setup fresh;
-        # a hang fails fast at ~110s (the 100s waitFor), so 3× is ~6min worst case. Deterministic
-        # AC-010/011/012 coverage lives in router/stream/permission/gateway-integration tests.
+        # Bounded retry-wrapper (operator-chosen, defence-in-depth). This live E2E rides the SSE
+        # firehose over loopback; on cold Windows CI the connection can be slow/flaky to establish.
+        # The firehose pump now RECONNECTS on drop (capped backoff, @marid/channel-client, WBS-6.5),
+        # so a mid-stream drop auto-recovers — the retry wrapper remains only as a backstop against
+        # first-subscribe/cold-start flake. Each attempt re-runs setup fresh; a hang fails fast at
+        # ~110s (the 100s waitFor), so 3× is ~6min worst case. Deterministic AC-010/011/012 coverage
+        # lives in router/stream/permission/gateway-integration tests.
         run: |
           for attempt in 1 2 3; do
             echo "::group::telegram live E2E — attempt ${attempt}/3"

@@ -1,0 +1,204 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "class",
+  "meta": {
+    "title": "Marid on OpenCode - Message / Part Domain Model (reused as-is)"
+  },
+  "nodes": [
+    {
+      "id": "Session",
+      "label": {
+        "text": "Session"
+      },
+      "attributes": [
+        "id: SessionID",
+        "projectID / workspaceID",
+        "parentID?: SessionID (fork)",
+        "title, agent",
+        "model (JSON)"
+      ]
+    },
+    {
+      "id": "MessageV2",
+      "label": {
+        "text": "MessageV2"
+      },
+      "attributes": [
+        "id: MessageID",
+        "sessionID: SessionID",
+        "role: user | assistant",
+        "tokens / cost",
+        "time_created"
+      ]
+    },
+    {
+      "id": "Part",
+      "label": {
+        "text": "Part (union by type)"
+      },
+      "attributes": [
+        "id: PartID",
+        "messageID: MessageID",
+        "type: discriminator"
+      ]
+    },
+    {
+      "id": "TextPart",
+      "label": {
+        "text": "TextPart"
+      },
+      "attributes": [
+        "type = \"text\"",
+        "text: string",
+        "ignored?: boolean"
+      ]
+    },
+    {
+      "id": "ReasoningPart",
+      "label": {
+        "text": "ReasoningPart"
+      },
+      "attributes": [
+        "type = \"reasoning\"",
+        "text: string"
+      ]
+    },
+    {
+      "id": "ToolPart",
+      "label": {
+        "text": "ToolPart"
+      },
+      "attributes": [
+        "type = \"tool\"",
+        "tool name + input",
+        "state / result"
+      ]
+    },
+    {
+      "id": "FilePart",
+      "label": {
+        "text": "FilePart"
+      },
+      "attributes": [
+        "type = \"file\"",
+        "mime, filename",
+        "url / content"
+      ]
+    },
+    {
+      "id": "StepPart",
+      "label": {
+        "text": "StepStartPart"
+      },
+      "attributes": [
+        "type = \"step-start\"",
+        "(marks agent step)"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "c1",
+      "source": "Session",
+      "target": "MessageV2",
+      "label": {
+        "text": "1..*"
+      }
+    },
+    {
+      "id": "c2",
+      "source": "MessageV2",
+      "target": "Part",
+      "label": {
+        "text": "1..*"
+      }
+    },
+    {
+      "id": "c3",
+      "source": "TextPart",
+      "target": "Part",
+      "label": {
+        "text": "variant"
+      }
+    },
+    {
+      "id": "c4",
+      "source": "ReasoningPart",
+      "target": "Part",
+      "label": {
+        "text": "variant"
+      }
+    },
+    {
+      "id": "c5",
+      "source": "ToolPart",
+      "target": "Part",
+      "label": {
+        "text": "variant"
+      }
+    },
+    {
+      "id": "c6",
+      "source": "FilePart",
+      "target": "Part",
+      "label": {
+        "text": "variant"
+      }
+    },
+    {
+      "id": "c7",
+      "source": "StepPart",
+      "target": "Part",
+      "label": {
+        "text": "variant"
+      }
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

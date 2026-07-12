@@ -1,3 +1,6 @@
+import fs from "node:fs/promises"
+import { fileURLToPath } from "node:url"
+import type { FilePartInput } from "@opencode-ai/sdk/v2"
 import type { BotApi } from "./bot-api"
 import type { TgMessage } from "./telegram"
 
@@ -30,9 +33,60 @@ export async function resolveDownloadUrl(bot: BotApi, fileId: string): Promise<s
   return bot.fileDownloadUrl(file.file_path)
 }
 
+// Resolve an OUTBOUND file part's `url` to raw bytes so it can be uploaded to Telegram as
+// multipart (Telegram cannot fetch `data:` or instance-local URLs). Assistant/tool file parts
+// carry `url: "data:<mime>;base64,<…>"` (bytes inline) — the common case, decoded with no
+// network. `file://` reads from disk; `http(s)` is fetched (a genuinely public artifact). The
+// mime comes from the file part itself (`file.mime`) at the call site, so this returns bytes
+// only. Returns undefined on any failure (the caller logs + skips — never fatal).
+export async function resolveOutboundBytes(url: string): Promise<Uint8Array | undefined> {
+  if (url.startsWith("data:")) {
+    const comma = url.indexOf(",")
+    if (comma === -1) return undefined
+    const meta = url.slice(5, comma) // "<mime>[;base64]"
+    const payload = url.slice(comma + 1)
+    return /;base64/i.test(meta)
+      ? new Uint8Array(Buffer.from(payload, "base64"))
+      : new TextEncoder().encode(decodeURIComponent(payload))
+  }
+  if (url.startsWith("file://")) {
+    const buf = await fs.readFile(fileURLToPath(url)).catch(() => undefined)
+    return buf ? new Uint8Array(buf) : undefined
+  }
+  const res = await fetch(url).catch(() => undefined)
+  if (!res || !res.ok) return undefined
+  return new Uint8Array(await res.arrayBuffer())
+}
+
 // The largest photo size Telegram offers for a message (last in the array), for
 // re-fetching or forwarding.
 export function largestPhotoFileId(message: TgMessage): string | undefined {
   const photos = message.photo
   return photos && photos.length > 0 ? photos[photos.length - 1]!.file_id : undefined
+}
+
+// A Telegram-supplied filename is untrusted (INV-004): strip path separators so it
+// can never be read as a path when the workspace file is written (traversal guard).
+function safeFilename(name?: string): string | undefined {
+  return name?.replace(/[/\\]/g, "_")
+}
+
+// Resolve inbound attachments (document and/or photo) to SDK file parts so the file
+// actually lands in the workspace (defect 2 — previously only inboundNote's text note
+// was sent and the file was discarded). The URL embeds the bot token: callers pass
+// these straight to the SDK and never log the URL (INV-002). A file that cannot be
+// resolved (getFile failed) is skipped, not fatal.
+export async function inboundFileParts(message: TgMessage, bot: BotApi): Promise<FilePartInput[]> {
+  const parts: FilePartInput[] = []
+  const doc = message.document
+  if (doc?.file_id) {
+    const url = await resolveDownloadUrl(bot, doc.file_id)
+    if (url) parts.push({ type: "file", mime: doc.mime_type ?? "application/octet-stream", filename: safeFilename(doc.file_name), url })
+  }
+  const photoId = largestPhotoFileId(message)
+  if (photoId) {
+    const url = await resolveDownloadUrl(bot, photoId)
+    if (url) parts.push({ type: "file", mime: "image/jpeg", filename: "photo.jpg", url }) // Telegram photos are JPEG
+  }
+  return parts
 }

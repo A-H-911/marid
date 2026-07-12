@@ -1,0 +1,185 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "state",
+  "direction": "LR",
+  "meta": {
+    "title": "Marid on OpenCode - Session Lifecycle (reused as-is)"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "shape": "initial",
+      "label": {
+        "text": ""
+      }
+    },
+    {
+      "id": "created",
+      "label": {
+        "text": "Created"
+      }
+    },
+    {
+      "id": "idle",
+      "label": {
+        "text": "Idle"
+      }
+    },
+    {
+      "id": "busy",
+      "label": {
+        "text": "Busy (running)"
+      }
+    },
+    {
+      "id": "retry",
+      "label": {
+        "text": "Retry (provider error)"
+      }
+    },
+    {
+      "id": "compacting",
+      "label": {
+        "text": "Compacting (time_compacting)"
+      }
+    },
+    {
+      "id": "archived",
+      "label": {
+        "text": "Archived (time_archived)"
+      }
+    },
+    {
+      "id": "end",
+      "shape": "final",
+      "label": {
+        "text": ""
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "s1",
+      "source": "start",
+      "target": "created"
+    },
+    {
+      "id": "s2",
+      "source": "created",
+      "target": "idle"
+    },
+    {
+      "id": "s3",
+      "source": "idle",
+      "target": "busy",
+      "label": {
+        "text": "prompt / run"
+      }
+    },
+    {
+      "id": "s4",
+      "source": "busy",
+      "target": "idle",
+      "label": {
+        "text": "done / revert"
+      }
+    },
+    {
+      "id": "s5",
+      "source": "busy",
+      "target": "retry",
+      "label": {
+        "text": "provider error"
+      }
+    },
+    {
+      "id": "s6",
+      "source": "retry",
+      "target": "busy",
+      "label": {
+        "text": "retry"
+      }
+    },
+    {
+      "id": "s7",
+      "source": "idle",
+      "target": "compacting",
+      "label": {
+        "text": "context full"
+      }
+    },
+    {
+      "id": "s8",
+      "source": "compacting",
+      "target": "idle"
+    },
+    {
+      "id": "s10",
+      "source": "idle",
+      "target": "created",
+      "label": {
+        "text": "fork"
+      }
+    },
+    {
+      "id": "s11",
+      "source": "idle",
+      "target": "archived",
+      "label": {
+        "text": "archive"
+      }
+    },
+    {
+      "id": "s12",
+      "source": "archived",
+      "target": "end"
+    }
+  ],
+  "styles": {
+    "local": {
+      "fill": "#2F6BFF",
+      "border": {
+        "color": "#1E4FD0"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "client": {
+      "fill": "#5C93FF",
+      "border": {
+        "color": "#2F6BFF"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}
