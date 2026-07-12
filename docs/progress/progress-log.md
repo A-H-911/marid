@@ -11,6 +11,19 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-12 — PR #48 merged (squash `4409d92f`) → **MS-007 MET**; PH-6 (Telegram-first) complete
+- **Done:** the operator merged the PH-6 stack into `develop` (squash `4409d92f`, all 20 CI checks green) — WBS-6.6
+  live test tiers (AC-017/019/020/021/024 all Met), the INV-001 firehose isolation fix (ADR-0016/0017), and the
+  WBS-6.7 docs + `20-gateway-mirroring` diagram + `docs/usage.md` user guide. This **exits MS-007**: PH-6 is
+  complete. Trackers flipped in this change (status-report / acceptance-audit evidence / work-breakdown 6.1–6.7 /
+  milestones MS-007 / roadmap / keystone-state) from the pre-merge "unmerged, exit gated on operator merge"
+  language to **Met / merged**.
+- **Decisions:** none new — realizes the already-accepted MS-007 exit (INV-005 operator merge). **Deviations:** the
+  flip also drops the residual "unmerged (INV-003/005)" tails on WBS-6.1–6.5 (they landed on develop via earlier
+  PRs #44/#46/#47, not #48) — a MET milestone cannot coexist with work items asserting "unmerged". **Blockers:**
+  none. **Next:** PH-7 (WhatsApp) is operator-gated and not started; optional `develop → main` sync PR to cut a
+  release. `validate_package.py docs/` = OK.
+
 ## 2026-07-12 — WBS-6.7 PH-6 docs + diagrams close (MS-007 exit pending operator merge) — unmerged, gated
 - **Done:** documented the PH-6 channel platform. `architecture/api-event-contract.md` → **v1.2**: the four Marid
   gateway routes (`/marid/attach`·`detach`·`bindings` admin, `/marid/self-bindings` non-admin), binding-aware

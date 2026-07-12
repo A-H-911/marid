@@ -67,8 +67,8 @@ Six dependency-ordered phases, each exiting at a measurable milestone:
 - **Ending a phase:** operator review checkpoint. Review PRs against `docs/handoff/review-prompts.md`
   (esp. patch-surface discipline — flag any upstream edit not registered as a `P-*`).
 - **Current status:** see `docs/progress/status-report.md` (the live snapshot) + `docs/planning/roadmap.md`.
-  (As of this writing: PH-0..5 done; **PH-6 Telegram gateway** in progress — all PH-6 acceptance criteria
-  Met and WBS-6.7 docs done; awaiting operator merge to exit **MS-007**.)
+  (As of this writing: **PH-0..6 done**; **MS-007 MET** (2026-07-12, PR #48 `4409d92f`) — all PH-6 acceptance
+  criteria Met and the Telegram gateway stack merged to `develop`. **PH-7 WhatsApp** is operator-gated, not started.)
 
 ## Tracking protocol (MANDATORY — do not let the trackers drift)
 
