@@ -7,13 +7,18 @@ owner: operator (STK-001)
 
 # Telegram channel — tool calling, MCP, and file sending (operator setup)
 
-> **⚠ KNOWN GAP (2026-07-12, pending fix):** the config below is correct, but the Telegram **gateway** currently
-> drives turns via `sdk.session.promptAsync` (`gateway.ts:165`), and that route empirically resolves **zero
-> tools** for a channel token (isolated by `test/marid/step0-tools-probe.test.ts`; corroborates the prior
-> `telegram.test.ts` note). The **sync** `session.prompt` route DOES resolve the full toolset for a channel token
-> + this agent config (ruleset applied, `task` hidden). So tool calling is **not yet live** on the gateway path —
-> a Marid-side gateway route change (or an upstream `promptAsync` fix) is required and is operator-gated. File
-> sending (below) is implemented and green independent of this.
+> **⚠ KNOWN GAP (2026-07-12, pending fix):** the config below is correct, but tool calling is **not yet live** on
+> the gateway path. **Root cause (pinned):** the gateway drives turns via `sdk.session.promptAsync`
+> (`gateway.ts:165`), whose server handler
+> (`opencode …/httpapi/handlers/session.ts:311`) does `Effect.forkIn(scope)` to return immediately — the forked
+> turn runs *after* the request returns, outliving the request-scoped context that tool/agent/MCP resolution
+> needs, and resolves an **empty toolset** (isolated by `test/marid/step0-tools-probe.test.ts`; corroborates the
+> prior `telegram.test.ts` note). The **sync** `session.prompt` route (`/session/:id/message`, handler 295) awaits
+> the turn in-request and resolves the **full toolset** for a channel token + this agent config (ruleset applied,
+> `task` hidden). Only the `forkIn` differs. **Fix (Marid-side, additive, operator-gated):** have the gateway
+> drive the sync `session.prompt` route in a detached task (draining the response stream to keep the request alive
+> until the turn completes) instead of `promptAsync`. File sending (below) is implemented and green independent of
+> this.
 
 How to give the Telegram bot **full TUI/Web capability parity** — every built-in tool and every MCP tool —
 gated per-tool by an **allow / ask / deny** policy, plus outbound file sending. This is **configuration**, not new
