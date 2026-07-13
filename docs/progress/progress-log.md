@@ -11,6 +11,22 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-13 — PH-8 Phase 3 (WBS-8.3): agent identity → Marid (P-8) — unmerged, at the operator gate
+- **Done:** the agent no longer calls itself OpenCode. New Marid-owned `session/marid-identity.ts`
+  `maridizePrompt()` rewrites the **emitted** system prompt at the single choke point — `session/system.ts`
+  `provider()` now delegates selection to `selectPrompt()` and maps the result through the transform (**P-8**,
+  a 1-line upstream edit → registered as a realized `P-8` row in `architecture.md`). Scope (DEC-026): identity
+  "You are OpenCode" → Marid; feedback repo `github.com/anomalyco/opencode` → the Marid repo; self-doc-fetch
+  `opencode.ai/docs` → the Marid repo. **App-name-gated** (upstream `opencode` app byte-unchanged — same
+  `__MARID_APP` lever as P-6/P-7). Rewriting at the choke point (not per-`.txt`) keeps the patch surface at one
+  file and catches sync-added prompts automatically.
+- **Tests:** `agent-identity.test.ts` (19) — identity/URL rebrand unit cases, `.opencode/` preserved (DEC-024),
+  the opencode-app regression (verbatim), and the **CI guard**: every shipped `prompt/*.txt` (read from disk, so
+  a future sync-added prompt is covered) emits no `\bopencode\b` after the transform. typecheck clean.
+- **Decisions:** **AC-028 → Met.** **Deviations:** the wrap needed a 1-line upstream edit to `system.ts`, so it
+  is a genuine `P-8` patch-surface row (not the "additive, no P-*" case ADR-0018 D6 allowed for). **Blockers:**
+  operator merge (INV-005). **Next:** Phase 4 (TUI rebrand). `validate_package.py docs/` = OK.
+
 ## 2026-07-13 — PH-8 WBS-8.2 (part 2): config filename (P-7) + env-pierce disclosure (AC-026) — unmerged, at the operator gate
 - **Done:** completed WBS-8.2. **P-7 config filename:** `marid.json`/`marid.jsonc` is now the primary config
   name at every level — global (`config/config.ts` `globalConfigFile()` candidates + the merge chain, marid

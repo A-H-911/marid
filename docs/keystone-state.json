@@ -2886,7 +2886,7 @@
       {
         "id": "AC-028",
         "statement": "Given the running agent, What is your role? and what can you do / where do I report bugs? answer as Marid (never opencode; Marid docs/repo URLs); a CI guard asserts no emitted system prompt matches /\\bopencode\\b/i outside an allowlist (issue-4)",
-        "status": "Proposed"
+        "status": "Met"
       },
       {
         "id": "AC-029",
@@ -4486,7 +4486,20 @@
         "config-pierce.test.ts (4) + config regression test flipped to marid.json default",
         "AC-025 -> Met (binary smoke green in #55), AC-026 -> Met; WBS-8.2 complete"
       ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 3 (WBS-8.3) agent identity -> Marid (P-8) - unmerged, at the operator gate. New Marid-owned session/marid-identity.ts maridizePrompt() rewrites the emitted system prompt at the single choke point (session/system.ts provider() now delegates to selectPrompt() and maps through the transform; 1-line upstream edit = realized P-8 row in architecture.md). Scope (DEC-026): identity You-are-OpenCode -> Marid, feedback repo github.com/anomalyco/opencode -> Marid repo, self-doc-fetch opencode.ai/docs -> Marid repo. App-name-gated (upstream opencode byte-unchanged, same __MARID_APP lever as P-6/P-7). agent-identity.test.ts (19): identity/URL rebrand, .opencode/ preserved (DEC-024), opencode-app regression verbatim, CI guard = every shipped prompt/*.txt (read from disk, sync-added covered) emits no \bopencode\b after transform. typecheck clean. AC-028 -> Met. Next: Phase 4 TUI rebrand. validate OK.",
+      "items_completed": [
+        "session/marid-identity.ts maridizePrompt() app-name-gated brand/URL transform",
+        "session/system.ts provider() -> selectPrompt() + .map(maridizePrompt) wrap (P-8, 1-line upstream edit)",
+        "architecture.md P-8 row realized; DEC-026 full-scope identity",
+        "agent-identity.test.ts (19) incl. disk-read CI guard over all prompt/*.txt",
+        "AC-028 -> Met"
+      ]
     }
+  
   
   
   
@@ -4704,7 +4717,14 @@
       "actor": "execution-agent",
       "action": "PH-8 WBS-8.2 part 2: P-7 config filename (marid.json primary; global/project/managed; opencode.json still works) + managed.ts dir isolation + AC-026 env-pierce disclosure (src/marid-pierce.ts, INV-002 value-safe). config-pierce.test.ts (4). AC-025 Met (binary smoke green #55), AC-026 Met; WBS-8.2 complete. At operator gate (INV-005).",
       "target": "packages/opencode/src/config/{config.ts,managed.ts} + packages/opencode/src/cli/cmd/mcp.ts + packages/opencode/src/{marid-pierce.ts,marid.ts} + packages/opencode/test/{marid/config-pierce.test.ts,config/config.test.ts} + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-13T15:30:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 3 agent identity: session/marid-identity.ts maridizePrompt() rewrites emitted system prompt at the session/system.ts provider() choke point (P-8, app-name-gated, upstream unchanged); identity+feedback-repo+doc-fetch -> Marid. agent-identity.test.ts (19) incl. disk-read CI guard (no \bopencode\b in any emitted prompt/*.txt). AC-028 Met. At operator gate (INV-005).",
+      "target": "packages/opencode/src/session/{marid-identity.ts,system.ts} + packages/opencode/test/marid/agent-identity.test.ts + docs/architecture/architecture.md(P-8) + docs trackers"
     }
+  
   
   
   
