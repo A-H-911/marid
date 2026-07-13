@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-12
+updated: 2026-07-13
 owner: operator (STK-001)
 generation: derived
 ---
@@ -15,11 +15,12 @@ generation: derived
 
 | | |
 |---|---|
-| Reporting date | 2026-07-12 |
-| Current phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
+| Reporting date | 2026-07-13 |
+| Active work | **PH-8 (Isolation & deep rebrand) OPENED — Phase 0 (Keystone scoping + ADR) docs-only, at the operator gate.** Post-`v0.2.0` mission: total DATA isolation from a co-installed OpenCode (dirs/config; `OPENCODE_*` env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first. Authored **ADR-0018** (Proposed) + **MS-009** + **AC-025..031** (one per reported v0.2.0 issue) + **WBS-8.0..8.7** + **DEC-022..027** (022..026 Approved operator inputs; ADR-0018 realization Proposed). **STOP: no code phase (WBS-8.1 upstream sync onward) begins until the operator approves ADR-0018 + merges this docs PR (INV-005).** |
+| Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
 | Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
-| Next milestone | **MS-008 (PH-7 WhatsApp)** — **not started; operator-gated** (ADR-0010 / DEC-015/016 Proposed). AC-018 + EXP-006 PASS (fake-WA) then a PH-7-start live probe. PH-6-independent. |
+| Next milestone | **MS-009 (PH-8 Isolation & deep rebrand)** — scoping in progress (this docs PR); **at the operator gate** (ADR-0018 + DEC-022..027 Proposed). AC-025..031 Met + all 6 reported v0.2.0 issues map to a passing check → v0.3.0. *(MS-008 / PH-7 WhatsApp remains not-started, operator-gated, PH-8-independent.)* |
 
 ## Phase progress
 
@@ -32,6 +33,7 @@ generation: derived
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
 | PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
 | PH-6 Telegram-first | **done** | yes | **MS-007 (2026-07-12)**: Marid Gateway + full Telegram + bidirectional mirroring + 4 live test tiers; WBS-6.3 (#44) · 6.1 (#46) · 6.5 (#47) · 6.2/6.4/6.6/6.7 (#48 `4409d92f`) | AC-017/019/020/021/024 all Met; EXP-005/007/008/009 PASS; INV-001 leak fixed (ADR-0016/0017); zero upstream edit, no P-\* |
+| PH-8 Isolation & deep rebrand | **scoping (Phase 0)** | at operator gate | this docs PR: ADR-0018 + MS-009 + AC-025..031 + WBS-8.0..8.7 + DEC-022..027 | Proposed; total DATA isolation (env kept) + deep rebrand + sync-first; STOP at ADR-0018 approval before any code |
 
 ## Acceptance snapshot
 
@@ -54,12 +56,13 @@ mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-**Nothing in active execution.** PH-0..6 complete; PH-7 (WhatsApp) is operator-gated and not started. The full
-PH-6 (Telegram-first) stack is merged to `develop` (see the Phase progress table and the
-[progress log](progress-log.md)) — Marid Gateway + `@marid/channel-client`, full Telegram experience, bidirectional
-cross-surface mirroring, SSE reconnect/re-fetch recovery, four live test tiers, and the PH-6 docs/diagrams. All
-MS-007 acceptance criteria (AC-017/019/020/021/024) Met; INV-001 firehose leak found via the live tier & fixed
-(ADR-0016/0017). Native-mobile EXP-010 deferred (never an MS-007 gate).
+**PH-8 Phase 0 — Keystone scoping + ADR (docs-only), at the operator gate.** Opened the post-`v0.2.0` mission
+(twice-reviewed plan): total DATA isolation from a co-installed OpenCode + deep rebrand + upstream-sync-first.
+This docs PR authors **ADR-0018** (Proposed), opens **MS-009 / AC-025..031 / WBS-8.0..8.7**, records **DEC-022..027**
+(022..026 Approved operator inputs; 027 Proposed), amends `branding.md`'s "Rebrand boundary", and pre-registers
+**P-6 / P-7 / P-8 + a P-2 expansion**. **STOP:** no code phase (WBS-8.1 upstream sync onward) starts until the
+operator approves ADR-0018 and merges this PR (INV-005). PH-0..6 complete; PH-7 (WhatsApp) operator-gated, not
+started (PH-8-independent).
 
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18
@@ -70,15 +73,20 @@ recovery is the delivered behavior), Telegram gateway **beta** (UX defects → p
 deferred #9). Watch: upstream v1→v2 migration (RISK-001) on future syncs.
 
 ## Decisions since last report
-Releases **public/anonymous** (DEC-010); **minisign** signing; **ship-under-containment** (ADR-0007). Logo →
-**red-orange flame + shadowed "marid" wordmark** (operator directive 2026-07-08; amends branding.md 2-color
-spec). First RC → **`v0.1.0`** on an independent `0.x` line (package.json stays upstream `1.17.15`; the
-release↔upstream mapping is the baseline SHA per sync).
+**PH-8 (2026-07-13, plan §2):** total **DATA** isolation via a build-time app-name, **keep `OPENCODE_*` env** +
+pierce disclosure (DEC-022); config `marid.json` + project-`opencode.json` fallback, **no global fallback**
+(DEC-023); `.opencode/` kept upstream-named (DEC-024); **one-time-copy** migration (DEC-025); full agent-identity
+transform (DEC-026); **no DB rename** (DEC-027, Proposed). Realized by **ADR-0018 (Proposed — at the gate)**.
+Earlier: releases **public/anonymous** (DEC-010); **minisign** signing; **ship-under-containment** (ADR-0007);
+logo = **red-orange flame + shadowed "marid" wordmark** (2026-07-08); `0.x` release line (package.json stays
+upstream `1.17.15`; release↔upstream mapping = baseline SHA per sync).
 
 ## Upcoming
-MS-007 met (2026-07-12) — PH-6 (Telegram-first) formally closed. **Next candidate phase, operator-gated:** **PH-7
-WhatsApp** = new `@marid/whatsapp` unofficial client behind pinned WAHA, separate process, `channel:` token (ADR-0010
-/ DEC-015/016) — **Proposed, awaiting operator gate** before any code; MS-008 = AC-018 + EXP-006 PASS (fake-WA) then a
-PH-7-start live probe. Optional near-term: a `develop → main` sync PR (merge-commit) to fold PH-6 into a release.
-Remaining backlog: egress secret-redactor (ADR-0007 / AC-016), AC-007 formal supersede, stats mechanism
-(deferred #10), upstream sync cadence.
+**PH-8 (Isolation & deep rebrand) — at the operator gate.** On ADR-0018 approval + merge of this docs PR, the
+phases run in order (each branch → PR → CI green → operator merge): **WBS-8.1** upstream sync first
+(`upstream/dev cf7503687a`, 167 commits / 458 files) → **8.2** total DATA isolation (build-time app-name P-6 +
+config P-7 + migration) → **8.3** agent identity (P-8) → **8.4** TUI rebrand (P-2) → **8.5** web UI (separate PR)
+→ **8.6** docs/diagrams/screenshots → **8.7** release **v0.3.0**. MS-009 closes when AC-025..031 are Met and all 6
+reported v0.2.0 issues map to a passing check. **Still operator-gated, PH-8-independent:** **PH-7 WhatsApp**
+(ADR-0010 / DEC-015/016). Backlog: egress secret-redactor (ADR-0007 / AC-016), AC-007 formal supersede, stats
+mechanism (deferred #10), upstream sync cadence.

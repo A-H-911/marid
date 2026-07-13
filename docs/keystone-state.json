@@ -1117,6 +1117,36 @@
         "id": "DEC-021",
         "title": "WhatsApp permission-approval UX = token-bound text reply (not interactive buttons)",
         "status": "Approved"
+      },
+      {
+        "id": "DEC-022",
+        "title": "PH-8 machine-state isolation via a build-time app-name; KEEP OPENCODE_* env + detect/disclose pierce",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-023",
+        "title": "PH-8 config marid.json primary; project-level opencode.json fallback; global reads ~/.config/marid only (no opencode global fallback)",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-024",
+        "title": "PH-8 .opencode/ project dirs (agents/skills/plugins/commands) kept upstream-named",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-025",
+        "title": "PH-8 upgrade migration = one-time copy of the old opencode data/state into the marid dirs (marker; no re-run)",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-026",
+        "title": "PH-8 agent-identity/prompt transform scope = full (identity + self-doc-fetch + support URLs -> Marid)",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-027",
+        "title": "PH-8 keep the sessions DB file opencode.db inside the isolated marid dir (no rename)",
+        "status": "Proposed"
       }
     ],
     "adrs": [
@@ -1270,6 +1300,14 @@
         "date": "2026-07-11",
         "context": "Companion to ADR-0016: turning the filter ON exposed that the gateway's own-session visibility had depended on the leak - it subscribes owning zero sessions then creates one per turn mid-stream, absent from the frozen subscribe-time snapshot, so its own reply frames were filtered out. marid token create defaults to non-admin client scope, so web/TUI/API share the SDK+filter -> a server-side fix is required.",
         "decision": "The filter resolves visibility LAZILY on first sight of a session id: keep the subscribe snapshot as initial cache, re-read ownership once for an unknown id, positive-cache; do NOT negative-cache (a session's created frame races ahead of its ownership record; the reply lands after -> admitted). filterSseStream/keepFrame take an async predicate. Rejected A (channel-client re-subscribe) and B-timer. Marid-owned, no upstream edit, no P-*."
+      },
+      {
+        "id": "ADR-0018",
+        "title": "Total data isolation from a co-installed OpenCode + deep rebrand (PH-8)",
+        "status": "Proposed",
+        "date": "2026-07-13",
+        "context": "Public marid v0.2.0, run plain (not via marid instance) beside a co-installed OpenCode, leaks the OpenCode identity and shares machine-global state (auth.json provider nvidia-custom, model.json, sessions DB, config) - six reported issues (update popup; model/token surprise = shared dir, NOT a bundled secret; TUI OpenCode surfaces; agent self-identity; web UI; total dir/auth/session/config/DB sharing). This is the on-machine conflict branding.md's Rebrand boundary said it would revisit only if it emerged.",
+        "decision": "Total DATA isolation via a build-time __MARID_APP app-name define (isolates data/state/config dirs + Flock at once, P-6); KEEP OPENCODE_* env unchanged (DEC-009 reuse) + detect-and-disclose data-layer pierce (boot WARN + usage table + negative tests, DEC-022); config marid.json primary with project-level opencode.json fallback and no global opencode fallback (DEC-023, P-7); .opencode/ project dirs kept upstream-named (DEC-024); one-time-copy migration from populated v0.2.0 (DEC-025); no DB rename - opencode.db stays inside the isolated marid dir (DEC-027, Proposed); full agent-identity transform wrapping provider() output at the single choke point + CI guard (DEC-026, P-8 conditional); update popup off via P-3 autoupdate:false + env; deep TUI + web rebrand with two-tone wordmark behind a render gate (P-2 expansion). Proposed - awaiting the PH-8 Phase-0 operator gate (INV-005); no code phase starts until Approved. Realizes DEC-022..027; opens MS-009 + AC-025..031 + WBS-8.0..8.7."
       }
     ],
     "risks": [
@@ -2829,6 +2867,41 @@
         "id": "AC-024",
         "statement": "Given the Marid Gateway (PH-6), a plain unattached TUI/Web/API request path behaves identically to today; a mirroring/registry fault degrades to non-mirrored behavior without breaking auth or plain clients; and the new attach/binding endpoints are OpenAPI-documented + health-covered + TEST-CONTRACT-pinned (blast-radius isolation)",
         "status": "Proposed"
+      },
+      {
+        "id": "AC-025",
+        "statement": "Given a machine with co-installed OpenCode, the built marid binary's effective data/state/config read paths are the marid dirs only (asserted from the boot log / config directories(), never dir existence); no foreign auth (nvidia-custom) or model.json bleeds in; the co-installed OpenCode dirs are untouched (issue-6)",
+        "status": "Proposed"
+      },
+      {
+        "id": "AC-026",
+        "statement": "Given global data-layer OPENCODE_* overrides (OPENCODE_CONFIG_DIR, OPENCODE_DB=<abs>, OPENCODE_CONFIG/_CONTENT, OPENCODE_AUTH_CONTENT), the binary boots, logs a WARN naming each active override, and behaves as disclosed (isolation pierced, not silently defeated); a plain OPENCODE_*-reading plugin still works (issue-6)",
+        "status": "Proposed"
+      },
+      {
+        "id": "AC-027",
+        "statement": "Given the fresh marid binary, no upstream update-available popup appears (P-3 autoupdate:false + bootstrap env) and no auto-update overwrites the binary (issue-1)",
+        "status": "Proposed"
+      },
+      {
+        "id": "AC-028",
+        "statement": "Given the running agent, What is your role? and what can you do / where do I report bugs? answer as Marid (never opencode; Marid docs/repo URLs); a CI guard asserts no emitted system prompt matches /\\bopencode\\b/i outside an allowlist (issue-4)",
+        "status": "Proposed"
+      },
+      {
+        "id": "AC-029",
+        "statement": "Given the TUI, the startup logo, /exit goodbye, sidebar footer, and OS notification all read Marid (flame + two-tone wordmark, marid -s hint, dot Marid version); the OpenCode-GO upsell is gone; the two-tone wordmark passes a render gate incl. a 256-color terminal (crisp-mono fallback if illegible) (issue-3)",
+        "status": "Proposed"
+      },
+      {
+        "id": "AC-030",
+        "statement": "Given the web UI (not binary-embedded), favicon/PWA icons/social-share/Mark+Splash glyphs/notification icon read Marid (from the flame); no opencode.ai remote is fetched (release-notes / notification repointed or disabled) (issue-5)",
+        "status": "Proposed"
+      },
+      {
+        "id": "AC-031",
+        "statement": "Given a populated v0.2.0 opencode data dir and no marid dir, first run copies auth.json + ${data}/marid gateway tokens + sessions DB + model.json + Telegram pairing into the marid dirs exactly once (marker prevents re-run, logged), so gateway bearer tokens and Telegram pairing survive the upgrade with no auth outage (issue-2)",
+        "status": "Proposed"
       }
     ],
     "phases": [
@@ -3045,6 +3118,40 @@
         "risks": [
           "RISK-013",
           "RISK-014"
+        ]
+      },
+      {
+        "id": "PH-8",
+        "name": "Isolation & deep rebrand",
+        "goal": "Total DATA isolation from a co-installed OpenCode (dirs/config; OPENCODE_* env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first",
+        "status": "not-started",
+        "depends_on": [
+          "PH-6"
+        ],
+        "work_items": [
+          "WBS-8.0",
+          "WBS-8.1",
+          "WBS-8.2",
+          "WBS-8.3",
+          "WBS-8.4",
+          "WBS-8.5",
+          "WBS-8.6",
+          "WBS-8.7"
+        ],
+        "exit_criteria": [
+          "AC-025..031 Met (data isolation, env-pierce disclosure, no update popup, agent identity, TUI branding, web branding, one-time migration) + all 6 reported v0.2.0 issues map to a passing check; v0.3.0 released (MS-009). Post-release; ADR-0018 + DEC-022..027 Proposed, operator-gated. WBS-8.0 (this) docs-only, at the Phase-0 operator gate."
+        ],
+        "acceptance_refs": [
+          "AC-025",
+          "AC-026",
+          "AC-027",
+          "AC-028",
+          "AC-029",
+          "AC-030",
+          "AC-031"
+        ],
+        "risks": [
+          "RISK-001"
         ]
       }
     ]
@@ -4331,6 +4438,17 @@
         "WBS-6.6 status flipped to done (merged, PR #48); WBS-6.1-6.7 unmerged tails dropped",
         "AC-017/019/020/021/024 evidence appended: landed on develop via PR #48"
       ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 (Isolation & deep rebrand) OPENED - Phase 0 Keystone scoping + ADR, docs-only, at the operator gate. Post-v0.2.0 mission (twice-reviewed plan): total DATA isolation from a co-installed OpenCode (dirs/config; OPENCODE_* env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first. Authored ADR-0018 (Proposed) + MS-009 + AC-025..031 (one per reported v0.2.0 issue; issue->AC->test table in the ADR) + WBS-8.0..8.7 (mirror plan Phase 0..7) + DEC-022..027 (022..026 Approved operator-locked plan-section-2 inputs; 027 no-DB-rename Proposed). Amended branding.md 'Rebrand boundary' (pointer, not rewrite) + pre-registered P-6/P-7/P-8 + P-2 expansion in architecture.md. STOP: no code phase (WBS-8.1 upstream sync onward) starts until the operator approves ADR-0018 + merges this docs PR (INV-005). validate_package.py docs/ = OK.",
+      "items_completed": [
+        "PH-8 opened; MS-009 + AC-025..031 + WBS-8.0..8.7 + DEC-022..027 recorded",
+        "ADR-0018 authored (Proposed) - realizes DEC-022..027; at the Phase-0 operator gate",
+        "P-6/P-7/P-8 + P-2 expansion pre-registered in architecture.md; branding.md boundary pointer added",
+        "Docs-only: zero code touched; next = WBS-8.1 upstream sync on approval"
+      ]
     }
   ],
   "change_log": [
@@ -4522,6 +4640,12 @@
       "actor": "execution-agent",
       "action": "Gateway/channel-gateway diagram disambiguation (docs-only, follows the @marid/gateway rename). Restructured to ONE Marid Gateway (@marid/gateway) node = auth + /marid/* binding + owns-union-bound mirroring, FRONTING the reused upstream HTTP+SSE API / /doc / /global/health (DEC-009: fronts, never absorbs); marid-telegram is the CHANNEL gateway, a client. Fixed architecture.md's self-contradiction ('marid-auth becomes the channel gateway' -> @marid/gateway is the API/ingress gateway). TUI two-edge caveat honored (dashed in-process/no-token to engine + attach/token to gateway; no blanket TUI->gateway). Touched: README (3 Mermaid topologies + prose + kept/removed table), architecture.md (container view + components table + Marid Gateway section, v1.2), Tarseem specs 01/02/05/13/20 + re-rendered PNG/SVG, diagrams/README legend. No governed ids in diagram labels (G-IDS). validate = OK.",
       "target": "README.md+docs/architecture/architecture.md+docs/architecture/diagrams/Marid/specs/{01-architecture-overview,02-package-dependencies,05-data-flow,13-deployment,20-gateway-mirroring}.json+docs/architecture/diagrams/Marid/{same}.{png,svg}+docs/architecture/diagrams/README.md+keystone-state(change_log)"
+    },
+    {
+      "timestamp": "2026-07-13T00:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 (Isolation & deep rebrand) opened - Phase 0 Keystone scoping + ADR, docs-only, at the operator gate. Authored ADR-0018 (Proposed): total DATA isolation via a build-time __MARID_APP app-name (P-6) + KEEP OPENCODE_* env with pierce disclosure (DEC-022) + config marid.json with project opencode.json fallback / no global fallback (DEC-023, P-7) + .opencode kept upstream-named (DEC-024) + one-time-copy migration (DEC-025) + full agent-identity transform (DEC-026, P-8) + no DB rename (DEC-027, Proposed) + autoupdate:false + two-tone wordmark/web (P-2 expansion). Opened PH-8 + MS-009 + AC-025..031 + WBS-8.0..8.7 + DEC-022..027. Amended branding.md boundary (pointer). DEC-022..026 Approved (operator plan-section-2, 2026-07-13); ADR-0018 realization Proposed until the Phase-0 gate (INV-005) - no code phase starts until Approved. validate_package.py docs/ = OK.",
+      "target": "docs/adrs/adr-0018-data-isolation-deep-rebrand.md(new)+docs/planning/{roadmap,milestones,work-breakdown}+docs/validation/acceptance-criteria+docs/decisions/open-decision-register+docs/branding/branding+docs/architecture/architecture+docs/progress/{progress-log,status-report}+keystone-state(decisions/adrs/acceptance_criteria/phases/progress/change_log)"
     }
   ]
 }
