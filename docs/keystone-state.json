@@ -4498,6 +4498,19 @@
         "agent-identity.test.ts (19) incl. disk-read CI guard over all prompt/*.txt",
         "AC-028 -> Met"
       ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 4a (WBS-8.4) TUI/CLI mechanical rebrand + GO-upsell removal - unmerged, at operator gate. Every user-facing OpenCode string in the shipped marid binary -> Marid across the main TUI, the --mini run mode, and uninstall (exit hint marid -s, notification title + sound-pack name, update toast, both sidebar footers dot-Marid-version, permission prose, ~12 tips wrong-binary opencode...->marid... hints, model-error hints, crash screen + bug-report -> Marid repo, docs link -> Marid repo). GO-upsell removed at the root: deleted the TUI dialog subsystem (dialog-retry-action + bg-pulse + bg-pulse-render) and the rate-limit handler/consts in routes/session/index.tsx, and neutralized the server source session/retry.ts (the inline retry footer renders retry.message, so deleting the dialog alone left subscribe-to-Go visible); both providers de-marketed (IDs kept). Cosmetic -> unconditional Marid (not __MARID_APP-gated) per PH-5 P-2, under the existing P-2 row, no new P-*. typecheck clean both packages; presentation/app-lifecycle/retry/permission tests green. AC-029 -> Partial (logo + two-tone render gate = PR 4b).",
+      "items_completed": [
+        "main TUI + --mini + uninstall OpenCode strings -> Marid (unconditional per PH-5 P-2)",
+        "wrong-binary tip hints opencode <cmd> -> marid <cmd> (functional bug fix)",
+        "GO-upsell deleted: dialog-retry-action + bg-pulse* + routes/session/index.tsx handler; server retry.ts free-limit message neutralized",
+        "dialog-provider.tsx de-marketed OpenCode Zen + Go (marketing blocks + Recommended tag), provider IDs kept",
+        "tests: presentation/app-lifecycle/permission.shared updated; retry green (const symbol); typecheck clean both pkgs",
+        "AC-029 -> Partial; go glyph + splash + logo redesign = PR 4b"
+      ]
     }
   
   
@@ -4723,6 +4736,12 @@
       "actor": "execution-agent",
       "action": "PH-8 Phase 3 agent identity: session/marid-identity.ts maridizePrompt() rewrites emitted system prompt at the session/system.ts provider() choke point (P-8, app-name-gated, upstream unchanged); identity+feedback-repo+doc-fetch -> Marid. agent-identity.test.ts (19) incl. disk-read CI guard (no \bopencode\b in any emitted prompt/*.txt). AC-028 Met. At operator gate (INV-005).",
       "target": "packages/opencode/src/session/{marid-identity.ts,system.ts} + packages/opencode/test/marid/agent-identity.test.ts + docs/architecture/architecture.md(P-8) + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 4a (WBS-8.4) TUI/CLI mechanical rebrand + GO-upsell removal. Every user-facing OpenCode string in the shipped marid binary -> Marid (main TUI + --mini run mode + uninstall): exit hint marid -s, notification, both sidebar footers, permission prose, wrong-binary tip hints opencode<cmd>->marid<cmd>, model-error hints, crash screen + docs -> Marid repo. GO-upsell removed at root: TUI dialog subsystem (dialog-retry-action + bg-pulse + bg-pulse-render) deleted + rate-limit handler removed + server retry.ts free-limit message neutralized (inline footer renders retry.message); both providers de-marketed, IDs kept. Cosmetic unconditional Marid per PH-5 P-2, no new P-*. typecheck clean both pkgs; presentation/app-lifecycle/retry/permission.shared tests green. AC-029 -> Partial (logo + render gate = PR 4b). At operator gate (INV-005).",
+      "target": "packages/tui/src/{util/presentation.ts,attention.ts,app.tsx,util/error.ts,component/error-component.tsx,component/dialog-provider.tsx,routes/session/{index.tsx,sidebar.tsx,permission.tsx},feature-plugins/{sidebar/footer.tsx,home/tips-view.tsx}} minus component/{dialog-retry-action,bg-pulse,bg-pulse-render} + packages/opencode/src/{session/retry.ts,cli/cmd/{uninstall.ts,run/{footer.permission.tsx,footer.prompt.tsx,permission.shared.ts}}} + tests + docs trackers"
     }
   
   

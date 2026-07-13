@@ -1,7 +1,7 @@
 ---
 status: Approved (gate 5, 2026-07-03; amended 2026-07-12 — PH-6 gateway + mirroring realized, additive; @marid/gateway rename + gateway/channel-gateway disambiguation)
 version: v1.2
-updated: 2026-07-13
+updated: 2026-07-14
 owner: operator (STK-001)
 ---
 
@@ -81,12 +81,24 @@ graph TB
 | P-7 (**planned, PH-8** — ADR-0018 D2) | **Config filename discovery + writers.** `marid.json`/`.jsonc` primary at every level; **project-level `opencode.json` fallback**; **global reads `~/.config/marid/` only** (no `opencode` global fallback); config writer (`cli/cmd/mcp.ts`) writes `marid.json`; `$schema` policy + managed-config ids (`config/managed.ts`) per D2/D7. *(Sites re-enumerated at WBS-8.2.)* | Distribution config identity the app-name change doesn't cover; global fallback would re-import model/provider bleed | Upstream — several small sites | Medium — **Marid wins on reconcile** |
 | P-8 (**realized, PH-8** — ADR-0018 D6, 2026-07-13) | **Agent-identity transform** at the single system-prompt choke point (`packages/opencode/src/session/system.ts` `provider()`): `selectPrompt()` picks the prompt, `provider()` maps it through Marid-owned `session/marid-identity.ts maridizePrompt()` — identity/self-doc-fetch/support-URL → Marid; app-name-gated (upstream unchanged). CI guard `agent-identity.test.ts` forbids `\bopencode\b` in any emitted `prompt/*.txt`. **Required a 1-line upstream edit** (the `.map()` wrap in `provider()`), so it is a `P-8` row (not additive). | Full identity rebrand (DEC-026) at the sole consumer | Upstream (choke point, ~1 line) + new marid module | Low — Marid wins on reconcile |
 
-**P-2 expansion (planned, PH-8 — ADR-0018 D8):** the existing **P-2** branding row extends to the deep-rebrand
+**P-2 expansion (PH-8 — ADR-0018 D8):** the existing **P-2** branding row extends to the deep-rebrand
 surfaces — TUI exit logo + `marid -s` hint (`packages/tui/src/util/presentation.ts`), sidebar footer, notification
 title (`attention.ts`), update toast, **GO-upsell removal** + **two-tone wordmark** (`packages/tui/src/logo.ts` /
 `logo.tsx` / `packages/opencode/src/cli/ui.ts`) behind a render gate, and the **web assets** (`packages/ui` /
 `packages/app` favicon/PWA/social/`Mark`+`Splash`/notification icon, release-notes repoint). Same class as P-2
 today (product identity, config-first, **Marid wins on reconcile**); enumerated at WBS-8.4/8.5.
+
+**WBS-8.4 4a done (2026-07-14, at operator gate):** the **mechanical** half of the TUI/CLI rebrand landed —
+every user-facing "OpenCode" string in the shipped `marid` binary → Marid: main TUI (exit hint, notification
+title + sound-pack name, update toast, both sidebar footers, permission prose, ~12 tips' wrong-binary
+`opencode …`→`marid …` hints, model-error hints, crash screen + bug-report → Marid repo, docs link → Marid
+repo), the `--mini` run mode (permission/prompt prose), and `uninstall.ts`. **GO-upsell removed at the root**
+(TUI dialog subsystem + `bg-pulse*` deleted, rate-limit handler removed, server `retry.ts` free-limit message
+neutralized — the inline footer renders `retry.message`, so the dialog delete alone left it visible); both
+providers de-marketed (IDs kept). Cosmetic → **unconditional** "Marid" (not `__MARID_APP`-gated), per PH-5 P-2;
+no new `P-*`. **4b (pending):** §94 logo redesign (flame + two-tone split wordmark `#2F6BFF`/`#F0731F`) behind a
+truecolor render gate (`COLORTERM`, mono fallback) across `logo.ts`/`logo.tsx`/`cli/ui.ts`, splash badge →
+Marid flame (`cli/cmd/run/splash.ts`), then delete the `go` glyph. Web assets remain WBS-8.5.
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 **PH-6 (gateway + mirroring) added no `P-*`:** the four `/marid/*` routes and the `owns ∪ bound` SSE filter

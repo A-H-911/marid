@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-13
+updated: 2026-07-14
 owner: operator (STK-001)
 generation: derived
 ---
@@ -15,8 +15,8 @@ generation: derived
 
 | | |
 |---|---|
-| Reporting date | 2026-07-13 |
-| Active work | **PH-8 — WBS-8.2 COMPLETE (merged #55/#56); Phase 3 (agent identity) at operator gate; Phase 4 (TUI rebrand) next.** DATA isolation + config + pierce + agent identity done: **AC-025/026/027/028/031 all Met**.** Post-`v0.2.0` mission: total DATA isolation from a co-installed OpenCode (dirs/config; `OPENCODE_*` env kept) + deep rebrand + upstream-sync-first. **ADR-0018 + DEC-022..027 Approved.** **WBS-8.1** merged (PR #54 → develop `42a7e4724d`, 79c/242f, upstream ancestry preserved). **WBS-8.2 part 1** (this PR): **P-6 app-name seam** (`global.ts:10` — one line isolates all machine-global dirs) + **one-time migration** (DEC-025/AC-031) + **no update popup** (AC-027) + a **3-OS binary isolation smoke**. Dev + live isolation proven; **AC-027/AC-031 Met, AC-025 Partial** (binary define pending CI smoke). Part 2 (P-7 config filename + AC-026 pierce WARN) is a follow-up. **STOP: awaits operator merge (INV-005).** |
+| Reporting date | 2026-07-14 |
+| Active work | **PH-8 Phase 4a (WBS-8.4) — TUI/CLI mechanical rebrand + GO-upsell removal, at the operator gate.** Every user-facing "OpenCode" string in the shipped `marid` binary → Marid across the main TUI, the `--mini` run mode, and `uninstall` (exit hint `marid -s`, notification title + sound-pack name, update toast, both sidebar footers "● Marid {version}", permission prose, ~12 tips' **wrong-binary** `opencode …`→`marid …` hints, crash screen + docs → Marid repo). **GO-upsell removed at the root** — the TUI dialog subsystem (`dialog-retry-action`+`bg-pulse*`) deleted, the rate-limit handler removed, and the server `retry.ts` free-limit message neutralized (the inline footer renders `retry.message`, so the dialog delete alone left it visible); both providers de-marketed (IDs kept). Cosmetic → **unconditional** "Marid" (not `__MARID_APP`-gated), per PH-5 P-2; no new `P-*`. typecheck clean both pkgs; presentation/app-lifecycle/retry/permission tests green. **AC-029 → Partial** (logo + two-tone render gate = **PR 4b** next). Prior PH-8 merged: WBS-8.1 sync (#54), 8.2 isolation+config+pierce (#55/#56), Phase-3 agent identity (#57) — **AC-025/026/027/028/031 all Met**. **STOP: awaits operator merge (INV-005).** |
 | Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
 | Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
@@ -33,7 +33,7 @@ generation: derived
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
 | PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
 | PH-6 Telegram-first | **done** | yes | **MS-007 (2026-07-12)**: Marid Gateway + full Telegram + bidirectional mirroring + 4 live test tiers; WBS-6.3 (#44) · 6.1 (#46) · 6.5 (#47) · 6.2/6.4/6.6/6.7 (#48 `4409d92f`) | AC-017/019/020/021/024 all Met; EXP-005/007/008/009 PASS; INV-001 leak fixed (ADR-0016/0017); zero upstream edit, no P-\* |
-| PH-8 Isolation & deep rebrand | **Phase 3 (agent identity) at operator gate; Phase 4 next** | part 2 + Phase 3 merged/at-gate | #55 (part 1) + #56 (part 2, merged `906250fee8`) + this PR (Phase 3: agent identity P-8) | **AC-025/026/027/028/031 Met** — DATA isolation + config + pierce + agent identity done; next = Phase 4 TUI rebrand |
+| PH-8 Isolation & deep rebrand | **Phase 4a (TUI/CLI mechanical rebrand) at operator gate; 4b (logo) next** | 8.1/8.2/Phase-3 merged; 4a at gate | #54 (sync) · #55/#56 (isolation+config+pierce) · #57 (agent identity) · this PR (4a mechanical + GO-upsell removal) | **AC-025/026/027/028/031 Met; AC-029 Partial** — 4a mechanical done, 4b logo/render-gate pending |
 
 ## Acceptance snapshot
 
@@ -56,18 +56,21 @@ mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-**PH-8 WBS-8.2 part 1 — total DATA isolation, at the operator gate.** WBS-8.1 (upstream sync) is **merged**
-(PR #54 → develop `42a7e4724d`, upstream ancestry preserved). This PR delivers the isolation core: the **P-6
-app-name seam** (`global.ts:10 const app = process.env.__MARID_APP ?? "opencode"` — the single point every
-machine-global dir derives from, so one line isolates DB/auth/model/config at once), baked into the binary via a
-`marid-build.ts` define and set in dev by a first-position `src/marid-env.ts`; a **marker-triggered one-time
-migration** (`src/marid-migrate.ts`, DEC-025/AC-031) that copies a populated pre-isolation OpenCode install into
-the marid dirs once (INV-002 count-only logging); and **`OPENCODE_DISABLE_AUTOUPDATE=1`** to kill the update
-popup (AC-027). New subprocess-driven `data-isolation.test.ts` (5) + live `instance-isolation` + a **3-OS
-`marid-build` binary isolation smoke** prove it; marid-instance 42 / contract 38 green; typecheck clean.
-**AC-027 + AC-031 Met; AC-025 Partial** (binary baked-define branch flips to Met on the CI smoke going green).
-**STOP:** operator merge (INV-005). Part 2 (P-7 `marid.json` config filename + AC-026 env-pierce WARN +
-`managed.ts`) is a follow-up. PH-0..6 complete; PH-7 (WhatsApp) operator-gated, not started.
+**PH-8 Phase 4a (WBS-8.4) — TUI/CLI mechanical rebrand + GO-upsell removal, at the operator gate.** A repo-wide
+re-enumeration (the earlier surface map was ~50% incomplete — it missed the whole `--mini` mode, `uninstall`,
+`error.ts`, and the crash screen) rebranded every user-facing "OpenCode" string in the shipped `marid` binary:
+**main TUI** (exit hint `opencode -s`→`marid -s`, notification title + sound-pack name, update toast, docs link →
+Marid repo, both sidebar footers "● Marid {version}", permission prose, ~12 tips' wrong-binary `opencode …`→
+`marid …` hints, model-error hints, crash screen + bug-report → Marid repo), the **`--mini` run mode**
+(permission/prompt prose), and **`uninstall.ts`**. **GO-upsell removed at the root** — deleted the TUI upsell
+subsystem (`dialog-retry-action`+`bg-pulse`+`bg-pulse-render`) and the rate-limit handler in
+`routes/session/index.tsx`, and **neutralized the server source** `session/retry.ts` (the inline retry footer
+renders `retry.message`, so the dialog delete alone left "…subscribe to Go" visible); both providers de-marketed
+(IDs kept). Cosmetic → **unconditional** "Marid" per PH-5 P-2, under the existing **P-2** row (no new `P-*`).
+typecheck clean both packages; `presentation`/`app-lifecycle`/`retry`/`permission.shared` tests green.
+**AC-029 → Partial. STOP:** operator merge (INV-005). **PR 4b (next):** §94 logo redesign (flame + two-tone split
+wordmark) behind a truecolor render gate + splash rebrand + `go`-glyph deletion → AC-029 Met. PH-0..6 complete;
+PH-7 (WhatsApp) operator-gated, not started.
 
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18
