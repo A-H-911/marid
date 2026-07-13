@@ -16,7 +16,7 @@ generation: derived
 | | |
 |---|---|
 | Reporting date | 2026-07-13 |
-| Active work | **PH-8 (Isolation & deep rebrand) — Phase 0 DONE & MERGED (PR #53 → develop `109734de39`); WBS-8.1 upstream sync DONE, at the operator merge gate.** Post-`v0.2.0` mission: total DATA isolation from a co-installed OpenCode (dirs/config; `OPENCODE_*` env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first. **ADR-0018 + DEC-022..027 all Approved** (operator gate 2026-07-13). **WBS-8.1** merged `upstream/dev f47684787a` into develop (79 commits / 242 files; 6 i18n conflicts resolved Marid-wins; typecheck + TEST-CONTRACT + marid-gateway suites green — fixed one inherited generated-SDK type drift, P-CI-5). **STOP: this merge-commit sync PR awaits operator merge (INV-005); WBS-8.2 data isolation begins only after merge.** |
+| Active work | **PH-8 (Isolation & deep rebrand) — WBS-8.1 MERGED (PR #54); WBS-8.2 part 1 (total DATA isolation) at the operator gate.** Post-`v0.2.0` mission: total DATA isolation from a co-installed OpenCode (dirs/config; `OPENCODE_*` env kept) + deep rebrand + upstream-sync-first. **ADR-0018 + DEC-022..027 Approved.** **WBS-8.1** merged (PR #54 → develop `42a7e4724d`, 79c/242f, upstream ancestry preserved). **WBS-8.2 part 1** (this PR): **P-6 app-name seam** (`global.ts:10` — one line isolates all machine-global dirs) + **one-time migration** (DEC-025/AC-031) + **no update popup** (AC-027) + a **3-OS binary isolation smoke**. Dev + live isolation proven; **AC-027/AC-031 Met, AC-025 Partial** (binary define pending CI smoke). Part 2 (P-7 config filename + AC-026 pierce WARN) is a follow-up. **STOP: awaits operator merge (INV-005).** |
 | Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
 | Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
@@ -33,7 +33,7 @@ generation: derived
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
 | PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
 | PH-6 Telegram-first | **done** | yes | **MS-007 (2026-07-12)**: Marid Gateway + full Telegram + bidirectional mirroring + 4 live test tiers; WBS-6.3 (#44) · 6.1 (#46) · 6.5 (#47) · 6.2/6.4/6.6/6.7 (#48 `4409d92f`) | AC-017/019/020/021/024 all Met; EXP-005/007/008/009 PASS; INV-001 leak fixed (ADR-0016/0017); zero upstream edit, no P-\* |
-| PH-8 Isolation & deep rebrand | **WBS-8.1 (upstream sync)** | Phase 0 merged; sync at merge gate | PR #53 (Phase 0 → develop `109734de39`) + this sync PR: `upstream/dev f47684787a` merged (79c/242f); ADR-0018 + DEC-022..027 Approved | total DATA isolation (env kept) + deep rebrand + sync-first; WBS-8.2 begins after operator merges this PR |
+| PH-8 Isolation & deep rebrand | **WBS-8.2 (data isolation)** | part 1 at operator gate | PR #53 (Phase 0) + PR #54 (WBS-8.1 sync, merged `42a7e4724d`) + this PR: P-6 seam + migration + no-popup | AC-027/031 Met, AC-025 Partial (binary smoke pending CI); part 2 = P-7 config filename + AC-026 pierce WARN |
 
 ## Acceptance snapshot
 
@@ -56,15 +56,18 @@ mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-**PH-8 WBS-8.1 — upstream sync (first code phase), at the operator merge gate.** Phase 0 (Keystone scoping +
-ADR) is **merged** (PR #53 → develop `109734de39`) and **ADR-0018 + DEC-022..027 are Approved** (operator gate
-2026-07-13). WBS-8.1 merged `upstream/dev f47684787a` into develop as a **merge commit** (keeps upstream
-ancestry): **79 commits / 242 files**, the only conflicts being **6 i18n files** (`packages/app/src/i18n/{ar,br,de,fr,ja,pl}.ts`)
-resolved **Marid-wins** (all langs keep "Marid Desktop"). Fixed one inherited generated-SDK type drift
-(`sdk/js/src/v2/gen/types.gen.ts` effort `values` → `Array<string | null>` to match the upstream `NullOr`
-schema, **P-CI-5**); root `bun turbo typecheck` (34/34), **TEST-CONTRACT** (38 pass) and **marid-gateway**
-(124 pass) green. **STOP:** WBS-8.2 (data isolation) starts only after the operator merges this sync PR
-(INV-005). PH-0..6 complete; PH-7 (WhatsApp) operator-gated, not started (PH-8-independent).
+**PH-8 WBS-8.2 part 1 — total DATA isolation, at the operator gate.** WBS-8.1 (upstream sync) is **merged**
+(PR #54 → develop `42a7e4724d`, upstream ancestry preserved). This PR delivers the isolation core: the **P-6
+app-name seam** (`global.ts:10 const app = process.env.__MARID_APP ?? "opencode"` — the single point every
+machine-global dir derives from, so one line isolates DB/auth/model/config at once), baked into the binary via a
+`marid-build.ts` define and set in dev by a first-position `src/marid-env.ts`; a **marker-triggered one-time
+migration** (`src/marid-migrate.ts`, DEC-025/AC-031) that copies a populated pre-isolation OpenCode install into
+the marid dirs once (INV-002 count-only logging); and **`OPENCODE_DISABLE_AUTOUPDATE=1`** to kill the update
+popup (AC-027). New subprocess-driven `data-isolation.test.ts` (5) + live `instance-isolation` + a **3-OS
+`marid-build` binary isolation smoke** prove it; marid-instance 42 / contract 38 green; typecheck clean.
+**AC-027 + AC-031 Met; AC-025 Partial** (binary baked-define branch flips to Met on the CI smoke going green).
+**STOP:** operator merge (INV-005). Part 2 (P-7 `marid.json` config filename + AC-026 env-pierce WARN +
+`managed.ts`) is a follow-up. PH-0..6 complete; PH-7 (WhatsApp) operator-gated, not started.
 
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18

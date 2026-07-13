@@ -11,6 +11,31 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-13 — PH-8 WBS-8.2 (part 1): total DATA isolation (P-6) + one-time migration + no-update-popup — unmerged, at the operator gate
+- **Done:** delivered the **isolation core** of WBS-8.2. **P-6 app-name seam:** `global.ts:10` →
+  `const app = process.env.__MARID_APP ?? "opencode"` — the single seam every machine-global dir derives from
+  (DB `opencode.db`, `auth.json`, `model.json`, `mcp-auth.json`, global config all route through `Global.Path`),
+  so one line isolates them all. Baked into the binary via a `marid-build.ts` define
+  (`"process.env.__MARID_APP": JSON.stringify("marid")`, dot-notation rewrite); dev sets it at runtime via a new
+  first-position side-effect import `src/marid-env.ts` (bracket notation `process.env["__MARID_APP"] ??= "marid"`
+  survives the define). **Migration (DEC-025 / AC-031):** new `src/marid-migrate.ts` — marker-triggered one-time
+  copy of the pre-isolation OpenCode `data`+`state` (auth/tokens/DB/model) into the marid dirs, skips regenerable
+  `repos`/`log`, INV-002 count-only logging; run early in `marid.ts` before command dispatch. **No update popup
+  (AC-027):** `marid-env.ts` also sets `OPENCODE_DISABLE_AUTOUPDATE=1` (guard `cli/upgrade.ts:10`). **Coordinated
+  seam:** `marid-instance/paths.ts:51` `opencode`→`marid` (the instance nests `marid` now) + test flips.
+- **Tests:** new `data-isolation.test.ts` (5, subprocess-driven — the app-name is read once at module load):
+  seam nests `marid`, unset→`opencode` regression, migration copy/skip/idempotency/fresh-machine, INV-002.
+  Live `instance-isolation.test.ts` green (marid via `src/marid.ts`, no `~/.local/share/opencode` leak). Added a
+  **3-OS `marid-build` isolation smoke** (spawns the compiled binary under a throwaway XDG root, asserts data lands
+  under `marid`) — the ONLY check of the binary's baked-define branch. marid-instance 42, contract 38, opencode
+  typecheck clean.
+- **Decisions/Deviations:** **scope split** — this PR is WBS-8.2 **part 1** (P-6 + migration + autoupdate). Part 2
+  (P-7 `marid.json` config filename + AC-026 env-pierce WARN + `managed.ts` Windows `ProgramData`) is a follow-up;
+  DEC-023 "no global `opencode` fallback" already falls out of P-6 for free (the global config dir *moves* to
+  `~/.config/marid/`). **AC-025 Partial** until the binary smoke goes green in CI (dev-proven now); **AC-027 +
+  AC-031 Met**. **Blockers:** operator merge (INV-005). **Next:** on merge → WBS-8.2 part 2, then Phase 3 identity.
+  `validate_package.py docs/` = OK.
+
 ## 2026-07-13 — PH-8 WBS-8.1: upstream sync merged + ADR-0018/DEC-027 Approved — at the operator merge gate
 - **Done:** ran **WBS-8.1 (upstream sync)**, the first PH-8 code phase. Merged `upstream/dev f47684787a` into
   develop as a **merge commit** (`f3e48a6c93`, keeps upstream ancestry — cf PR #31): **79 commits / 242 files**.

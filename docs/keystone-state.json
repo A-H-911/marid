@@ -2871,7 +2871,7 @@
       {
         "id": "AC-025",
         "statement": "Given a machine with co-installed OpenCode, the built marid binary's effective data/state/config read paths are the marid dirs only (asserted from the boot log / config directories(), never dir existence); no foreign auth (nvidia-custom) or model.json bleeds in; the co-installed OpenCode dirs are untouched (issue-6)",
-        "status": "Proposed"
+        "status": "Partial"
       },
       {
         "id": "AC-026",
@@ -2881,7 +2881,7 @@
       {
         "id": "AC-027",
         "statement": "Given the fresh marid binary, no upstream update-available popup appears (P-3 autoupdate:false + bootstrap env) and no auto-update overwrites the binary (issue-1)",
-        "status": "Proposed"
+        "status": "Met"
       },
       {
         "id": "AC-028",
@@ -2901,7 +2901,7 @@
       {
         "id": "AC-031",
         "statement": "Given a populated v0.2.0 opencode data dir and no marid dir, first run copies auth.json + ${data}/marid gateway tokens + sessions DB + model.json + Telegram pairing into the marid dirs exactly once (marker prevents re-run, logged), so gateway bearer tokens and Telegram pairing survive the upgrade with no auth outage (issue-2)",
-        "status": "Proposed"
+        "status": "Met"
       }
     ],
     "phases": [
@@ -4461,7 +4461,21 @@
         "root bun turbo typecheck 34/34, TEST-CONTRACT 38 pass, marid-gateway 124 pass",
         "Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate 2026-07-13; DEC-027 = keep opencode.db)"
       ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 WBS-8.2 part 1 (total DATA isolation) - unmerged, at the operator gate. P-6 app-name seam: global.ts:10 const app = process.env.__MARID_APP ?? 'opencode' (single point all machine-global dirs derive from - DB/auth/model/mcp-auth/config via Global.Path), baked into the binary via a marid-build.ts define ('process.env.__MARID_APP': JSON.stringify('marid')) and set in dev by a first-position side-effect import src/marid-env.ts (bracket notation survives the define). One-time migration (DEC-025/AC-031): src/marid-migrate.ts marker-triggered copy of pre-isolation OpenCode data+state (auth/tokens/DB/model) into marid dirs, skips repos/log, INV-002 count-only logging. No update popup (AC-027): marid-env sets OPENCODE_DISABLE_AUTOUPDATE=1 (guard cli/upgrade.ts:10). Coordinated seam: marid-instance/paths.ts:51 opencode->marid + test flips. Tests: new subprocess-driven data-isolation.test.ts (5: seam nests marid, unset->opencode regression, migration copy/skip/idempotency/fresh-machine, INV-002) + live instance-isolation green + a 3-OS marid-build binary isolation smoke (the only check of the baked-define branch). marid-instance 42, contract 38, opencode typecheck clean. Scope split: this is WBS-8.2 part 1 (P-6 + migration + autoupdate); part 2 = P-7 marid.json filename + AC-026 pierce WARN + managed.ts. AC-027 + AC-031 Met; AC-025 Partial (binary smoke pending CI). STOP for operator merge (INV-005). validate_package.py docs/ = OK.",
+      "items_completed": [
+        "P-6: global.ts app-name seam + marid-build.ts define + src/marid-env.ts dev bootstrap",
+        "src/marid-migrate.ts one-time marker-based migration (DEC-025/AC-031), INV-002 count-only logging",
+        "OPENCODE_DISABLE_AUTOUPDATE=1 kills the update popup (AC-027)",
+        "marid-instance/paths.ts opencode->marid coordination + paths.test flips",
+        "data-isolation.test.ts (5) + live instance-isolation + 3-OS marid-build binary isolation smoke",
+        "AC-027 + AC-031 -> Met; AC-025 -> Partial (binary define pending CI smoke)"
+      ]
     }
+  
   
   ],
   "change_log": [
@@ -4665,7 +4679,14 @@
       "actor": "execution-agent",
       "action": "PH-8 WBS-8.1 upstream sync merged (merge commit into develop, keeps upstream ancestry): upstream/dev f47684787a, 79 commits / 242 files; only conflicts 6 i18n files resolved Marid-wins. Fixed inherited generated-SDK v2 type drift (types.gen.ts effort values Array<string> -> Array<string|null> to match the NullOr schema; type-only, P-CI-5). root bun turbo typecheck 34/34, TEST-CONTRACT 38 pass, marid-gateway 124 pass. Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate 2026-07-13; DEC-027 = keep opencode.db). At the operator merge gate (INV-005).",
       "target": "merge f3e48a6c93 (develop + upstream/dev f47684787a) + packages/sdk/js/src/v2/gen/types.gen.ts + docs/adrs/adr-0018 + docs/decisions/open-decision-register + docs/architecture/upstream-sync-strategy(P-CI-5) + docs/progress/{progress-log,status-report}"
+    },
+    {
+      "timestamp": "2026-07-13T13:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 WBS-8.2 part 1: total DATA isolation. P-6 app-name seam (global.ts:10) baked via marid-build define + dev src/marid-env.ts; one-time migration src/marid-migrate.ts (DEC-025/AC-031, INV-002 count-only); OPENCODE_DISABLE_AUTOUPDATE=1 (AC-027); marid-instance/paths.ts opencode->marid. New data-isolation.test.ts (5) + 3-OS marid-build binary isolation smoke. AC-027/031 Met, AC-025 Partial (binary smoke pending CI). At operator gate (INV-005).",
+      "target": "packages/core/src/global.ts + packages/opencode/{script/marid-build.ts,src/marid-env.ts,src/marid.ts,src/marid-migrate.ts,test/marid/data-isolation.test.ts} + packages/marid-instance/{src/paths.ts,test/paths.test.ts} + docs trackers"
     }
+  
   
   ]
 }

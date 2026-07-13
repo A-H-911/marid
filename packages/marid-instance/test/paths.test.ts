@@ -67,18 +67,19 @@ describe("composeInstanceEnv: every R-05 conflict-inventory row is namespaced in
 })
 
 describe("derived paths are a single source of truth for where the server writes", () => {
-  test("the data dir (where the DB lands) is under XDG_DATA_HOME/opencode", () => {
+  test("the data dir (where the DB lands) is under XDG_DATA_HOME/marid", () => {
     // The server writes its DB inside instanceDataDir; keep that root aligned
     // with the composed XDG_DATA_HOME so the live test and the server agree.
+    // Post-P-6 the app-name segment is "marid" (was "opencode").
     expect(instanceDataDir(DIR).startsWith(composeInstanceEnv(DIR).XDG_DATA_HOME)).toBe(true)
-    expect(instanceDataDir(DIR)).toBe(path.join(DIR, "data", "opencode"))
+    expect(instanceDataDir(DIR)).toBe(path.join(DIR, "data", "marid"))
   })
 
-  test("the marid token store resolves to {data}/opencode/marid (matches serve.ts maridDir())", () => {
+  test("the marid token store resolves to {data}/marid/marid (matches serve.ts maridDir())", () => {
     // If this diverges by one segment the live test writes a token the server
     // never reads → infinite 401. Pin it to Global.Path.data/marid.
     expect(instanceMaridDir(DIR)).toBe(path.join(instanceDataDir(DIR), "marid"))
-    expect(instanceMaridDir(DIR)).toBe(path.join(DIR, "data", "opencode", "marid"))
+    expect(instanceMaridDir(DIR)).toBe(path.join(DIR, "data", "marid", "marid"))
   })
 
   test("instancesRoot honors MARID_HOME", () => {
