@@ -4,6 +4,16 @@
 // disclosure names each active var — and, per INV-002, never prints its value.
 import { describe, test, expect } from "bun:test"
 import { pierceMessage } from "../../src/marid-pierce"
+import { maridConfigNames } from "../../src/config/config"
+
+describe("P-7 config filename derivation (app-name gated)", () => {
+  test("marid app → marid.json/marid.jsonc are the primary names", () => {
+    expect(maridConfigNames("marid")).toEqual(["marid.json", "marid.jsonc"])
+  })
+  test("upstream opencode app → no marid names (regression-safe, byte-identical discovery)", () => {
+    expect(maridConfigNames("opencode")).toEqual([])
+  })
+})
 
 describe("AC-026 env-pierce disclosure", () => {
   test("no piercing env → no message", () => {
