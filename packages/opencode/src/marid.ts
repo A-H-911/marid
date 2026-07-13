@@ -13,6 +13,7 @@ import "./marid-env" // MUST stay first: sets __MARID_APP before global.ts loads
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
 import { maridMigrate } from "./marid-migrate"
+import { disclosePierce } from "./marid-pierce"
 import { RunCommand } from "./cli/cmd/run"
 import { GenerateCommand } from "./cli/cmd/generate"
 import { ConsoleCommand } from "./cli/cmd/account"
@@ -139,6 +140,9 @@ const cli = yargs(args)
 // keeps auth, gateway tokens, sessions DB, and model selection. Best-effort —
 // a failure degrades to a fresh marid dir (re-auth), never blocks the CLI.
 await maridMigrate().catch((e) => process.stderr.write("[marid] migration skipped: " + errorMessage(e) + EOL))
+
+// WBS-8.2 (AC-026): disclose any OPENCODE_* env var that pierces data isolation.
+disclosePierce()
 
 try {
   if (args.includes("-h") || args.includes("--help")) {

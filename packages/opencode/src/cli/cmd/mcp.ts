@@ -392,11 +392,25 @@ export const McpLogoutCommand = effectCmd({
 })
 
 async function resolveConfigPath(baseDir: string, global = false) {
-  // Check for existing config files (prefer .jsonc over .json, check .opencode/ subdirectory too)
-  const candidates = [path.join(baseDir, "opencode.json"), path.join(baseDir, "opencode.jsonc")]
+  // MARID P-7 (WBS-8.2): the marid distribution prefers marid.json (the write target
+  // when none exists), keyed off the same __MARID_APP that isolates the dirs. Upstream
+  // opencode (app unset) is byte-identical — no marid candidate is added. An existing
+  // opencode.json(c) still works. `.opencode/` project dir keeps its upstream name
+  // (DEC-024); only the file inside is marid-branded.
+  const app = process.env["__MARID_APP"] ?? "opencode"
+  const maridNames = app === "opencode" ? [] : [`${app}.json`, `${app}.jsonc`]
+  const candidates = [
+    ...maridNames.map((f) => path.join(baseDir, f)),
+    path.join(baseDir, "opencode.json"),
+    path.join(baseDir, "opencode.jsonc"),
+  ]
 
   if (!global) {
-    candidates.push(path.join(baseDir, ".opencode", "opencode.json"), path.join(baseDir, ".opencode", "opencode.jsonc"))
+    candidates.push(
+      ...maridNames.map((f) => path.join(baseDir, ".opencode", f)),
+      path.join(baseDir, ".opencode", "opencode.json"),
+      path.join(baseDir, ".opencode", "opencode.jsonc"),
+    )
   }
 
   for (const candidate of candidates) {
@@ -405,7 +419,7 @@ async function resolveConfigPath(baseDir: string, global = false) {
     }
   }
 
-  // Default to opencode.json if none exist
+  // Default to the app-preferred config (marid.json for marid; opencode.json upstream).
   return candidates[0]
 }
 

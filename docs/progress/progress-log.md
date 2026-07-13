@@ -11,6 +11,24 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-13 — PH-8 WBS-8.2 (part 2): config filename (P-7) + env-pierce disclosure (AC-026) — unmerged, at the operator gate
+- **Done:** completed WBS-8.2. **P-7 config filename:** `marid.json`/`marid.jsonc` is now the primary config
+  name at every level — global (`config/config.ts` `globalConfigFile()` candidates + the merge chain, marid
+  loaded last so it wins), project + `.opencode/` (`mcp.ts` writer default), and managed (`config/config.ts`
+  managed loop). An existing upstream-named `opencode.json(c)` still works everywhere (backward-compat fallback);
+  the created default global config is now `marid.json`. Managed-config dir also isolated to `marid`
+  (`managed.ts` — mac/win/linux). DEC-023 "no global `opencode` fallback" was already free from P-6 (the global
+  dir moved to `~/.config/marid/`). **AC-026 env-pierce disclosure:** new `src/marid-pierce.ts` `disclosePierce()`
+  (boot, from `marid.ts`) warns when `OPENCODE_CONFIG_DIR`/`OPENCODE_CONFIG`/`OPENCODE_CONFIG_CONTENT`/
+  `OPENCODE_AUTH_CONTENT`/`OPENCODE_DB` pierce isolation — names the var + what it redirects, keeps it honored
+  (disclosure not enforcement), INV-002 never prints the value.
+- **Tests:** `config-pierce.test.ts` (4 — naming, no-op, empty-string, INV-002 no-secret-leak); config suite
+  regression test flipped to the `marid.json` created-default; opencode typecheck clean.
+- **Decisions:** **AC-025 → Met** (the 3-OS `marid-build` binary isolation smoke went green in PR #55) +
+  **AC-026 → Met**; WBS-8.2 complete. **Deviations:** P-7 filename additions are additive list-extensions to the
+  well-tested config discovery (the one config test encoding the old default was updated). **Blockers:** operator
+  merge (INV-005). **Next:** Phase 3 (agent identity). `validate_package.py docs/` = OK.
+
 ## 2026-07-13 — PH-8 WBS-8.2 (part 1): total DATA isolation (P-6) + one-time migration + no-update-popup — unmerged, at the operator gate
 - **Done:** delivered the **isolation core** of WBS-8.2. **P-6 app-name seam:** `global.ts:10` →
   `const app = process.env.__MARID_APP ?? "opencode"` — the single seam every machine-global dir derives from

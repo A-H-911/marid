@@ -136,8 +136,18 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Co
 
 export const use = serviceUse(Service)
 
+// MARID P-7 (WBS-8.2): the marid distribution prefers `marid.json`/`marid.jsonc` as
+// the config filename, keyed off the SAME app-name that isolates the dirs (P-6). When
+// running as upstream `opencode` (app unset), this is empty → filename behaviour is
+// byte-identical to upstream (no regression). marid names come FIRST for discovery
+// (the created default) and LAST for merging (they win over a co-existing opencode.json).
+export function maridConfigNames(app: string = process.env["__MARID_APP"] ?? "opencode"): string[] {
+  return app === "opencode" ? [] : [`${app}.json`, `${app}.jsonc`]
+}
+const MARID_CONFIG_NAMES = maridConfigNames()
+
 function globalConfigFile() {
-  const candidates = ["opencode.jsonc", "opencode.json", "config.json"].map((file) =>
+  const candidates = [...MARID_CONFIG_NAMES, "opencode.jsonc", "opencode.json", "config.json"].map((file) =>
     path.join(Global.Path.config, file),
   )
   for (const file of candidates) {
@@ -258,6 +268,11 @@ const layer = Layer.effect(
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "config.json"), env))
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.json"), env))
       result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.jsonc"), env))
+      // MARID P-7: marid.json(c) loaded last → wins over a co-existing opencode.json(c).
+      // Empty for the upstream opencode app → no extra loads (regression-safe).
+      for (const name of MARID_CONFIG_NAMES) {
+        result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, name), env))
+      }
 
       const legacy = path.join(Global.Path.config, "config")
       if (existsSync(legacy)) {
@@ -423,7 +438,7 @@ const layer = Layer.effect(
 
         for (const dir of directories) {
           if (dir.endsWith(".opencode") || dir === Flag.OPENCODE_CONFIG_DIR) {
-            for (const file of ["opencode.json", "opencode.jsonc"]) {
+            for (const file of ["opencode.json", "opencode.jsonc", ...MARID_CONFIG_NAMES]) {
               const source = path.join(dir, file)
               yield* Effect.logDebug(`loading config from ${source}`)
               yield* merge(source, yield* loadFile(source, authEnv))
@@ -515,7 +530,7 @@ const layer = Layer.effect(
 
         const managedDir = ConfigManaged.managedConfigDir()
         if (existsSync(managedDir)) {
-          for (const file of ["opencode.json", "opencode.jsonc"]) {
+          for (const file of ["opencode.json", "opencode.jsonc", ...MARID_CONFIG_NAMES]) {
             const source = path.join(managedDir, file)
             yield* merge(source, yield* loadFile(source), "global")
           }
