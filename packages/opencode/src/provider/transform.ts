@@ -734,7 +734,6 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
       high: { reasoningEffort: "high" },
     }
   }
-  if (id.includes("grok")) return {}
 
   switch (model.api.npm) {
     case "@openrouter/ai-sdk-provider":
@@ -760,7 +759,7 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
     }
 
     case "@ai-sdk/gateway":
-      if (model.id.includes("anthropic")) {
+      if (model.api.id.includes("anthropic")) {
         if (adaptiveEfforts) {
           return Object.fromEntries(
             adaptiveEfforts.map((effort) => [
@@ -793,8 +792,8 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
           },
         }
       }
-      if (model.id.includes("google")) {
-        if (id.includes("2.5")) {
+      if (model.api.id.includes("google")) {
+        if (model.api.id.includes("2.5")) {
           return {
             high: {
               thinkingConfig: {
@@ -805,7 +804,7 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
             max: {
               thinkingConfig: {
                 includeThoughts: true,
-                thinkingBudget: googleThinkingBudgetMax(id),
+                thinkingBudget: googleThinkingBudgetMax(model.api.id.toLowerCase()),
               },
             },
           }
@@ -885,6 +884,18 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
       )
     case "@ai-sdk/amazon-bedrock/mantle":
     case "@ai-sdk/openai": {
+      if (model.providerID === "meta") {
+        return Object.fromEntries(
+          OPENAI_EFFORTS.map((effort) => [
+            effort,
+            {
+              reasoningEffort: effort,
+              reasoningSummary: "auto",
+              include: INCLUDE_ENCRYPTED_REASONING,
+            },
+          ]),
+        )
+      }
       // https://v5.ai-sdk.dev/providers/ai-sdk-providers/openai
       const efforts = openaiReasoningEfforts(model.api.id, model.release_date)
       return Object.fromEntries(
@@ -1127,8 +1138,20 @@ export function options(input: {
     }
   }
 
-  if (input.model.providerID === "openai" || input.providerOptions?.setCacheKey) {
+  if (
+    input.providerOptions?.setCacheKey !== false &&
+    (input.model.providerID === "openai" ||
+      input.model.api.npm === "@ai-sdk/openai" ||
+      input.model.api.npm === "@ai-sdk/xai" ||
+      input.providerOptions?.setCacheKey)
+  ) {
     result["promptCacheKey"] = input.sessionID
+  }
+
+  if (input.model.providerID === "meta" && input.model.api.npm === "@ai-sdk/openai") {
+    result["reasoningEffort"] = "high"
+    result["reasoningSummary"] = "auto"
+    result["include"] = INCLUDE_ENCRYPTED_REASONING
   }
 
   if (input.model.api.npm === "@ai-sdk/google" || input.model.api.npm === "@ai-sdk/google-vertex") {
