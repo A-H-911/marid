@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-12
+updated: 2026-07-13
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,31 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-13 — PH-8 WBS-8.1: upstream sync merged + ADR-0018/DEC-027 Approved — at the operator merge gate
+- **Done:** ran **WBS-8.1 (upstream sync)**, the first PH-8 code phase. Merged `upstream/dev f47684787a` into
+  develop as a **merge commit** (`f3e48a6c93`, keeps upstream ancestry — cf PR #31): **79 commits / 242 files**.
+  The **only** conflicts were **6 i18n files** (`packages/app/src/i18n/{ar,br,de,fr,ja,pl}.ts`) — Marid's
+  `"app.name.desktop": "Marid Desktop"` vs upstream's translation refresh — resolved **Marid-wins** (all 17 langs
+  keep "Marid Desktop", zero "OpenCode Desktop"); no workflow leakage, P-2 branding sites intact, `bun.lock`
+  auto-merge correct. Fixed the one inherited typecheck blocker: upstream's generated SDK v2 type
+  (`sdk/js/src/v2/gen/types.gen.ts`) lagged its own `ProviderReasoningOption` schema
+  (`provider.ts:987 Schema.Array(Schema.NullOr(Schema.String))`) — widened the effort `values: Array<string>` →
+  `Array<string | null>` (type-only, behavior-neutral; **P-CI-5**). Verified: root `bun turbo typecheck`
+  **34/34 packages**, **TEST-CONTRACT** (`test/marid/contract.test.ts`) **38 pass**, **marid-gateway** suite
+  **124 pass**. Flipped **ADR-0018 + DEC-027 → Approved** (operator gate ruling) folded into this same PR.
+- **Decisions:** **ADR-0018 + DEC-022..027 all Approved** at the PH-8 Phase-0 operator gate (2026-07-13);
+  DEC-027 = **KEEP `opencode.db`** (no rename). **Corrected sync numbers:** real delta is **79 commits / 242
+  files** to upstream tip `f47684787a`, not the plan's 167/458 — the plan measured from the immutable baseline
+  tag, but PR #31 already advanced develop's merge-base to `14a5529793`.
+- **Deviations:** used the hand-widen of the generated type (the operator's stated *fallback*) instead of a
+  full `./script/generate.ts` regen — regen needs `bun dev generate` (server boot → Windows native-toolchain
+  risk) for a larger diff, while the 1-line widen is type-only, matches the schema truth, and is CI-safe (no CI
+  job regenerates or freshness-checks the SDK). Registered as **P-CI-5** in `upstream-sync-strategy.md` so a
+  future sync that reverts it re-applies the one-line widen. **Blockers:** **operator merge of this sync PR**
+  (INV-005 — merge-commit into develop, never squash). **Next:** on merge → **WBS-8.2** data isolation
+  (build-time `__MARID_APP` app-name P-6 + config `marid.json`/project-fallback P-7 + one-time-copy migration).
+  `validate_package.py docs/` = OK.
 
 ## 2026-07-13 — PH-8 opened: Keystone scoping + ADR-0018 (docs-only) — unmerged, at the operator gate
 - **Done:** opened **PH-8 "Isolation & deep rebrand"** (total DATA isolation from a co-installed OpenCode + deep

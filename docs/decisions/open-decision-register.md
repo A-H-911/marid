@@ -1,7 +1,7 @@
 ---
 status: Draft
 version: v0.1
-updated: 2026-07-03
+updated: 2026-07-13
 owner: operator (STK-001)
 ---
 
@@ -39,7 +39,7 @@ governance: Proposed / Approved / Rejected / Superseded / Deferred. Nothing here
 | DEC-024 | `.opencode/` project dirs (agents/skills/plugins/commands) | **keep upstream-named** · rename to `.marid/` | operator: keep (ecosystem compat, like kept env) | PH-8 | Approved | 2026-07-13 (plan §2 ii); ADR-0018 D3 |
 | DEC-025 | Upgrade migration | **one-time copy** of the old opencode data/state into the marid dirs (marker; no re-run) · fresh + re-issue · no migration | operator: one-time copy (no auth outage; gateway tokens + Telegram pairing survive) | PH-8 | Approved | 2026-07-13 (plan §2 iii); ADR-0018 D4 |
 | DEC-026 | Agent-identity / prompt transform scope | **full** (identity + self-doc-fetch → Marid docs + support URLs → Marid repo) · identity-only · none | operator: full transform | PH-8 | Approved | 2026-07-13 (plan §2 iv); ADR-0018 D6 |
-| DEC-027 | Rename the sessions DB file | keep `opencode.db` inside the isolated marid dir · rename to `marid.db` | plan: recommend drop the rename (dir isolation already isolates it; rename needs 2 upstream branches, no operator-visible benefit) | PH-8 | Proposed | plan §1.8 recommendation; operator confirms at the ADR-0018 gate; ADR-0018 D5 |
+| DEC-027 | Rename the sessions DB file | **keep `opencode.db` inside the isolated marid dir** · rename to `marid.db` | operator: keep (dir isolation already isolates it; rename needs 2 upstream branches, no operator-visible benefit) | PH-8 | Approved | 2026-07-13 (operator gate at ADR-0018 Phase-0 exit); ADR-0018 D5 |
 
 ## Tensions logged at Stage 6 (contradiction/dependency detection)
 
@@ -197,11 +197,11 @@ Realized ADR-0013; feasibility gated by EXP-007/009/010.
 
 ## DEC-022 … DEC-027 detail — PH-8 isolation & deep rebrand (2026-07-13)
 
-Inputs the operator locked while planning PH-8 (twice-reviewed plan §2, 2026-07-13). **DEC-022..026 are
-Approved decision inputs; DEC-027 is Proposed (a plan recommendation the operator confirms at the gate).**
-They are *realized* by **[ADR-0018](../adrs/adr-0018-data-isolation-deep-rebrand.md)**, which itself stays
-**Proposed** until the PH-8 Phase-0 operator approval gate — i.e. these decisions are settled, but no code
-phase starts until the ADR (the realization design) is Approved (INV-005).
+Inputs the operator locked while planning PH-8 (twice-reviewed plan §2, 2026-07-13). **DEC-022..027 are all
+Approved** — DEC-022..026 as plan-locked inputs, and **DEC-027 confirmed KEEP `opencode.db` at the Phase-0
+operator gate (2026-07-13).** They are *realized* by
+**[ADR-0018](../adrs/adr-0018-data-isolation-deep-rebrand.md)**, **Approved at that same PH-8 Phase-0 gate**
+(INV-005) — the design is settled and PH-8 code phases (WBS-8.1+) are authorized.
 
 **Context.** The public `marid` v0.2.0 binary, run beside a co-installed OpenCode, leaks the OpenCode
 identity and shares machine-global state (auth/model/sessions/config/DB) — six reported issues (see ADR-0018
@@ -232,10 +232,10 @@ single system-prompt choke point: identity → Marid, self-doc-fetch → Marid d
 Marid repo; CI guard forbids `\bopencode\b` in emitted prompts outside an allowlist. ADR-0018 D6, **P-8**
 (conditional).
 
-**DEC-027 — no DB rename (Proposed).** The plan recommends the DB file stay `opencode.db` *inside* the
-isolated marid dir (dir isolation already isolates it; renaming needs two upstream branches, conflicts with
-marid-instance, no operator-visible benefit). **Operator confirms drop-vs-rename at the ADR-0018 gate.**
-ADR-0018 D5.
+**DEC-027 — no DB rename (Approved).** The DB file stays `opencode.db` *inside* the isolated marid dir (dir
+isolation already isolates it; renaming needs two upstream branches, conflicts with marid-instance, no
+operator-visible benefit). **The operator confirmed KEEP `opencode.db` (no rename) at the ADR-0018 Phase-0
+gate (2026-07-13).** ADR-0018 D5.
 
-**Traceability:** realized by ADR-0018 (Proposed); opens PH-8 / MS-009 (roadmap/WBS/milestones) + AC-025..031;
+**Traceability:** realized by ADR-0018 (Approved 2026-07-13); opens PH-8 / MS-009 (roadmap/WBS/milestones) + AC-025..031;
 amends `branding.md` "Rebrand boundary"; pre-registers P-6/P-7/P-8 + a P-2 expansion in `architecture.md`.

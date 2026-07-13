@@ -1,7 +1,7 @@
 ---
 status: Approved (gate 9, 2026-07-03)
-version: v1.0
-updated: 2026-07-03
+version: v1.1
+updated: 2026-07-13
 owner: operator (STK-001)
 ---
 
@@ -201,3 +201,19 @@ All read-sites carry `marid:` comments. On sync, re-apply on conflict; the `ci.y
 untouched. Any **new** timing flake should be fixed by routing its budget through this scale (or, if it
 already flows through a wrapper above, it is covered automatically) — not by another one-off widening.
 If the class keeps growing anyway, a larger runner (≈4-core) remains the deeper fix.
+
+**P-CI-5 · Generated SDK v2 type drift vs its own schema (Marid's typecheck catches it; upstream's
+doesn't).** Upstream's `ProviderReasoningOption` schema makes the effort `values` nullable
+(`packages/opencode/src/provider/provider.ts` — `values: Schema.Array(Schema.NullOr(Schema.String))`), but
+the checked-in generated SDK v2 type lags it: `packages/sdk/js/src/v2/gen/types.gen.ts` still declares the
+effort `values: Array<string>`. Marid's full-workspace `bun turbo typecheck` (tsgo) compiles the v2/next
+files (`provider/provider.ts`, `share/share-next.ts`) and fails — the mismatch cascades (via
+`toPublicInfo`) into the `plugin.trigger<"experimental.provider.small_model">` inference too. Upstream's own
+typecheck config does **not** compile these v2 files, so the drift ships green from their side and **recurs on
+every sync that re-imports `types.gen.ts`**. **Fix (behavior-neutral, type-only):** widen the generated effort
+`values: Array<string>` → `Array<string | null>` to match the runtime schema. First applied **WBS-8.1
+(2026-07-13)**. CI does not revert it (no job runs the SDK generator or `git diff --exit-code` on generated
+files), so the one-line widen holds until a future sync re-imports upstream's stale `types.gen.ts` →
+re-apply the widen. **Durable alternative:** run `./script/generate.ts` on a host where `bun dev generate`
+can boot the server (regenerates the SDK from the live schema, producing the nullable type directly) — not
+used on Windows sync hosts where the native toolchain (`tree-sitter-powershell`) blocks the boot.

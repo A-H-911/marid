@@ -1,7 +1,7 @@
 ---
 id: ADR-0018
-status: Proposed
-version: 1.0.0
+status: Approved
+version: 1.1.0
 updated: 2026-07-13
 supersedes: none
 superseded_by: none
@@ -12,10 +12,10 @@ owner: operator (STK-001)
 
 ## Status
 
-**Proposed** (2026-07-13, drafted at PH-8 Phase 0 by the execution agent) — **awaiting the operator
-approval gate at Phase 0 exit (INV-005).** No code phase (PH-8 Phase 1+) begins until this ADR is Approved.
-The four operator decisions locked in the twice-reviewed plan §2 are recorded below as **Approved** DECs
-with provenance; the one plan *recommendation* not yet operator-ruled (no DB rename) is recorded **Proposed**.
+**Approved** (2026-07-13, operator gate at PH-8 Phase 0 exit per INV-005 — drafted the same day by the
+execution agent). All decisions below are now operator-ruled: DEC-022…026 locked in the twice-reviewed
+plan §2, and **DEC-027 (no DB rename)** — the one plan *recommendation* that had still been open — confirmed
+**KEEP `opencode.db`** at this gate. PH-8 code phases (WBS-8.1+) are authorized.
 
 ## Context
 
@@ -100,12 +100,13 @@ marid dirs — `auth.json`, the `${data}/marid` gateway bearer tokens, the sessi
 pairing — then write a **marker** so it never re-runs, and log what was migrated. This avoids an auth outage:
 gateway tokens + Telegram pairing survive the move. Also documented as a manual command in `usage.md`.
 
-### D5 · No DB rename (DEC-027, **Proposed** — plan recommendation, not operator-locked)
+### D5 · No DB rename (DEC-027, **Approved** — operator confirmed KEEP at the Phase-0 gate)
 
 The DB file **stays `opencode.db`** *inside* `~/.local/share/marid/`. Dir isolation already isolates it;
 renaming would need two upstream branches (`database.ts` + its channel variant) and conflicts with
 marid-instance's "don't hardcode" stance for zero operator-visible benefit (the name is internal, invisible
-once the dir is isolated). **Recorded Proposed** — the operator confirms drop-vs-rename at the gate.
+once the dir is isolated). **Approved** — the operator confirmed KEEP `opencode.db` (no rename) at the
+Phase-0 gate (2026-07-13).
 
 ### D6 · Agent identity — FULL transform at the single choke point (DEC-026, Approved)
 
@@ -186,8 +187,8 @@ identity CI guard live in Marid packages. The delta report enumerates the P-* se
   bleed — the opposite of isolation.
 - **Rename `.opencode/` project dirs.** Rejected (D3): breaks ecosystem agents/skills for no isolation gain
   (project-local opt-in, not machine-global state).
-- **Rename the DB file.** Proposed-drop (D5): two upstream branches, conflicts with marid-instance, zero
-  operator-visible benefit once the dir is isolated.
+- **Rename the DB file.** Rejected (D5, DEC-027 Approved): two upstream branches, conflicts with
+  marid-instance, zero operator-visible benefit once the dir is isolated.
 - **Fresh start + re-issue (no migration).** Rejected (D4): orphans gateway bearer tokens and Telegram
   pairing → an auth/pairing outage on upgrade.
 
@@ -196,11 +197,11 @@ identity CI guard live in Marid packages. The delta report enumerates the P-* se
 - Plan (twice-reviewed): `~/.claude/plans/i-downloaded-the-latest-splendid-volcano.md`.
 - Decisions: **DEC-022** (isolation + kept-env + pierce), **DEC-023** (config filename/fallback), **DEC-024**
   (`.opencode` kept), **DEC-025** (migration one-time copy), **DEC-026** (full identity transform), **DEC-027**
-  (no DB rename, Proposed) — see [open-decision-register](../decisions/open-decision-register.md).
+  (no DB rename, Approved) — see [open-decision-register](../decisions/open-decision-register.md).
 - Acceptance: **AC-025…031** — see [acceptance-criteria](../validation/acceptance-criteria.md).
 - Phase / milestone: **PH-8** / **MS-009** — see [roadmap](../planning/roadmap.md),
   [milestones](../planning/milestones.md), [work-breakdown](../planning/work-breakdown.md).
 - Amends: [branding.md](../branding/branding.md) "Rebrand boundary"; patch-surface register in
   [architecture.md](../architecture/architecture.md) (P-6/P-7/P-8, P-2 expansion).
 - Invariants: **INV-002** (no secrets in logs/diffs — migration/auth work), **INV-003** (operator-approved
-  push/merge), **INV-005** (this ADR is Proposed until the operator gate), **DEC-009** (reuse-first — kept env).
+  push/merge), **INV-005** (this ADR Approved at the operator gate 2026-07-13), **DEC-009** (reuse-first — kept env).
