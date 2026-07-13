@@ -1146,7 +1146,7 @@
       {
         "id": "DEC-027",
         "title": "PH-8 keep the sessions DB file opencode.db inside the isolated marid dir (no rename)",
-        "status": "Proposed"
+        "status": "Approved"
       }
     ],
     "adrs": [
@@ -1304,10 +1304,10 @@
       {
         "id": "ADR-0018",
         "title": "Total data isolation from a co-installed OpenCode + deep rebrand (PH-8)",
-        "status": "Proposed",
+        "status": "Approved",
         "date": "2026-07-13",
         "context": "Public marid v0.2.0, run plain (not via marid instance) beside a co-installed OpenCode, leaks the OpenCode identity and shares machine-global state (auth.json provider nvidia-custom, model.json, sessions DB, config) - six reported issues (update popup; model/token surprise = shared dir, NOT a bundled secret; TUI OpenCode surfaces; agent self-identity; web UI; total dir/auth/session/config/DB sharing). This is the on-machine conflict branding.md's Rebrand boundary said it would revisit only if it emerged.",
-        "decision": "Total DATA isolation via a build-time __MARID_APP app-name define (isolates data/state/config dirs + Flock at once, P-6); KEEP OPENCODE_* env unchanged (DEC-009 reuse) + detect-and-disclose data-layer pierce (boot WARN + usage table + negative tests, DEC-022); config marid.json primary with project-level opencode.json fallback and no global opencode fallback (DEC-023, P-7); .opencode/ project dirs kept upstream-named (DEC-024); one-time-copy migration from populated v0.2.0 (DEC-025); no DB rename - opencode.db stays inside the isolated marid dir (DEC-027, Proposed); full agent-identity transform wrapping provider() output at the single choke point + CI guard (DEC-026, P-8 conditional); update popup off via P-3 autoupdate:false + env; deep TUI + web rebrand with two-tone wordmark behind a render gate (P-2 expansion). Proposed - awaiting the PH-8 Phase-0 operator gate (INV-005); no code phase starts until Approved. Realizes DEC-022..027; opens MS-009 + AC-025..031 + WBS-8.0..8.7."
+        "decision": "Total DATA isolation via a build-time __MARID_APP app-name define (isolates data/state/config dirs + Flock at once, P-6); KEEP OPENCODE_* env unchanged (DEC-009 reuse) + detect-and-disclose data-layer pierce (boot WARN + usage table + negative tests, DEC-022); config marid.json primary with project-level opencode.json fallback and no global opencode fallback (DEC-023, P-7); .opencode/ project dirs kept upstream-named (DEC-024); one-time-copy migration from populated v0.2.0 (DEC-025); no DB rename - opencode.db stays inside the isolated marid dir (DEC-027, Approved); full agent-identity transform wrapping provider() output at the single choke point + CI guard (DEC-026, P-8 conditional); update popup off via P-3 autoupdate:false + env; deep TUI + web rebrand with two-tone wordmark behind a render gate (P-2 expansion). Approved at the PH-8 Phase-0 operator gate (INV-005, 2026-07-13); PH-8 code phases (WBS-8.1+) authorized. Realizes DEC-022..027; opens MS-009 + AC-025..031 + WBS-8.0..8.7."
       }
     ],
     "risks": [
@@ -4449,7 +4449,20 @@
         "P-6/P-7/P-8 + P-2 expansion pre-registered in architecture.md; branding.md boundary pointer added",
         "Docs-only: zero code touched; next = WBS-8.1 upstream sync on approval"
       ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 WBS-8.1 (upstream sync) - MERGE DONE, at the operator merge gate. Merged upstream/dev f47684787a into develop as a merge commit f3e48a6c93 (keeps upstream ancestry, cf PR #31): 79 commits / 242 files. Only conflicts were 6 i18n files (packages/app/src/i18n/{ar,br,de,fr,ja,pl}.ts) - Marid app.name.desktop 'Marid Desktop' vs upstream translation refresh - resolved Marid-wins (all 17 langs keep 'Marid Desktop', zero 'OpenCode Desktop'); no workflow leakage, P-2 branding intact, bun.lock auto-merge correct. Fixed one inherited generated-SDK type drift: upstream's generated SDK v2 type sdk/js/src/v2/gen/types.gen.ts lagged its own ProviderReasoningOption schema (provider.ts effort values Schema.Array(Schema.NullOr(Schema.String))) - widened the effort values Array<string> to Array<string|null> (type-only, behavior-neutral, P-CI-5). Verified: root bun turbo typecheck 34/34 packages, TEST-CONTRACT (test/marid/contract.test.ts) 38 pass, marid-gateway suite 124 pass. Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate ruling 2026-07-13; DEC-027 = keep opencode.db) folded into this same PR. Corrected sync numbers: real delta 79c/242f (not the plan's 167/458 - plan measured from the baseline tag but PR #31 already advanced develop's merge-base to 14a5529793). STOP: WBS-8.2 data isolation starts only after the operator merges this sync PR (INV-005). validate_package.py docs/ = OK.",
+      "items_completed": [
+        "Merged upstream/dev f47684787a into develop (merge commit f3e48a6c93, 79 commits / 242 files)",
+        "6 i18n conflicts resolved Marid-wins (all 17 langs keep 'Marid Desktop')",
+        "Fixed inherited generated SDK v2 type drift: types.gen.ts effort values Array<string> -> Array<string|null> to match the NullOr schema (P-CI-5)",
+        "root bun turbo typecheck 34/34, TEST-CONTRACT 38 pass, marid-gateway 124 pass",
+        "Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate 2026-07-13; DEC-027 = keep opencode.db)"
+      ]
     }
+  
   ],
   "change_log": [
     {
@@ -4646,6 +4659,13 @@
       "actor": "execution-agent",
       "action": "PH-8 (Isolation & deep rebrand) opened - Phase 0 Keystone scoping + ADR, docs-only, at the operator gate. Authored ADR-0018 (Proposed): total DATA isolation via a build-time __MARID_APP app-name (P-6) + KEEP OPENCODE_* env with pierce disclosure (DEC-022) + config marid.json with project opencode.json fallback / no global fallback (DEC-023, P-7) + .opencode kept upstream-named (DEC-024) + one-time-copy migration (DEC-025) + full agent-identity transform (DEC-026, P-8) + no DB rename (DEC-027, Proposed) + autoupdate:false + two-tone wordmark/web (P-2 expansion). Opened PH-8 + MS-009 + AC-025..031 + WBS-8.0..8.7 + DEC-022..027. Amended branding.md boundary (pointer). DEC-022..026 Approved (operator plan-section-2, 2026-07-13); ADR-0018 realization Proposed until the Phase-0 gate (INV-005) - no code phase starts until Approved. validate_package.py docs/ = OK.",
       "target": "docs/adrs/adr-0018-data-isolation-deep-rebrand.md(new)+docs/planning/{roadmap,milestones,work-breakdown}+docs/validation/acceptance-criteria+docs/decisions/open-decision-register+docs/branding/branding+docs/architecture/architecture+docs/progress/{progress-log,status-report}+keystone-state(decisions/adrs/acceptance_criteria/phases/progress/change_log)"
+    },
+    {
+      "timestamp": "2026-07-13T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 WBS-8.1 upstream sync merged (merge commit into develop, keeps upstream ancestry): upstream/dev f47684787a, 79 commits / 242 files; only conflicts 6 i18n files resolved Marid-wins. Fixed inherited generated-SDK v2 type drift (types.gen.ts effort values Array<string> -> Array<string|null> to match the NullOr schema; type-only, P-CI-5). root bun turbo typecheck 34/34, TEST-CONTRACT 38 pass, marid-gateway 124 pass. Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate 2026-07-13; DEC-027 = keep opencode.db). At the operator merge gate (INV-005).",
+      "target": "merge f3e48a6c93 (develop + upstream/dev f47684787a) + packages/sdk/js/src/v2/gen/types.gen.ts + docs/adrs/adr-0018 + docs/decisions/open-decision-register + docs/architecture/upstream-sync-strategy(P-CI-5) + docs/progress/{progress-log,status-report}"
     }
+  
   ]
 }

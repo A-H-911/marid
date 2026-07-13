@@ -2103,7 +2103,7 @@ export type Model = {
   reasoning_options?: Array<
     | {
         type: "effort"
-        values: Array<string>
+        values: Array<string | null>
       }
     | {
         type: "toggle"
