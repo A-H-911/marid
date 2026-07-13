@@ -11,6 +11,23 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-13 — PH-8 opened: Keystone scoping + ADR-0018 (docs-only) — unmerged, at the operator gate
+- **Done:** opened **PH-8 "Isolation & deep rebrand"** (total DATA isolation from a co-installed OpenCode + deep
+  rebrand + upstream-sync-first), the post-`v0.2.0` mission from the twice-reviewed plan. Docs-only scoping: authored
+  **[ADR-0018](../adrs/adr-0018-data-isolation-deep-rebrand.md)** (Proposed) — data-dir isolation via a build-time
+  `__MARID_APP` app-name (P-6), KEEP `OPENCODE_*` env + pierce disclosure (DEC-022), config `marid.json` + project
+  `opencode.json` fallback / no global fallback (DEC-023, P-7), `.opencode/` kept upstream-named (DEC-024), one-time-copy
+  migration (DEC-025), full agent-identity transform (DEC-026, P-8), no DB rename (DEC-027, Proposed), `autoupdate:false`,
+  two-tone wordmark + web scope (P-2 expansion). Opened **MS-009** + **AC-025..031** (one per reported v0.2.0 issue,
+  issue→AC→test table in the ADR) + **WBS-8.0..8.7** (mirror plan Phase 0..7). Recorded **DEC-022..027** (022..026
+  Approved as operator-locked plan §2 inputs, 027 Proposed). Amended `branding.md` "Rebrand boundary" (pointer) +
+  pre-registered P-6/P-7/P-8 + P-2 expansion in `architecture.md`.
+- **Decisions:** DEC-022..026 are Approved operator inputs (plan §2, 2026-07-13); ADR-0018 (the realization) stays
+  **Proposed** until the Phase-0 operator gate — no code phase starts until it is Approved (INV-005). DEC-027 (no DB
+  rename) Proposed. **Deviations:** none. **Blockers:** **operator approval of ADR-0018 + merge of this docs PR** — the
+  Phase-0 gate; PH-8 Phase 1 (upstream sync) does not start until then. **Next:** on approval → WBS-8.1 upstream sync
+  (`upstream/dev cf7503687a`, 167 commits / 458 files). `validate_package.py docs/` = OK.
+
 ## 2026-07-12 — PR #48 merged (squash `4409d92f`) → **MS-007 MET**; PH-6 (Telegram-first) complete
 - **Done:** the operator merged the PH-6 stack into `develop` (squash `4409d92f`, all 20 CI checks green) — WBS-6.6
   live test tiers (AC-017/019/020/021/024 all Met), the INV-001 firehose isolation fix (ADR-0016/0017), and the

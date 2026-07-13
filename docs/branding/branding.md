@@ -47,6 +47,15 @@ P-2). Internal identifiers, env prefixes (`OPENCODE_*`), XDG dir names, and DB n
 keep the sync surface small — revisit only if a conflict with genuine OpenCode installs on the same
 machine emerges (instance dirs already prevent it).
 
+> **PH-8 revisits this boundary (that "revisit only if" condition emerged).** Running the public v0.2.0
+> binary *plain* (not via `marid instance`) beside a co-installed OpenCode shares machine-global
+> dirs/auth/model/sessions/DB. **[ADR-0018](../adrs/adr-0018-data-isolation-deep-rebrand.md)** (Proposed)
+> and [DEC-022..027](../decisions/open-decision-register.md) resolve it: **XDG dir names change** (data
+> isolation via a build-time app-name), **`OPENCODE_*` env stays** (ecosystem compat), and the **DB file
+> name stays** (internal, now inside the isolated dir). PH-8 also extends the rebrand past this "user-visible
+> surfaces only" line to the exit/footer/notification surfaces, agent self-identity, and the web UI (see
+> ADR-0018 D6/D8); the two-tone wordmark below is applied across those surfaces behind a render gate.
+
 **User-Agent dropped from P-2 (WBS-5.4):** the brief originally listed the user-agent, but the real request
 UAs are hardcoded `opencode/${version}` across ~15 provider/plugin source sites (`session/llm/request.ts`,
 `provider.ts`, the copilot/codex/digitalocean/xai/snowflake plugins…). Rebranding all of them is a large
