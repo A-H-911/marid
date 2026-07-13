@@ -18,13 +18,15 @@ const PLIST_META = new Set([
 ])
 
 function systemManagedConfigDir(): string {
+  // MARID P-7 (WBS-8.2): the managed (MDM/enterprise policy) config dir isolates to
+  // `marid` too, so a co-installed OpenCode's managed policy is not read by marid.
   switch (process.platform) {
     case "darwin":
-      return "/Library/Application Support/opencode"
+      return "/Library/Application Support/marid"
     case "win32":
-      return path.join(process.env.ProgramData || "C:\\ProgramData", "opencode")
+      return path.join(process.env.ProgramData || "C:\\ProgramData", "marid")
     default:
-      return "/etc/opencode"
+      return "/etc/marid"
   }
 }
 

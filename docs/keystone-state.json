@@ -2871,12 +2871,12 @@
       {
         "id": "AC-025",
         "statement": "Given a machine with co-installed OpenCode, the built marid binary's effective data/state/config read paths are the marid dirs only (asserted from the boot log / config directories(), never dir existence); no foreign auth (nvidia-custom) or model.json bleeds in; the co-installed OpenCode dirs are untouched (issue-6)",
-        "status": "Partial"
+        "status": "Met"
       },
       {
         "id": "AC-026",
         "statement": "Given global data-layer OPENCODE_* overrides (OPENCODE_CONFIG_DIR, OPENCODE_DB=<abs>, OPENCODE_CONFIG/_CONTENT, OPENCODE_AUTH_CONTENT), the binary boots, logs a WARN naming each active override, and behaves as disclosed (isolation pierced, not silently defeated); a plain OPENCODE_*-reading plugin still works (issue-6)",
-        "status": "Proposed"
+        "status": "Met"
       },
       {
         "id": "AC-027",
@@ -4474,7 +4474,20 @@
         "data-isolation.test.ts (5) + live instance-isolation + 3-OS marid-build binary isolation smoke",
         "AC-027 + AC-031 -> Met; AC-025 -> Partial (binary define pending CI smoke)"
       ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 WBS-8.2 part 2 (config filename P-7 + env-pierce disclosure AC-026) - unmerged, at the operator gate. P-7: marid.json/marid.jsonc primary config name at every level (global globalConfigFile candidates + merge chain marid-last-wins; project + .opencode via mcp.ts writer; managed loop), opencode.json(c) still works (backward-compat), created default is now marid.json; managed-config dir isolated to marid (managed.ts mac/win/linux). AC-026: new src/marid-pierce.ts disclosePierce() warns at boot when OPENCODE_CONFIG_DIR/CONFIG/CONFIG_CONTENT/AUTH_CONTENT/DB pierce isolation - names var + redirect, keeps honored (DEC-022), INV-002 never prints value. Tests: config-pierce.test.ts (4) + config regression flipped to marid.json default; typecheck clean. AC-025 -> Met (3-OS marid-build binary smoke green in PR #55) + AC-026 -> Met; WBS-8.2 complete. Next: Phase 3 agent identity. validate OK.",
+      "items_completed": [
+        "P-7 marid.json primary config name (global/project/managed) in config.ts + mcp.ts",
+        "managed.ts managed-config dir opencode->marid (3 platforms)",
+        "AC-026: src/marid-pierce.ts disclosePierce() boot WARN, INV-002 value-safe",
+        "config-pierce.test.ts (4) + config regression test flipped to marid.json default",
+        "AC-025 -> Met (binary smoke green in #55), AC-026 -> Met; WBS-8.2 complete"
+      ]
     }
+  
   
   
   ],
@@ -4685,7 +4698,14 @@
       "actor": "execution-agent",
       "action": "PH-8 WBS-8.2 part 1: total DATA isolation. P-6 app-name seam (global.ts:10) baked via marid-build define + dev src/marid-env.ts; one-time migration src/marid-migrate.ts (DEC-025/AC-031, INV-002 count-only); OPENCODE_DISABLE_AUTOUPDATE=1 (AC-027); marid-instance/paths.ts opencode->marid. New data-isolation.test.ts (5) + 3-OS marid-build binary isolation smoke. AC-027/031 Met, AC-025 Partial (binary smoke pending CI). At operator gate (INV-005).",
       "target": "packages/core/src/global.ts + packages/opencode/{script/marid-build.ts,src/marid-env.ts,src/marid.ts,src/marid-migrate.ts,test/marid/data-isolation.test.ts} + packages/marid-instance/{src/paths.ts,test/paths.test.ts} + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-13T14:30:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 WBS-8.2 part 2: P-7 config filename (marid.json primary; global/project/managed; opencode.json still works) + managed.ts dir isolation + AC-026 env-pierce disclosure (src/marid-pierce.ts, INV-002 value-safe). config-pierce.test.ts (4). AC-025 Met (binary smoke green #55), AC-026 Met; WBS-8.2 complete. At operator gate (INV-005).",
+      "target": "packages/opencode/src/config/{config.ts,managed.ts} + packages/opencode/src/cli/cmd/mcp.ts + packages/opencode/src/{marid-pierce.ts,marid.ts} + packages/opencode/test/{marid/config-pierce.test.ts,config/config.test.ts} + docs trackers"
     }
+  
   
   
   ]

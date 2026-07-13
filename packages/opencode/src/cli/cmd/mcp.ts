@@ -392,11 +392,22 @@ export const McpLogoutCommand = effectCmd({
 })
 
 async function resolveConfigPath(baseDir: string, global = false) {
-  // Check for existing config files (prefer .jsonc over .json, check .opencode/ subdirectory too)
-  const candidates = [path.join(baseDir, "opencode.json"), path.join(baseDir, "opencode.jsonc")]
+  // MARID P-7 (WBS-8.2): prefer marid.json (the write target when none exists), but
+  // an existing upstream-named opencode.json(c) still works. `.opencode/` project
+  // dir keeps its upstream name (DEC-024); only the file inside is marid-branded.
+  const candidates = [
+    path.join(baseDir, "marid.json"),
+    path.join(baseDir, "marid.jsonc"),
+    path.join(baseDir, "opencode.json"),
+    path.join(baseDir, "opencode.jsonc"),
+  ]
 
   if (!global) {
-    candidates.push(path.join(baseDir, ".opencode", "opencode.json"), path.join(baseDir, ".opencode", "opencode.jsonc"))
+    candidates.push(
+      path.join(baseDir, ".opencode", "marid.json"),
+      path.join(baseDir, ".opencode", "opencode.json"),
+      path.join(baseDir, ".opencode", "opencode.jsonc"),
+    )
   }
 
   for (const candidate of candidates) {
@@ -405,7 +416,7 @@ async function resolveConfigPath(baseDir: string, global = false) {
     }
   }
 
-  // Default to opencode.json if none exist
+  // Default to marid.json if none exist
   return candidates[0]
 }
 
