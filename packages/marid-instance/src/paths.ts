@@ -43,12 +43,13 @@ export function instancePaths(dir: string): InstancePaths {
   }
 }
 
-// opencode nests its own "opencode" segment under each XDG root
-// (packages/core/src/global.ts: `${xdgData}/opencode` etc.). Expose the concrete
-// files/dirs the isolation suite checks, derived once from instancePaths so a
-// path change can't drift the token store away from where the server reads it.
+// The marid binary nests its app-name segment "marid" under each XDG root
+// (packages/core/src/global.ts `const app` = "marid" via the P-6 build define /
+// dev bootstrap). Expose the concrete files/dirs the isolation suite checks,
+// derived once from instancePaths so a path change can't drift the token store
+// away from where the server reads it. (Pre-P-6 this segment was "opencode".)
 export function instanceDataDir(dir: string): string {
-  return path.join(instancePaths(dir).data, "opencode")
+  return path.join(instancePaths(dir).data, "marid")
 }
 // Note: no instanceDbFile helper. The DB filename is channel-dependent
 // (`opencode.db` on prod channels, `opencode-<channel>.db` otherwise — see
@@ -56,7 +57,7 @@ export function instanceDataDir(dir: string): string {
 // XDG_DATA_HOME is what actually isolates the DB into instanceDataDir(dir); the
 // live isolation test asserts the DB lands there rather than trusting a string.
 // marid-auth's token store: `${Global.Path.data}/marid` (see marid/serve.ts
-// maridDir()). With XDG_DATA_HOME = {dir}/data, that is {dir}/data/opencode/marid.
+// maridDir()). With XDG_DATA_HOME = {dir}/data, that is {dir}/data/marid/marid.
 export function instanceMaridDir(dir: string): string {
   return path.join(instanceDataDir(dir), "marid")
 }
