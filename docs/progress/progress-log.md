@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-13
+updated: 2026-07-14
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,37 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-14 — PH-8 Phase 4a (WBS-8.4): TUI/CLI mechanical rebrand + GO-upsell removal — unmerged, at the operator gate
+- **Done:** every user-facing "OpenCode" string in the shipped `marid` binary now reads Marid. A repo-wide
+  re-enumeration (the earlier surface map was ~50% incomplete — it missed the whole `--mini` mode, `uninstall`,
+  `error.ts`, the crash screen) found and fixed: **main TUI** — exit hint `opencode -s`→`marid -s`
+  (`util/presentation.ts`), notification title + sound-pack display name (`attention.ts`), update toast +
+  docs link → Marid repo (`app.tsx`), both sidebar footers "● Marid {version}"
+  (`feature-plugins/sidebar/footer.tsx` + `routes/session/sidebar.tsx`), permission prose (`permission.tsx`),
+  ~12 home-screen tips (**wrong-binary** `opencode run/serve/upgrade/…`→`marid …`, a real bug for marid users),
+  model-error hints (`util/error.ts`), crash screen (`error-component.tsx` — "marid crashed", bug report →
+  Marid repo); the **`--mini` run mode** — permission/prompt prose
+  (`cli/cmd/run/{footer.permission,footer.prompt,permission.shared}`); and `cli/cmd/uninstall.ts`.
+- **GO-upsell removed at the root:** deleted the TUI upsell subsystem (`component/{dialog-retry-action,bg-pulse,bg-pulse-render}`)
+  and the rate-limit handler + consts in `routes/session/index.tsx`; **neutralized the server source**
+  `session/retry.ts` (`GO_UPSELL_MESSAGE` "…subscribe to Go" → "Free usage limit reached") — the inline retry
+  footer renders `retry.message`, so deleting the dialog alone left the upsell visible. Both providers
+  **de-marketed** (`dialog-provider.tsx`: dropped OpenCode-Go from the recommended list + the "(Recommended)"
+  tag + both Zen/Go marketing blocks) — provider **IDs kept functional**.
+- **Kept (unchanged):** internal ids (`opencode.default` pack id, `opencode.status/debug` commands, `provider.id`
+  "opencode"/"opencode-go", `opencode.json`/`.opencode/` filenames+dirs, `$schema` URLs), the GitHub `/opencode`
+  trigger keyword, and the `retry.ts` `action` upsell copy (web-only now → PH-8 web phase). The **`go` glyph is
+  retained** (splash badge still imports it; deleted in 4b).
+- **Gating:** cosmetic → **unconditional** "Marid" (not `__MARID_APP`-gated), per PH-5 P-2. Under the existing
+  **P-2** patch row (expanded in `architecture.md`), no new `P-*`.
+- **Tests:** updated `presentation.test.ts`, `app-lifecycle.test.tsx`, `permission.shared.test.ts` to the new
+  strings; `retry.test.ts` green unchanged (asserts the const symbol). **typecheck clean both packages.**
+- **Decisions:** **AC-029 → Partial** (mechanical done; logo + render gate = 4b). **Deviations:** the approved
+  plan's GO-removal covered only the TUI dialog; execution found the upsell is **server-sourced** (`retry.ts`)
+  and also surfaces in the inline footer, so the root was neutralized too — within the explicit "remove the GO
+  upsell" authorization, disclosed here. **Blockers:** operator merge (INV-005). **Next:** PR 4b — §94 logo
+  redesign + two-tone render gate + splash rebrand + `go` deletion → AC-029 Met. `validate_package.py docs/` = OK.
 
 ## 2026-07-13 — PH-8 Phase 3 (WBS-8.3): agent identity → Marid (P-8) — unmerged, at the operator gate
 - **Done:** the agent no longer calls itself OpenCode. New Marid-owned `session/marid-identity.ts`
