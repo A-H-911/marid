@@ -11,6 +11,31 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-14 — PH-8 Phase 4b (WBS-8.4): §94 logo redesign + two-tone render gate + splash — unmerged, at the operator gate
+- **Done:** completed the TUI rebrand's visual half. `logo.ts` is now the single source of the mark:
+  a **taller 6-row flame** (`left`, keeps the PH-5 flame DNA) + a **`leftCore`** mask marking the inner cells
+  that take a brighter core gradient, and the 6-row "MARID" wordmark (`right`, letters centered rows 2-4 so the
+  three renderers zip row-for-row). Gradients are data: flame edge `#FBD24A→#F5901E→#DC2A16`, core
+  `#FDEFB0→#F8B73C`. **Two-tone split wordmark:** columns `< WORDMARK_SPLIT` (16) render blue `#2F6BFF` ("MAR"),
+  the rest orange `#F0731F` ("ID"). **Render gate:** `supportsTrueColor()` (`COLORTERM === truecolor|24bit`, the
+  documented theme convention) gates the split — truecolor → blue/orange, else single-tone (`theme.text` in TUI /
+  reset in CLI) crisp-mono fallback (AC-029). Both renderers rewritten to color per-cell from the shared data —
+  `component/logo.tsx` (opentui `RGBA`) and `cli/ui.ts` `logo()` (raw ANSI, `hexToRgb` helper); the duplicated
+  hardcoded non-TTY wordmark array is gone (generated from the glyph now). Splash badge (`cli/cmd/run/splash.ts`)
+  → a compact 3-row Marid flame `badge` + its "OpenCode"/`opencode --mini -s` fixed; **`export const go` (and the
+  dead `marks`) deleted** — zero importers after 4a's upsell removal + this splash rebrand.
+- **Not colored (deliberate):** the `/exit` goodbye (`util/presentation.ts`) still renders the mark in its dim
+  understated style — it adapts to the 6-row glyph automatically (`logo.right[i] ?? ""`), no code change.
+- **Tests:** `logo.test.ts` (6) — `supportsTrueColor()` true/false, and the structural invariants that de-risk
+  the 3-renderer coupling: left/right/leftCore equal height, `leftCore ⊆ left` filled cells, split within the
+  letter rows. typecheck clean both packages; presentation green. The help-snapshot suite excludes the banner
+  (moving target), so the glyph change is snapshot-safe.
+- **Decisions:** **AC-029 → Met** (mechanical 4a + visual 4b). **Deviations:** the flame glyph art + exact split
+  are **blind-authored** (headless — cannot screenshot a TUI in truecolor + 256-color); **operator visual
+  sign-off is the merge gate** — glyph rows / gradients / split are data-only, trivially retunable on feedback.
+  **Blockers:** operator visual review + merge (INV-005). **Next:** Phase 5 (web UI, separate PR) → 6 docs → 7
+  release v0.3.0. `validate_package.py docs/` = OK.
+
 ## 2026-07-14 — PH-8 Phase 4a (WBS-8.4): TUI/CLI mechanical rebrand + GO-upsell removal — unmerged, at the operator gate
 - **Done:** every user-facing "OpenCode" string in the shipped `marid` binary now reads Marid. A repo-wide
   re-enumeration (the earlier surface map was ~50% incomplete — it missed the whole `--mini` mode, `uninstall`,
