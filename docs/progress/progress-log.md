@@ -11,6 +11,24 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-14 — PH-8 TUI logo follow-up: goodbye "OpenCode" residual + flame-height retune — unmerged, at the operator gate
+- **Done:** operator local-review of the TUI surfaced two art defects that string-greps + CI could not catch (block-ASCII
+  art is invisible to `grep`). **(1) `/exit` goodbye still spelled "OpenCode"** — `packages/tui/src/util/presentation.ts`
+  carried its OWN hardcoded block-art logo that 4a/4b never touched. Rewrote it to render the SAME mark as the startup
+  logo, imported from `logo.ts` (**single source of truth** — a rebrand or glyph change can't leave a stale goodbye
+  again), in the understated dim style; kept the `marid -s` hint. **(2) startup flame too tall** — the 6-row flame
+  towered over the 3-row "MARID" wordmark. Redesigned `logo.ts` to a **3-row candle flame** (operator-picked from
+  harness-rendered options), same height as the letters, with a 3-stop full-range gradient (`#FBD24A→#F5901E→#DC2A16`).
+  Both renderers (`component/logo.tsx`, `cli/ui.ts`) + the goodbye update from the shared data.
+- **New dev tool:** `packages/tui/script/render-logo.ts` — a visual harness that renders the logo + goodbye ANSI to an
+  HTML preview (screenshot via headless Chrome), so terminal art can be reviewed without a live TTY. This is how the
+  above were caught/fixed and how the flame option was chosen; xterm.js/asciinema/etc. are absent so ANSI→HTML→Chrome
+  was the zero-dep path.
+- **Tests:** `presentation.test.ts` gains a structural guard (ANSI-stripped epilogue must contain `logo.right`'s
+  wordmark rows + no `^`/`~` from the old shading font). `logo.test.ts` green (invariants hold at 3 rows). Full-workspace
+  typecheck 34/34; no other test asserts logo content. **Blockers:** operator merge (INV-005). AC-029 stays Met (this
+  closes a residual + retunes, per operator visual sign-off).
+
 ## 2026-07-14 — PH-8 Phase 5a (WBS-8.5): web UI rebrand — code half — unmerged, at the operator gate
 - **Done:** the CI-verifiable code half of the web rebrand (`packages/app` + `packages/ui` only; `packages/desktop`
   EXCLUDED per CON-004). **Killed the 3 runtime `opencode.ai` fetches** (the mandatory AC-030 half): release-notes
