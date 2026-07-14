@@ -2891,7 +2891,7 @@
       {
         "id": "AC-029",
         "statement": "Given the TUI, the startup logo, /exit goodbye, sidebar footer, and OS notification all read Marid (flame + two-tone wordmark, marid -s hint, dot Marid version); the OpenCode-GO upsell is gone; the two-tone wordmark passes a render gate incl. a 256-color terminal (crisp-mono fallback if illegible) (issue-3)",
-        "status": "Proposed"
+        "status": "Met"
       },
       {
         "id": "AC-030",
@@ -4511,6 +4511,18 @@
         "tests: presentation/app-lifecycle/permission.shared updated; retry green (const symbol); typecheck clean both pkgs",
         "AC-029 -> Partial; go glyph + splash + logo redesign = PR 4b"
       ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 4b (WBS-8.4) §94 logo redesign + two-tone render gate - unmerged, at operator gate (visual sign-off). logo.ts single mark source: taller 6-row flame + leftCore inner-highlight mask + 6-row MARID wordmark; data-driven gradients (edge #FBD24A->#F5901E->#DC2A16, core #FDEFB0->#F8B73C); two-tone split wordmark blue #2F6BFF (MAR) / orange #F0731F (ID) behind a truecolor render gate (supportsTrueColor via COLORTERM; single-tone crisp-mono fallback on 256-color, AC-029). Both renderers rewritten to color per-cell from shared data (component/logo.tsx opentui RGBA + cli/ui.ts ANSI, hexToRgb helper; hardcoded non-TTY wordmark array removed). splash.ts badge -> compact Marid flame + OpenCode/opencode--mini-s fixed; go glyph + dead marks deleted (zero importers after 4a). logo.test.ts (6): gate true/false + equal-height/core-subset/split invariants. typecheck clean both pkgs; presentation green. Flame art blind-authored (headless) - operator visual sign-off (truecolor+256-color) is the merge gate; glyph/colors data-only. AC-029 -> Met on merge.",
+      "items_completed": [
+        "logo.ts: 6-row flame + leftCore mask + 6-row wordmark + gradients + supportsTrueColor + hexToRgb; go/marks removed",
+        "component/logo.tsx + cli/ui.ts: per-cell edge/core flame + gated blue/orange split wordmark",
+        "cli/cmd/run/splash.ts: badge -> Marid flame, OpenCode -> Marid, opencode --mini -s -> marid --mini -s",
+        "logo.test.ts (6): render gate + 3-renderer alignment invariants",
+        "AC-029 -> Met (operator visual sign-off = merge gate); next = Phase 5 web"
+      ]
     }
   
   
@@ -4742,6 +4754,12 @@
       "actor": "execution-agent",
       "action": "PH-8 Phase 4a (WBS-8.4) TUI/CLI mechanical rebrand + GO-upsell removal. Every user-facing OpenCode string in the shipped marid binary -> Marid (main TUI + --mini run mode + uninstall): exit hint marid -s, notification, both sidebar footers, permission prose, wrong-binary tip hints opencode<cmd>->marid<cmd>, model-error hints, crash screen + docs -> Marid repo. GO-upsell removed at root: TUI dialog subsystem (dialog-retry-action + bg-pulse + bg-pulse-render) deleted + rate-limit handler removed + server retry.ts free-limit message neutralized (inline footer renders retry.message); both providers de-marketed, IDs kept. Cosmetic unconditional Marid per PH-5 P-2, no new P-*. typecheck clean both pkgs; presentation/app-lifecycle/retry/permission.shared tests green. AC-029 -> Partial (logo + render gate = PR 4b). At operator gate (INV-005).",
       "target": "packages/tui/src/{util/presentation.ts,attention.ts,app.tsx,util/error.ts,component/error-component.tsx,component/dialog-provider.tsx,routes/session/{index.tsx,sidebar.tsx,permission.tsx},feature-plugins/{sidebar/footer.tsx,home/tips-view.tsx}} minus component/{dialog-retry-action,bg-pulse,bg-pulse-render} + packages/opencode/src/{session/retry.ts,cli/cmd/{uninstall.ts,run/{footer.permission.tsx,footer.prompt.tsx,permission.shared.ts}}} + tests + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T18:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 4b (WBS-8.4) §94 logo redesign + two-tone render gate. logo.ts single mark source: taller 6-row flame + leftCore inner-highlight mask + 6-row MARID wordmark; gradients edge #FBD24A->#F5901E->#DC2A16 / core #FDEFB0->#F8B73C; two-tone split wordmark blue #2F6BFF (MAR) / orange #F0731F (ID) behind a truecolor render gate (supportsTrueColor via COLORTERM; single-tone crisp-mono fallback on 256-color). component/logo.tsx (opentui RGBA) + cli/ui.ts (ANSI, hexToRgb) rewritten to color per-cell from shared data; splash.ts badge -> Marid flame + strings fixed; go/marks deleted. logo.test.ts (6) = gate + alignment invariants. typecheck clean; presentation green. Flame art blind-authored - operator visual sign-off is the merge gate. AC-029 -> Met on merge. At operator gate (INV-005).",
+      "target": "packages/tui/src/{logo.ts,component/logo.tsx} + packages/opencode/src/cli/{ui.ts,cmd/run/splash.ts} + packages/tui/test/logo.test.ts + docs trackers"
     }
   
   

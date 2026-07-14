@@ -96,9 +96,14 @@ repo), the `--mini` run mode (permission/prompt prose), and `uninstall.ts`. **GO
 (TUI dialog subsystem + `bg-pulse*` deleted, rate-limit handler removed, server `retry.ts` free-limit message
 neutralized — the inline footer renders `retry.message`, so the dialog delete alone left it visible); both
 providers de-marketed (IDs kept). Cosmetic → **unconditional** "Marid" (not `__MARID_APP`-gated), per PH-5 P-2;
-no new `P-*`. **4b (pending):** §94 logo redesign (flame + two-tone split wordmark `#2F6BFF`/`#F0731F`) behind a
-truecolor render gate (`COLORTERM`, mono fallback) across `logo.ts`/`logo.tsx`/`cli/ui.ts`, splash badge →
-Marid flame (`cli/cmd/run/splash.ts`), then delete the `go` glyph. Web assets remain WBS-8.5.
+no new `P-*`. **WBS-8.4 4b done (2026-07-14, at operator gate):** §94 logo redesign — taller 6-row flame
+(`logo.ts` with a `leftCore` inner-highlight mask), flame gradient `#FBD24A→#F5901E→#DC2A16` + core
+`#FDEFB0→#F8B73C`, **two-tone split wordmark** blue `#2F6BFF` (MAR) / orange `#F0731F` (ID) behind a
+**truecolor render gate** (`supportsTrueColor()` via `COLORTERM`; single-tone `theme.text`/reset fallback on
+256-color) — applied in both renderers (`component/logo.tsx` + `cli/ui.ts`; the hardcoded non-TTY wordmark array
+is gone, both renderers now generate from the shared glyph data). Splash badge → compact Marid flame
+(`cli/cmd/run/splash.ts`); `go` glyph deleted (zero importers after 4a). AC-029 → Met (operator visual sign-off
+= merge gate). Web assets remain WBS-8.5.
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 **PH-6 (gateway + mirroring) added no `P-*`:** the four `/marid/*` routes and the `owns ∪ bound` SSE filter
