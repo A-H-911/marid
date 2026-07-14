@@ -116,8 +116,17 @@ Zen/Go de-marketed in render code (connect-provider + unpaid-model dialogs; prov
 reference (allowlist: i18n display strings, the dev-only hostname heuristic, comments). One required typecheck fix
 (`titlebar.tsx` `ChannelIndicator` — an app-touching change forces a cache-miss rebuild that surfaces a latent
 `VITE_OPENCODE_CHANNEL?` undefined-unsafety; 1-line guard). Cosmetic → **unconditional** "Marid", no new `P-*`;
-Marid wins on reconcile (highest sync-churn phase). AC-030 → Partial. **Visual assets (favicon SVG + `Mark`/
-`Splash` glyph + raster set) remain WBS-8.5 5b** (operator visual review → AC-030 Met).
+Marid wins on reconcile (highest sync-churn phase). **WBS-8.5 5a MERGED (PR #60 `67f56b8edd`). WBS-8.5 5b done
+(2026-07-14, at operator gate):** the **visual assets**. `Mark`+`Splash` (`packages/ui/src/components/logo.tsx`)
+rewritten from the OpenCode square-in-square glyph to the Marid flame silhouette — kept the `--icon-*` fills +
+viewBoxes so theme coloring + all call-sites are unchanged (monochrome at those small UI call sites, matching the
+surrounding icon color). `favicon-v3.svg` → a full-color gradient flame (edge `#FBD24A→#F5901E→#DC2A16`, core
+`#FDEFB0→#F8B73C` — the TUI flame DNA) on the `#131010` ground. Raster set regenerated from that master SVG:
+favicon-96×96/`.ico`, apple-touch 180, PWA 192/512 (maskable), and a 1200×630 `social-share.png` OG card (flame +
+two-tone "Marid" wordmark). Pipeline was Chrome-headless rendering of the SVG + a pure-JS box downscaler
+(`node zlib`, no ImageMagick — Windows `convert` is the NTFS tool, and Chrome mis-sized the 180/192 windows).
+Legacy non-`-v3` favicons left in place (still referenced by the excluded `packages/console`). AC-030 → Met
+(operator visual sign-off = merge gate).
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 **PH-6 (gateway + mirroring) added no `P-*`:** the four `/marid/*` routes and the `owns ∪ bound` SSE filter
