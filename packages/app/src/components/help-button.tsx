@@ -37,8 +37,8 @@ export function HelpButton() {
 
   return (
     <a
-      href="https://opencode.ai"
-      aria-label="Open the OpenCode website"
+      href="https://github.com/A-H-911/marid"
+      aria-label="Open the Marid website"
       data-component="icon-button-v2"
       data-size="large"
       class={`${triggerClass} fixed bottom-5 right-5 z-50 flex items-center justify-center`}
@@ -132,7 +132,7 @@ export function TabsInfoPopup() {
             Introducing Tabs Navigation.
           </p>
           <p class="w-full flex-1 text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-base">
-            We've introduced tabs as the primary navigation in OpenCode. Your most important session are now pinned at
+            We've introduced tabs as the primary navigation in Marid. Your most important session are now pinned at
             the top of your screen at all times. No more hunting through menus or losing your place mid-session. Switch
             contexts instantly, pick up exactly where you left off, and keep your focus where it belongs: on the
             sessions.

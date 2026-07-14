@@ -103,7 +103,21 @@ no new `P-*`. **WBS-8.4 4b done (2026-07-14, at operator gate):** §94 logo rede
 256-color) — applied in both renderers (`component/logo.tsx` + `cli/ui.ts`; the hardcoded non-TTY wordmark array
 is gone, both renderers now generate from the shared glyph data). Splash badge → compact Marid flame
 (`cli/cmd/run/splash.ts`); `go` glyph deleted (zero importers after 4a). AC-029 → Met (operator visual sign-off
-= merge gate). Web assets remain WBS-8.5.
+= merge gate). **WBS-8.5 5a done (2026-07-14, at operator gate):** the **code** half of the web rebrand
+(`packages/app` + `packages/ui`; `packages/desktop` EXCLUDED per CON-004). Killed the 3 runtime `opencode.ai`
+fetches — release-notes changelog → a committed local `packages/app/public/changelog.json` (same parser shape,
+Marid entries), notification icon + hardcoded-project avatar → local `-v3` assets. Web "OpenCode" strings → Marid
+(desktop-menu, wsl install/update copy + its test, `favicon.tsx` apple-web-app-title, help-button). Web GO-upsell
+removed at the root (`usage-exceeded-dialogs.tsx` + `dialog-usage-exceeded.tsx` deleted, call site gone — the web
+has no inline retry-message surface, so this also closes the `retry.ts` `opencode.ai/workspace/.../go` residual);
+Zen/Go de-marketed in render code (connect-provider + unpaid-model dialogs; provider IDs kept). apiKey fields →
+`type="password"`. opencode.ai click-through links (docs/help/feedback/themes) → `github.com/A-H-911/marid`. A
+`TEST-WEB` static-source guard (`marid-no-remote.test.ts`) fails CI on any re-added `opencode.ai` network
+reference (allowlist: i18n display strings, the dev-only hostname heuristic, comments). One required typecheck fix
+(`titlebar.tsx` `ChannelIndicator` — an app-touching change forces a cache-miss rebuild that surfaces a latent
+`VITE_OPENCODE_CHANNEL?` undefined-unsafety; 1-line guard). Cosmetic → **unconditional** "Marid", no new `P-*`;
+Marid wins on reconcile (highest sync-churn phase). AC-030 → Partial. **Visual assets (favicon SVG + `Mark`/
+`Splash` glyph + raster set) remain WBS-8.5 5b** (operator visual review → AC-030 Met).
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 **PH-6 (gateway + mirroring) added no `P-*`:** the four `/marid/*` routes and the `owns ∪ bound` SSE filter

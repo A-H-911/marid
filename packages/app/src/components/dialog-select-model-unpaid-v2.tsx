@@ -131,15 +131,9 @@ export const DialogSelectModelUnpaidV2: Component<{ model?: ModelState }> = (pro
                         <ProviderIcon id={provider.id} class="size-4 shrink-0 text-v2-icon-icon-muted" />
                         <span class="min-w-0 truncate">{provider.name}</span>
                         <Show when={provider.id === "opencode"}>
-                          <span class="min-w-0 truncate text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-muted [font-family:Inter,var(--font-family-sans)] [font-variation-settings:'slnt'_0]">
-                            {language.t("dialog.provider.opencode.tagline")}
-                          </span>
                           <Tag class="shrink-0">{language.t("dialog.provider.tag.recommended")}</Tag>
                         </Show>
                         <Show when={provider.id === "opencode-go"}>
-                          <span class="min-w-0 truncate text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-muted [font-family:Inter,var(--font-family-sans)] [font-variation-settings:'slnt'_0]">
-                            {language.t("dialog.provider.opencodeGo.tagline")}
-                          </span>
                           <Tag class="shrink-0">{language.t("dialog.provider.tag.recommended")}</Tag>
                         </Show>
                         <Show when={provider.id === "anthropic"}>

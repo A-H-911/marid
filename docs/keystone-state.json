@@ -2896,7 +2896,7 @@
       {
         "id": "AC-030",
         "statement": "Given the web UI (not binary-embedded), favicon/PWA icons/social-share/Mark+Splash glyphs/notification icon read Marid (from the flame); no opencode.ai remote is fetched (release-notes / notification repointed or disabled) (issue-5)",
-        "status": "Proposed"
+        "status": "Partial"
       },
       {
         "id": "AC-031",
@@ -4523,11 +4523,25 @@
         "logo.test.ts (6): render gate + 3-renderer alignment invariants",
         "AC-029 -> Met (operator visual sign-off = merge gate); next = Phase 5 web"
       ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 5a (WBS-8.5) web UI rebrand code half - unmerged, at operator gate. packages/app + packages/ui only (packages/desktop EXCLUDED per CON-004). Killed the 3 runtime opencode.ai fetches (mandatory AC-030 half): release-notes changelog -> committed local packages/app/public/changelog.json (same parser shape, Marid v0.2.0/v0.3.0 entries; operator chose repoint-with-content over disable); notification icon + hardcoded-project avatar -> local -v3 assets. Web OpenCode strings -> Marid (desktop-menu app/docs/support, WSL install/update copy + its 4 test assertions/titles, ui favicon.tsx apple-web-app-title, help-button aria+body). Web GO-upsell removed at root: usage-exceeded-dialogs.tsx + dialog-usage-exceeded.tsx + session.tsx call site deleted (web has no inline retry-message surface -> also closes the retry.ts opencode.ai/workspace/.../go residual 4a flagged); Zen/Go de-marketed in render code (connect-provider Zen block + taglines, unpaid-model dialogs; provider IDs kept). apiKey fields -> type=password; opencode.ai click-through links (docs/help/feedback/themes) -> github.com/A-H-911/marid; en.ts residual 'Free models provided by OpenCode' -> 'Free models'. TEST-WEB marid-no-remote.test.ts static-source guard (CI via turbo @opencode-ai/app#test) fails on any re-added opencode.ai network reference (allowlist: i18n display strings, dev-only hostname heuristic, comments); verified both directions (green now, red on a re-added fetch). One required typecheck fix: titlebar.tsx ChannelIndicator latent VITE_OPENCODE_CHANNEL? undefined guard (env.d.ts types it optional; an app-touching change forces a cache-miss rebuild that surfaces it). app+ui typecheck clean; ui 7/7; app 577 pass (1 fail = pre-existing skipIf(CI) i18n-parity drift from WBS-8.1 sync, not ours); lint 0 errors. Cosmetic -> unconditional Marid, no new P-*. AC-030 -> Partial (icons pending 5b). 4b MERGED PR #59 049089b79a.",
+      "items_completed": [
+        "highlights.tsx CHANGELOG_URL -> /changelog.json + committed public/changelog.json (Marid entries)",
+        "entry.tsx notification icon + layout/helpers.ts project avatar -> local -v3 assets",
+        "web OpenCode strings -> Marid (desktop-menu, wsl settings-model + test, ui favicon.tsx, help-button)",
+        "web GO-upsell deleted (usage-exceeded-dialogs + dialog-usage-exceeded + call site); Zen/Go de-marketed; closes retry.ts residual",
+        "apiKey fields type=password; opencode.ai click-through links -> github.com/A-H-911/marid; en.ts brand string neutralized",
+        "TEST-WEB marid-no-remote.test.ts (CI-run) guards no-opencode.ai-fetch, verified both directions; titlebar.tsx typecheck fix",
+        "AC-030 -> Partial; visual assets (favicon SVG + Mark/Splash + rasters) = PR 5b"
+      ]
     }
-  
-  
-  
-  
+
+
+
+
   ],
   "change_log": [
     {
@@ -4760,10 +4774,16 @@
       "actor": "execution-agent",
       "action": "PH-8 Phase 4b (WBS-8.4) §94 logo redesign + two-tone render gate. logo.ts single mark source: taller 6-row flame + leftCore inner-highlight mask + 6-row MARID wordmark; gradients edge #FBD24A->#F5901E->#DC2A16 / core #FDEFB0->#F8B73C; two-tone split wordmark blue #2F6BFF (MAR) / orange #F0731F (ID) behind a truecolor render gate (supportsTrueColor via COLORTERM; single-tone crisp-mono fallback on 256-color). component/logo.tsx (opentui RGBA) + cli/ui.ts (ANSI, hexToRgb) rewritten to color per-cell from shared data; splash.ts badge -> Marid flame + strings fixed; go/marks deleted. logo.test.ts (6) = gate + alignment invariants. typecheck clean; presentation green. Flame art blind-authored - operator visual sign-off is the merge gate. AC-029 -> Met on merge. At operator gate (INV-005).",
       "target": "packages/tui/src/{logo.ts,component/logo.tsx} + packages/opencode/src/cli/{ui.ts,cmd/run/splash.ts} + packages/tui/test/logo.test.ts + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T20:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 5a (WBS-8.5) web UI rebrand code half. packages/app + packages/ui only (desktop EXCLUDED per CON-004). Killed 3 runtime opencode.ai fetches: changelog -> committed local public/changelog.json (Marid entries), notification icon + hardcoded-project avatar -> local -v3 assets. Web OpenCode strings -> Marid (desktop-menu, wsl copy + test, ui favicon.tsx, help-button); web GO-upsell removed at root (usage-exceeded-dialogs + dialog-usage-exceeded + call site deleted, closes retry.ts opencode.ai residual); Zen/Go de-marketed in render code (provider IDs kept); apiKey fields type=password; click-through links -> github.com/A-H-911/marid; en.ts brand string neutralized. TEST-WEB marid-no-remote.test.ts static-source guard (CI via turbo @opencode-ai/app#test) fails on any re-added opencode.ai network reference; verified both directions. titlebar.tsx latent VITE_OPENCODE_CHANNEL? undefined typecheck fix (1-line). Cosmetic unconditional Marid, no new P-*. AC-030 -> Partial (icons pending 5b). app+ui typecheck clean; ui 7/7; app 577 pass (1 pre-existing skipIf(CI) parity drift); lint 0 errors. At operator gate (INV-005).",
+      "target": "packages/app + packages/ui web sources + packages/app/public/changelog.json + docs trackers"
     }
-  
-  
-  
-  
+
+
+
+
   ]
 }
