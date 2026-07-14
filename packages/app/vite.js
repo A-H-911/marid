@@ -38,12 +38,18 @@ const resolveStub = (file) => {
 const maridPublicSymlinks = {
   name: "marid:resolve-public-symlinks",
   configureServer(server) {
+    const root = path.resolve(publicDir)
     server.middlewares.use((req, res, next) => {
-      const url = (req.url || "").split("?")[0]
-      if (url === "/" || url.includes("..")) return next()
-      const target = resolveStub(path.join(publicDir, decodeURIComponent(url)))
+      let rel
+      try { rel = decodeURIComponent((req.url || "").split("?")[0]) } catch { return next() }
+      if (rel.includes("\0")) return next()
+      // Decode BEFORE resolving, then require the resolved path to stay inside public/ — blocks `..`
+      // traversal including URL-encoded `%2e%2e` (vite binds 0.0.0.0 in dev, so this is reachable).
+      const file = path.resolve(root, "." + (rel.startsWith("/") ? rel : "/" + rel))
+      if (file !== root && !file.startsWith(root + path.sep)) return next()
+      const target = resolveStub(file)
       if (!target) return next()
-      res.setHeader("Content-Type", contentTypeFor(url))
+      res.setHeader("Content-Type", contentTypeFor(rel))
       res.end(readFileSync(target))
     })
   },
