@@ -7,7 +7,9 @@ import { useSettings } from "@/context/settings"
 import { persisted } from "@/utils/persist"
 import { DialogReleaseNotes, type Highlight } from "@/components/dialog-release-notes"
 
-const CHANGELOG_URL = "https://opencode.ai/changelog.json"
+// Marid serves its release notes from a local static file (bundled in public/), so no
+// opencode.ai remote is fetched (AC-030). Same parser shape; add entries in changelog.json.
+const CHANGELOG_URL = "/changelog.json"
 
 type Store = {
   version?: string

@@ -11,6 +11,33 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-14 — PH-8 Phase 5a (WBS-8.5): web UI rebrand — code half — unmerged, at the operator gate
+- **Done:** the CI-verifiable code half of the web rebrand (`packages/app` + `packages/ui` only; `packages/desktop`
+  EXCLUDED per CON-004). **Killed the 3 runtime `opencode.ai` fetches** (the mandatory AC-030 half): release-notes
+  changelog → committed local `packages/app/public/changelog.json` (same parser shape, real Marid v0.2.0/v0.3.0
+  entries — operator chose repoint-with-content over disable); OS-notification icon + hardcoded-project avatar →
+  local `-v3` assets. **Web "OpenCode" strings → Marid:** desktop-menu app/docs/support, WSL install/update copy
+  (+ its 4 test assertions/titles), `packages/ui` `favicon.tsx` apple-web-app-title, help-button aria + body copy.
+  **Web GO-upsell removed at the root:** deleted `usage-exceeded-dialogs.tsx` + `dialog-usage-exceeded.tsx` and the
+  `session.tsx` call site — the web has no inline retry-message surface (verified), so this also **closes the
+  `retry.ts` `opencode.ai/workspace/.../go` residual** that 4a flagged. **Zen/Go de-marketed in render code**
+  (connect-provider Zen block + opencode taglines, unpaid-model dialogs; provider IDs untouched) — mirrors 4a's
+  delete-the-render-blocks approach, no 20-locale edit. **apiKey fields masked** (`type="password"`). **opencode.ai
+  click-through links → `github.com/A-H-911/marid`** (docs/help/feedback/themes). Neutralized the residual `en.ts`
+  brand string ("Free models provided by OpenCode" → "Free models").
+- **TEST-WEB (AC-030 guard):** `packages/app/src/marid-no-remote.test.ts` static-source-scans `app/src` + `ui/src`
+  `.ts/.tsx` for `opencode.ai` network references and fails on any outside the allowlist (i18n display strings, the
+  dev-only hostname heuristic, comments). Runs in CI via turbo `@opencode-ai/app#test`. Verified **both directions**
+  (green now; red on a re-added `fetch("opencode.ai")`, naming the file:line).
+- **Verification:** app + ui typecheck clean; ui tests 7/7; app unit **577 pass** (1 fail = the pre-existing,
+  `skipIf(CI)`-guarded i18n-parity drift from the WBS-8.1 sync — not ours, skipped in CI); `bun lint` 0 errors.
+- **Decisions:** AC-030 → **Partial** (fetch/strings/upsell/links done; icons pending 5b). **Deviations:** one
+  required typecheck fix — `titlebar.tsx` `ChannelIndicator`: an app-touching change forces a cache-miss rebuild
+  that surfaces a latent `VITE_OPENCODE_CHANNEL?` undefined-unsafety (`env.d.ts` types it optional); fixed with a
+  1-line undefined guard (behavior-preserving; mirrors 4a's required CI-only fix). No new `P-*` (P-2 branding row).
+  **Blockers:** operator merge (INV-005). **Next:** Phase 5b (favicon SVG + `Mark`/`Splash` glyph + raster set via
+  claude-design, operator visual review → AC-030 Met) → 6 docs → 7 release v0.3.0. `validate_package.py docs/` = OK.
+
 ## 2026-07-14 — PH-8 Phase 4b (WBS-8.4): §94 logo redesign + two-tone render gate + splash — unmerged, at the operator gate
 - **Done:** completed the TUI rebrand's visual half. `logo.ts` is now the single source of the mark:
   a **taller 6-row flame** (`left`, keeps the PH-5 flame DNA) + a **`leftCore`** mask marking the inner cells
