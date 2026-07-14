@@ -1,9 +1,61 @@
-import { readFileSync } from "node:fs"
+import { readFileSync, statSync, readdirSync, writeFileSync } from "node:fs"
+import path from "node:path"
 import solidPlugin from "vite-plugin-solid"
 import tailwindcss from "@tailwindcss/vite"
 import { fileURLToPath } from "url"
 
 const theme = fileURLToPath(new URL("./public/oc-theme-preload.js", import.meta.url))
+const publicDir = fileURLToPath(new URL("./public", import.meta.url))
+
+// Windows/`core.symlinks=false` checks out packages/app/public/* (git symlinks into
+// packages/ui/src/assets) as tiny TEXT stubs whose content is the relative target path. Vite then
+// serves the stub verbatim → broken favicon + "Manifest syntax error". This plugin resolves any such
+// stub to its real target (generic — no hardcoded list): in dev via middleware (registered in the
+// configureServer hook body so it runs BEFORE vite's public-serving), and at build via writeBundle so
+// an embedded build gets the real bytes. No-op on POSIX / when core.symlinks=true (real files, not stubs).
+const contentTypeFor = (p) =>
+  p.endsWith(".svg") ? "image/svg+xml"
+  : p.endsWith(".png") ? "image/png"
+  : p.endsWith(".ico") ? "image/x-icon"
+  : p.endsWith(".webmanifest") ? "application/manifest+json"
+  : p.endsWith(".json") ? "application/json"
+  : "application/octet-stream"
+
+// If `file` is a symlink-stub (a tiny file whose text is a relative path to an existing file), return
+// the resolved target path; otherwise undefined.
+const resolveStub = (file) => {
+  let stat
+  try { stat = statSync(file) } catch { return undefined }
+  if (!stat.isFile() || stat.size > 1024) return undefined
+  const text = readFileSync(file, "utf8").trim()
+  if (!text.startsWith("../") && !text.startsWith("./")) return undefined
+  if (/[\r\n]/.test(text)) return undefined
+  const target = path.resolve(path.dirname(file), text)
+  try { if (statSync(target).isFile()) return target } catch { /* fallthrough */ }
+  return undefined
+}
+
+const maridPublicSymlinks = {
+  name: "marid:resolve-public-symlinks",
+  configureServer(server) {
+    server.middlewares.use((req, res, next) => {
+      const url = (req.url || "").split("?")[0]
+      if (url === "/" || url.includes("..")) return next()
+      const target = resolveStub(path.join(publicDir, decodeURIComponent(url)))
+      if (!target) return next()
+      res.setHeader("Content-Type", contentTypeFor(url))
+      res.end(readFileSync(target))
+    })
+  },
+  writeBundle(options) {
+    const outDir = options.dir
+    if (!outDir) return
+    for (const name of readdirSync(publicDir)) {
+      const target = resolveStub(path.join(publicDir, name))
+      if (target) try { writeFileSync(path.join(outDir, name), readFileSync(target)) } catch { /* skip */ }
+    }
+  },
+}
 
 const channel = (() => {
   const raw = process.env.OPENCODE_CHANNEL
@@ -16,6 +68,7 @@ const channel = (() => {
  * @type {import("vite").PluginOption}
  */
 export default [
+  maridPublicSymlinks,
   {
     name: "opencode-desktop:config",
     config() {

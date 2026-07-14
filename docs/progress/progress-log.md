@@ -24,6 +24,14 @@ lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 - **Pipeline:** Chrome-headless render of the master SVG → PNG, then a **pure-JS box downscaler** (`node zlib`, no
   deps) for 180/192/96/ico — Windows has no ImageMagick (`convert` is the NTFS tool) and Chrome mis-sizes the
   180/192 headless windows, so downscaling the good 512 render was the reliable path.
+- **Local-dev fix (folded in):** operator review found the running web broken locally — favicon + manifest served as
+  path-text because `packages/app/public/*` are git symlinks that Windows (`core.symlinks=false`) checks out as text
+  stubs. Added a `vite.js` plugin (`marid:resolve-public-symlinks`) that resolves any such stub to its real target —
+  dev middleware (registered in the `configureServer` hook body so it beats vite's public serving) + a `writeBundle`
+  copy for the build. Generic (no hardcoded list), no-op on POSIX. **Verified via chrome-devtools MCP** against the
+  running stack (marid `serve` :4096 + vite :3000, opened with an admin `?auth_token=`): console clean (no 401, no
+  manifest error), `/site.webmanifest` + `/favicon-*` return real Marid content, `/global/event` SSE connects, home
+  renders branded. (The 401 was operational — the secured gateway needs a token; not a code defect.)
 - **Verification:** every flame render **visually inspected** (favicon 96/512, apple-touch 180, social card, Mark +
   Splash silhouettes) — all correct. ui typecheck clean; ui tests 7/7; `bun lint` 0 errors.
 - **Decisions:** **AC-030 → Met** (both halves: 5a no-fetch + 5b icons-read-Marid). **Deviations:** legacy non-`-v3`
