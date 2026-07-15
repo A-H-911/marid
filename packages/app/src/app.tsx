@@ -538,12 +538,14 @@ function Unauthorized() {
     location.search = params.toString() // reloads authenticated
   }
   return (
-    <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base gap-6 p-6">
-      <Flame class="w-16 h-20" />
-      <div class="flex flex-col items-center max-w-sm w-full text-center gap-3">
+    <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base p-6">
+      <div class="flex flex-col items-center max-w-sm w-full text-center">
+        <Flame class="w-14 h-[4.375rem] mb-5" />
         <p class="text-14-regular text-text-strong font-medium">Unauthorized</p>
-        <p class="text-14-regular text-text-base">Marid requires a token to connect. Paste your token to continue.</p>
-        <form onSubmit={submit} class="flex flex-col gap-2 w-full mt-1">
+        <p class="mt-1.5 text-14-regular text-text-weak">
+          Marid requires a token to connect. Paste your token to continue.
+        </p>
+        <form onSubmit={submit} class="flex flex-col gap-2 w-full mt-5">
           <input
             type="password"
             value={token()}
