@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-14
+updated: 2026-07-15
 owner: operator (STK-001)
 ---
 
@@ -11,7 +11,28 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
-## 2026-07-14 — PH-8 TUI logo follow-up: goodbye "OpenCode" residual + flame-height retune — unmerged, at the operator gate
+## 2026-07-15 — PH-8 web auth-gate + navigation-safe token (P-9) + brand lockup — MERGED (PR #63 `19ad4279f3`)
+- **Done:** the web-phase PR squash-merged to `develop` (`19ad4279f3`, all 20 CI green). Based on the 5b branch, so it
+  **superseded #61** (closed) and carried the 5b flame assets + the auth-gate + the brand lockup. **(1) Auth survives
+  navigation (P-9):** a secured gateway needs the token on every request; it arrives once via `?auth_token=` and lived
+  only in the boot server's in-memory `http.password`, so navigating into a re-resolved local-server connection whose
+  URL isn't byte-identical to the boot server's (active `localhost:4096` vs boot `127.0.0.1:4096`) dropped it →
+  `/global/health` 401 → false Unauthorized **even with a valid token**. Root-caused live via chrome-devtools
+  (reproduced 401→Unauthorized on the pre-fix code, then 200→home after). Fix at the single SDK chokepoint
+  (`createSdkForServer`): persist the token to `sessionStorage` at boot (`entry.tsx`) + fall back to it for any
+  **loopback** connection missing a password (`isLoopbackUrl` guard keeps it off remote/desktop; `!password` guard
+  leaves an explicit-password server untouched). Additive `AuthGate` + `Unauthorized` token-entry screen reacting to
+  the already-running global health poll (`ServerHealth.unauthorized`). Upstream `disableHealthCheck` (#29319)
+  untouched. Registered **P-9** in `architecture.md`. **(2) Brand lockup:** `marid-logo.png` (old pixel wordmark + grey
+  halo box, never touched in the flame rebrand) → shared inline-SVG on `Logo` (home/crash) + `WordmarkV2` (new-session
+  hero): gradient flame (favicon paths) + two-tone "Marid" wordmark (`#2F6BFF`/`#F0731F`), **flame height = "M"
+  cap-height** (operator-approved). Unit-guarded (`server.test.ts` `isLoopbackUrl`).
+- **Decisions:** #63 supersedes #61 (closed, redundant — its 5b commits are in develop via #63). AC-030 stays Met; P-9
+  added to the patch surface.
+- **Deviations:** `marid-logo.png` now unused by the app (README still references it — out of web scope).
+- **Blockers:** none. **Next:** the TUI logo follow-up (PR #62, below) → Phase 6 (docs/diagrams) → Phase 7 (v0.3.0).
+
+## 2026-07-14 — PH-8 TUI logo follow-up: goodbye "OpenCode" residual + flame-height retune — at the operator gate (PR #62)
 - **Done:** operator local-review of the TUI surfaced two art defects that string-greps + CI could not catch (block-ASCII
   art is invisible to `grep`). **(1) `/exit` goodbye still spelled "OpenCode"** — `packages/tui/src/util/presentation.ts`
   carried its OWN hardcoded block-art logo that 4a/4b never touched. Rewrote it to render the SAME mark as the startup
@@ -33,7 +54,7 @@ lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
   typecheck 34/34; no other test asserts logo content. **Blockers:** operator merge (INV-005). AC-029 stays Met (this
   closes a residual + retunes, per operator visual sign-off).
 
-## 2026-07-14 — PH-8 Phase 5b (WBS-8.5): web UI rebrand — visual assets — unmerged, at the operator gate
+## 2026-07-14 — PH-8 Phase 5b (WBS-8.5): web UI rebrand — visual assets — MERGED via PR #63 `19ad4279f3` (superseded #61)
 - **Done:** the visual half of the web rebrand — the flame identity across every web brand surface (`packages/ui`).
   **`Mark` + `Splash`** (`packages/ui/src/components/logo.tsx`) rewritten from the OpenCode square-in-square glyph
   to the **Marid flame silhouette** (a teardrop matching the TUI `logo.ts` DNA), keeping the `--icon-*` fill vars +
