@@ -88,9 +88,53 @@ export const Flame = (props: Pick<ComponentProps<"svg">, "ref" | "class">) => {
   )
 }
 
-// Marid brand lockup (the README logo: flame mark + "Marid" wordmark), served as a
-// transparent PNG so it drops onto any surface — including true black — with no box
-// and true colors. Size/placement come from the caller's class.
+// Marid brand lockup (flame mark + "Marid" wordmark). Inline SVG — crisp at any size, fully
+// transparent (no box/halo), true colors on any surface. Matches the review artifact exactly:
+// the full-color gradient flame (same paths as Flame/favicon) + the two-tone wordmark
+// (#2F6BFF "Mar" / #F0731F "id"). Size/placement come from the caller's class (aspect preserved).
 export const Logo = (props: { class?: string }) => {
-  return <img src="/marid-logo.png" alt="Marid" classList={{ [props.class ?? ""]: !!props.class }} />
+  return (
+    <svg
+      data-component="logo-lockup"
+      classList={{ [props.class ?? ""]: !!props.class }}
+      viewBox="0 0 196 90"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="marid-lockup-edge" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stop-color="#FBD24A" />
+          <stop offset="0.5" stop-color="#F5901E" />
+          <stop offset="1" stop-color="#DC2A16" />
+        </linearGradient>
+        <linearGradient id="marid-lockup-core" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stop-color="#FDEFB0" />
+          <stop offset="1" stop-color="#F8B73C" />
+        </linearGradient>
+      </defs>
+      {/* Flame scaled + positioned so its visible height equals the "M" cap-height and it spans
+          cap-line → baseline alongside the wordmark (operator spec: flame height = M height). */}
+      <g transform="translate(-1.4, 20.3) scale(0.494)">
+        <path
+          d="M40 7.5C52.5 25 65 35 65 52.5C65 75 53.5 91.5 40 92.5C26.5 91.5 15 75 15 52.5C15 35 27.5 25 40 7.5Z"
+          fill="url(#marid-lockup-edge)"
+        />
+        <path
+          d="M40 32.5C47 43 52.5 49.5 52.5 60C52.5 72 47 80 40 81C33 80 27.5 72 27.5 60C27.5 49.5 33 43 40 32.5Z"
+          fill="url(#marid-lockup-core)"
+        />
+      </g>
+      <text
+        x="42"
+        y="66"
+        font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        font-size="60"
+        font-weight="700"
+        letter-spacing="-2"
+      >
+        <tspan fill="#2F6BFF">Mar</tspan>
+        <tspan fill="#F0731F">id</tspan>
+      </text>
+    </svg>
+  )
 }
