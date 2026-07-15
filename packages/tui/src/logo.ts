@@ -1,37 +1,29 @@
 // marid brand mark (P-2, WBS-8.4). Rendered in color by two consumers — component/logo.tsx (TUI,
 // opentui RGBA) and packages/opencode/src/cli/ui.ts (CLI, raw ANSI) — and dimmed by
 // util/presentation.ts for the /exit goodbye. All three zip `left[i]` with `right[i]`, so both
-// halves are 6 rows. `left` is the flame glyph; `leftCore` marks the inner cells that take the
-// brighter core gradient (a strict subset of `left`'s filled cells — same column, block char).
-// `right` is the "MARID" wordmark, letters centered in rows 2-4 to sit against the flame body.
+// halves are 3 rows — the flame is the SAME height as the wordmark letters (operator call: the
+// earlier 6-row flame towered over the words). `left` is the flame glyph; `leftCore` marks the inner
+// cells that take the brighter core gradient (a strict subset of `left`'s filled cells — same column,
+// block char). `right` is the "MARID" wordmark, one row per letter band, flush with the flame.
 // Block chars only (█ ▀ ▄ ▟ ▙ ▜ ▛ space) so every renderer agrees; no shadow marks (they muddy it).
 //
 // Retuning the mark is data-only: edit the glyph rows, the core mask, the gradients, or the split
 // column below — the render logic in the two consumers is generic.
 export const logo = {
   left: [
-    "  ▟▙  ",
-    " ▟██▙ ",
-    " ▟██▙ ",
-    " ▜██▛ ",
-    "  ██  ",
-    "  ▀▀  ",
+    " ▟█▙ ",
+    "▐███▌",
+    " ▜█▛ ",
   ],
   leftCore: [
-    "      ",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-    "      ",
+    "     ",
+    "  █  ",
+    "  █  ",
   ],
   right: [
-    "                        ",
-    "                        ",
     "█▄ ▄█ ▄▀▀▄ █▀▀▄ ▀█▀ █▀▀▄",
     "█ ▀ █ █▄▄█ █▄▄▀  █  █  █",
     "█   █ █  █ █ ▀▄ ▄█▄ █▄▄▀",
-    "                        ",
   ],
 }
 
@@ -41,8 +33,8 @@ export const badge = ["▟█▙", "▜█▛", " ▀ "]
 
 // Flame gradient, top -> base (one hex per `left` row). Edge = outer flame; core = the brighter
 // inner highlight applied where `leftCore` is filled.
-export const FLAME_EDGE = ["#FBD24A", "#F8B23A", "#F5901E", "#EC6A1B", "#E34A18", "#DC2A16"]
-export const FLAME_CORE = ["#FDEFB0", "#FCE596", "#FBDB7C", "#FAD062", "#F9C44F", "#F8B73C"]
+export const FLAME_EDGE = ["#FBD24A", "#F5901E", "#DC2A16"]
+export const FLAME_CORE = ["#FDEFB0", "#FAD062", "#F8B73C"]
 
 // Two-tone wordmark: columns < WORDMARK_SPLIT render blue ("MAR"), the rest orange ("ID"). Applied
 // only when the terminal signals truecolor (see supportsTrueColor); otherwise the wordmark renders

@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-14
+updated: 2026-07-15
 owner: operator (STK-001)
 generation: derived
 ---
@@ -15,12 +15,12 @@ generation: derived
 
 | | |
 |---|---|
-| Reporting date | 2026-07-14 |
-| Active work | **PH-8 Phase 5b (WBS-8.5) — web UI rebrand, visual assets, at the operator gate.** The flame identity across every web brand surface (`packages/ui`). **`Mark` + `Splash`** (`components/logo.tsx`) rewritten from the OpenCode square glyph to the **Marid flame silhouette** (kept `--icon-*` fills + viewBoxes → theme coloring + call-sites unchanged). **`favicon-v3.svg`** → full-color gradient flame (edge `#FBD24A→#F5901E→#DC2A16`, core `#FDEFB0→#F8B73C`). **Raster set** regenerated from that master SVG: favicon 96/`.ico`, apple-touch 180, PWA 192/512 (maskable), 1200×630 `social-share.png` OG card (flame + two-tone "Marid"). Pipeline: Chrome-headless SVG render + a pure-JS `node zlib` box downscaler (no ImageMagick; Chrome mis-sizes 180/192 windows). Every flame render **visually verified**. ui typecheck clean; ui 7/7; lint 0 errors. Legacy non-`-v3` favicons left (referenced by the excluded `packages/console`). **AC-030 → Met** (both halves; operator visual sign-off = merge gate). **5a MERGED** (PR #60 `67f56b8edd`). Prior PH-8 merged: WBS-8.1 (#54), 8.2 (#55/#56), Phase-3 (#57), 4a (#58), 4b (#59), 5a (#60) — **AC-025/026/027/028/029/031 Met; AC-030 Met on 5b merge**. **STOP: awaits operator merge (INV-005).** |
+| Reporting date | 2026-07-15 |
+| Active work | **PH-8 web phase MERGED; TUI logo follow-up at the merge gate.** **PR #63 (`19ad4279f3`) merged to `develop`** (all 20 CI green) — the whole web phase in one PR (it was based on 5b, so it **superseded #61**, now closed): (a) the **§5b flame assets** (`Mark`/`Splash`/favicon-v3/PWA/social → Marid flame); (b) the **web auth-gate + navigation-safe token (P-9)** — a secured gateway needs the token on every request, but it lived only in the boot server's in-memory `http.password` and was dropped when the app navigated into a re-resolved local-server connection whose URL isn't byte-identical to the boot server's (`localhost` vs `127.0.0.1`) → `/global/health` 401 → false Unauthorized; fixed at the `createSdkForServer` chokepoint (persist token to `sessionStorage` at boot + inject on any loopback connection missing a password), plus an additive `AuthGate`/`Unauthorized` screen; upstream `disableHealthCheck` (#29319) untouched; **P-9** registered; (c) the **brand lockup** — `marid-logo.png` (old pixel wordmark + grey halo) → shared inline-SVG (gradient flame + two-tone "Marid", flame height = "M"), operator-approved. **AC-030 → Met.** **PR #62 (TUI logo: `/exit` goodbye residual + 3-row flame retune, AC-029) is at the operator merge gate** (this reconciliation rides its branch). Prior PH-8 merged: WBS-8.1 (#54), 8.2 (#55/#56), Phase-3 (#57), 4a (#58), 4b (#59), 5a (#60), web (#63) — **AC-025..031 Met**. **Next after #62: Phase 6 (docs/diagrams) → Phase 7 (release v0.3.0).** |
 | Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
 | Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
-| Next milestone | **MS-009 (PH-8 Isolation & deep rebrand)** — Phase 0 merged (PR #53); **ADR-0018 + DEC-022..027 Approved**; **WBS-8.1 upstream sync at the operator merge gate** (this PR). AC-025..031 Met + all 6 reported v0.2.0 issues map to a passing check → v0.3.0. *(MS-008 / PH-7 WhatsApp remains not-started, operator-gated, PH-8-independent.)* |
+| Next milestone | **MS-009 (PH-8 Isolation & deep rebrand)** — Phases 0–5 merged through the **web phase (#63)**; **TUI logo #62 at the merge gate**; **Phase 6 (docs/diagrams) → Phase 7 (v0.3.0 release)** remain. AC-025..031 Met + all 6 reported v0.2.0 issues map to a passing check → v0.3.0. *(MS-008 / PH-7 WhatsApp remains not-started, operator-gated, PH-8-independent.)* |
 
 ## Phase progress
 
@@ -33,7 +33,7 @@ generation: derived
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
 | PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
 | PH-6 Telegram-first | **done** | yes | **MS-007 (2026-07-12)**: Marid Gateway + full Telegram + bidirectional mirroring + 4 live test tiers; WBS-6.3 (#44) · 6.1 (#46) · 6.5 (#47) · 6.2/6.4/6.6/6.7 (#48 `4409d92f`) | AC-017/019/020/021/024 all Met; EXP-005/007/008/009 PASS; INV-001 leak fixed (ADR-0016/0017); zero upstream edit, no P-\* |
-| PH-8 Isolation & deep rebrand | **Phase 5b (web visual assets) at operator gate; Phase 6 (docs) next** | 8.1/8.2/Phase-3/4a/4b/5a merged; 5b at gate | #54 (sync) · #55/#56 (isolation+config+pierce) · #57 (agent identity) · #58 (4a) · #59 (4b) · #60 (5a web code) · this PR (5b visual assets) | **AC-025/026/027/028/029/031 Met**; **AC-030 Met on 5b merge** — web rebrand complete (code + flame assets) |
+| PH-8 Isolation & deep rebrand | **Web phase merged (#63); TUI logo (#62) at gate; Phase 6 (docs) next** | 8.1/8.2/Phase-3/4a/4b/5a/web merged; TUI logo at gate | #54 (sync) · #55/#56 (isolation+config+pierce) · #57 (agent identity) · #58 (4a) · #59 (4b) · #60 (5a web code) · #63 (5b assets + web auth-gate P-9 + brand lockup) · #62 (TUI logo, at gate) | **AC-025..031 Met** — web rebrand complete (code + flame assets + auth-gate + lockup) |
 
 ## Acceptance snapshot
 
@@ -56,20 +56,19 @@ mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-**PH-8 Phase 5b (WBS-8.5) — web UI rebrand, visual assets, at the operator gate.** The flame identity across every
-web brand surface (`packages/ui`). **`Mark` + `Splash`** (`components/logo.tsx`) rewritten from the OpenCode
-square-in-square glyph to the **Marid flame silhouette** (a teardrop matching the TUI `logo.ts` DNA), keeping the
-`--icon-*` fill vars + viewBoxes so theme coloring and all call-sites are unchanged (monochrome at those small UI
-glyphs). **`favicon-v3.svg`** → a full-color gradient flame (edge `#FBD24A→#F5901E→#DC2A16`, core
-`#FDEFB0→#F8B73C`) on the `#131010` ground. **Raster set regenerated from that master SVG:** favicon 96/`.ico`
-(16/32/48), apple-touch 180, PWA 192/512 (maskable), and a 1200×630 **`social-share.png`** OG card (flame +
-two-tone "Marid" wordmark + tagline); the two SVG sources are committed alongside. Pipeline: Chrome-headless render
-of the SVG + a **pure-JS `node zlib` box downscaler** (no ImageMagick — Windows `convert` is the NTFS tool, and
-Chrome mis-sizes the 180/192 headless windows). Every flame render **visually verified** (favicon 96/512,
-apple-touch 180, social card, Mark + Splash). ui typecheck clean; ui 7/7; `bun lint` 0 errors. **AC-030 → Met**
-(both halves; operator visual sign-off = merge gate). **Deviation:** legacy non-`-v3` favicons +
-`social-share-{zen,black}.png` left in place — still referenced by the EXCLUDED `packages/console`, so deletion is
-out of scope. **Next:** Phase 6 (docs/diagrams) → Phase 7 (release v0.3.0).
+**PH-8 TUI logo follow-up (WBS-8.5 / AC-029) — PR #62 at the operator merge gate.** Operator local-review surfaced
+two TUI art defects greps + CI couldn't catch (block-ASCII art is invisible to `grep`): the `/exit` goodbye still
+spelled "OpenCode" (`presentation.ts` carried its own hardcoded block logo 4a/4b never touched → rewired to the
+`logo.ts` mark as the single source of truth, kept the `marid -s` hint), and the startup flame towered over the
+wordmark (redesigned `logo.ts` to a 3-row teardrop flame the same height as the letters, operator-picked from a new
+`packages/tui/script/render-logo.ts` ANSI→HTML→headless-Chrome harness). `presentation.test.ts` gains a structural
+guard; `logo.test.ts` green; typecheck 34/34. **Blockers:** operator merge (INV-005). **Next after #62:** Phase 6
+(docs/diagrams) → Phase 7 (release v0.3.0).
+
+**(web phase, merged 2026-07-15, PR #63 `19ad4279f3`)** — §5b flame assets + web **auth-gate + navigation-safe
+token (P-9)** + **brand lockup** (`marid-logo.png` pixel wordmark + grey halo → shared inline-SVG, flame height = "M"),
+superseding #61 (closed). Root-caused + verified live via chrome-devtools; see the 2026-07-15 progress-log entry.
+**AC-030 → Met.**
 
 **(5a, merged 2026-07-14, PR #60 `67f56b8edd`)** — web code half: 3 runtime `opencode.ai` fetches killed
 (changelog → local `changelog.json`, notification icon + avatar → local `-v3`), web strings → Marid, GO-upsell
