@@ -2896,7 +2896,7 @@
       {
         "id": "AC-030",
         "statement": "Given the web UI (not binary-embedded), favicon/PWA icons/social-share/Mark+Splash glyphs/notification icon read Marid (from the flame); no opencode.ai remote is fetched (release-notes / notification repointed or disabled) (issue-5)",
-        "status": "Partial"
+        "status": "Met"
       },
       {
         "id": "AC-031",
@@ -4537,6 +4537,19 @@
         "TEST-WEB marid-no-remote.test.ts (CI-run) guards no-opencode.ai-fetch, verified both directions; titlebar.tsx typecheck fix",
         "AC-030 -> Partial; visual assets (favicon SVG + Mark/Splash + rasters) = PR 5b"
       ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 5b (WBS-8.5) web UI rebrand visual assets - unmerged, at operator gate. The flame identity across every web brand surface (packages/ui). Mark + Splash (components/logo.tsx) rewritten from the OpenCode square-in-square glyph to the Marid flame silhouette (teardrop matching the TUI logo.ts DNA), keeping the --icon-* fill vars + viewBoxes so theme coloring and all call-sites work unchanged (monochrome at those small UI glyphs). favicon-v3.svg -> full-color gradient flame (edge #FBD24A->#F5901E->#DC2A16, core #FDEFB0->#F8B73C) on the #131010 ground. Raster set regenerated from that master SVG: favicon-96x96-v3.png, favicon-v3.ico (16/32/48), apple-touch-icon-v3.png (180), web-app-manifest-{192,512}.png (maskable), and a 1200x630 social-share.png OG card (flame + two-tone Marid wordmark + tagline); the two SVG sources (favicon-v3.svg, images/social-share.svg) committed alongside the rasters. Pipeline: Chrome-headless render of the master SVG + a pure-JS node zlib box downscaler (no ImageMagick - Windows convert is the NTFS tool, and Chrome mis-sizes the 180/192 headless windows). Every flame render visually inspected (favicon 96/512, apple-touch 180, social card, Mark + Splash silhouettes) - all correct. ui typecheck clean; ui 7/7; lint 0 errors. AC-030 -> Met (both halves; operator visual sign-off = merge gate). Deviation: legacy non-v3 favicons + social-share-{zen,black}.png left in place (still referenced by the EXCLUDED packages/console per CON-004 - deletion out of scope). 5a MERGED PR #60 67f56b8edd.",
+      "items_completed": [
+        "components/logo.tsx: Mark + Splash rewritten OpenCode square glyph -> Marid flame silhouette (kept --icon-* fills + viewBoxes)",
+        "assets/favicon/favicon-v3.svg -> full-color gradient flame; assets/images/social-share.svg new OG-card source",
+        "raster set regenerated from master SVG: favicon-96x96-v3.png, favicon-v3.ico, apple-touch-icon-v3.png (180), web-app-manifest-{192,512}.png, social-share.png (1200x630)",
+        "pipeline: Chrome-headless SVG render + pure-JS node-zlib box downscaler (no ImageMagick; Chrome mis-sizes 180/192 windows)",
+        "every flame render visually verified; ui typecheck clean; ui 7/7; lint 0 errors",
+        "AC-030 -> Met (both halves); legacy non-v3 favicons left (referenced by excluded packages/console)"
+      ]
     }
 
 
@@ -4780,6 +4793,12 @@
       "actor": "execution-agent",
       "action": "PH-8 Phase 5a (WBS-8.5) web UI rebrand code half. packages/app + packages/ui only (desktop EXCLUDED per CON-004). Killed 3 runtime opencode.ai fetches: changelog -> committed local public/changelog.json (Marid entries), notification icon + hardcoded-project avatar -> local -v3 assets. Web OpenCode strings -> Marid (desktop-menu, wsl copy + test, ui favicon.tsx, help-button); web GO-upsell removed at root (usage-exceeded-dialogs + dialog-usage-exceeded + call site deleted, closes retry.ts opencode.ai residual); Zen/Go de-marketed in render code (provider IDs kept); apiKey fields type=password; click-through links -> github.com/A-H-911/marid; en.ts brand string neutralized. TEST-WEB marid-no-remote.test.ts static-source guard (CI via turbo @opencode-ai/app#test) fails on any re-added opencode.ai network reference; verified both directions. titlebar.tsx latent VITE_OPENCODE_CHANNEL? undefined typecheck fix (1-line). Cosmetic unconditional Marid, no new P-*. AC-030 -> Partial (icons pending 5b). app+ui typecheck clean; ui 7/7; app 577 pass (1 pre-existing skipIf(CI) parity drift); lint 0 errors. At operator gate (INV-005).",
       "target": "packages/app + packages/ui web sources + packages/app/public/changelog.json + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T22:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 5b (WBS-8.5) web UI rebrand visual assets. packages/ui only. Mark + Splash (components/logo.tsx) rewritten OpenCode square glyph -> Marid flame silhouette (kept --icon-* fills + viewBoxes). favicon-v3.svg -> full-color gradient flame (edge #FBD24A->#F5901E->#DC2A16, core #FDEFB0->#F8B73C) on #131010. Raster set regenerated from master SVG: favicon-96x96-v3.png, favicon-v3.ico (16/32/48), apple-touch-icon-v3.png (180), web-app-manifest-{192,512}.png (maskable), social-share.png (1200x630 OG card, flame + two-tone Marid); SVG sources committed. Pipeline: Chrome-headless SVG render + pure-JS node-zlib box downscaler (no ImageMagick; Chrome mis-sizes 180/192 windows). Every render visually verified. ui typecheck clean; ui 7/7; lint 0 errors. AC-030 -> Met (both halves; operator visual sign-off = merge gate). Legacy non-v3 favicons left (referenced by excluded packages/console). At operator gate (INV-005).",
+      "target": "packages/ui/src/components/logo.tsx + packages/ui/src/assets/{favicon/{favicon-v3.svg,favicon-96x96-v3.png,favicon-v3.ico,apple-touch-icon-v3.png,web-app-manifest-192x192.png,web-app-manifest-512x512.png},images/{social-share.png,social-share.svg}} + docs trackers"
     },
     {
       "timestamp": "2026-07-14T23:30:00Z",

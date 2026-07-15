@@ -4,7 +4,7 @@ import { createSdkForServer } from "./server"
 import { Accessor, createEffect, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 
-export type ServerHealth = { healthy: boolean; version?: string }
+export type ServerHealth = { healthy: boolean; version?: string; unauthorized?: boolean }
 
 interface CheckServerHealthOptions {
   timeoutMs?: number
@@ -89,7 +89,13 @@ export async function checkServerHealth(
       signal,
     })
       .global.health()
-      .then((x) => (x.error ? next(count, x.error) : { healthy: x.data?.healthy === true, version: x.data?.version }))
+      .then((x) => {
+        if (!x.error) return { healthy: x.data?.healthy === true, version: x.data?.version }
+        // A secured Marid gateway returns 401 for a missing/invalid token — distinct from unreachable,
+        // so the UI can show an "unauthorized" gate + token entry instead of a raw error. Not retried.
+        if (x.response?.status === 401) return { healthy: false as const, unauthorized: true as const }
+        return next(count, x.error)
+      })
       .catch((error) => next(count, error))
   return attempt(0).finally(() => timeout?.clear?.())
 }
