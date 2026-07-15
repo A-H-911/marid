@@ -20,6 +20,7 @@ this guide describes how to *use* the result.
 - [CLI reference](#cli-reference) — every `marid` command and flag
 - [Recipes](#recipes) — local TUI, API + SDK, web UI, Telegram bot, mirroring, multi-instance
 - [Configuration](#configuration) — config layer + environment variables
+- [Data isolation & coexistence](#data-isolation--coexistence) — marid dirs, config name, env-pierce, v0.2.0 migration
 - [Security model](#security-model) — deny-by-default, channel scope vs. agent ruleset
 - [Troubleshooting](#troubleshooting)
 
@@ -243,6 +244,61 @@ this is where a channel's restricted agent is defined.
 | `TELEGRAM_TEXT_LIMIT` | | Max characters before a reply is split into multiple messages. |
 
 Secrets always come from the environment, never CLI flags (INV-002).
+
+---
+
+## Data isolation & coexistence
+
+Marid keeps **all** of its machine-global state in its own directory tree, namespaced under `marid`, so a
+plain `marid` binary and a co-installed OpenCode never share auth, model selection, sessions, or config
+(issue-6). This is separate from the *instance* isolation above — it applies to the base binary itself.
+
+**Where Marid stores data.** The dirs follow the XDG layout on **every** OS (Marid uses the Linux-style
+paths on macOS and Windows too — not `~/Library/Application Support` or `%AppData%`), rooted at your home dir:
+
+| Tree | Path (an `XDG_*` env var wins if set) | Holds |
+|---|---|---|
+| Data | `$XDG_DATA_HOME/marid` → `<home>/.local/share/marid` | `auth.json`, gateway tokens (`marid/`), sessions DB (`opencode.db`), logs |
+| State | `$XDG_STATE_HOME/marid` → `<home>/.local/state/marid` | `model.json` (last model selection) |
+| Config | `$XDG_CONFIG_HOME/marid` → `<home>/.config/marid` | global `marid.json` |
+| Cache | `$XDG_CACHE_HOME/marid` → `<home>/.cache/marid` | caches (regenerable) |
+| Managed (MDM) | macOS `/Library/Application Support/marid` · Windows `%ProgramData%\marid` · Linux `/etc/marid` | enterprise-policy config |
+
+`<home>` is `/home/you` (Linux), `/Users/you` (macOS), or `C:\Users\you` (Windows). The sessions DB file is
+still named `opencode.db` — an internal name, now living inside the isolated marid dir (DEC-027).
+
+**Config file name.** Marid reads **`marid.json`** / **`marid.jsonc`** at the global and project levels (and
+writes `marid.json` when a command creates config, e.g. `marid mcp add`). A project-level **`opencode.json`**
+is still read as a fallback so existing repos keep working; `marid.json` wins when both are present. At the
+**global** level Marid reads only `~/.config/marid/` — it never falls back to `~/.config/opencode/`, which is
+exactly what would re-import a co-installed OpenCode's provider/model bleed. Per-project **`.opencode/`** dirs
+(agents / skills / plugins / commands) keep their upstream name for ecosystem compatibility (DEC-024).
+
+**Kept `OPENCODE_*` env — and what still pierces isolation.** Marid deliberately keeps the `OPENCODE_*`
+environment variable names (DEC-022) so third-party OpenCode plugins/extensions keep working. Most are
+harmless, but five **data-layer** overrides, if you have them set globally, **redirect Marid's state back
+outside** the marid dirs. Marid does not silently defeat them — it honors them (your setup keeps working) and
+logs a WARN at boot naming each active one (the *value* is never logged — INV-002):
+
+| Variable | Redirects |
+|---|---|
+| `OPENCODE_CONFIG_DIR` | global config dir |
+| `OPENCODE_CONFIG` | global config file |
+| `OPENCODE_CONFIG_CONTENT` | inline config content |
+| `OPENCODE_AUTH_CONTENT` | inline auth credentials |
+| `OPENCODE_DB` | sessions database path |
+
+For full isolation, leave these unset (or point them inside the marid dirs).
+
+**Upgrading from an OpenCode-shared v0.2.0.** The first time an isolated `marid` binary runs and finds no
+marid data dir, it copies your existing pre-isolation data **once** — `auth.json`, gateway bearer tokens, the
+sessions DB, `model.json`, Telegram pairing — from the old shared `opencode` dir into the marid dirs, then
+writes a marker so it never repeats (issue-2 / DEC-025). Gateway tokens and Telegram pairing survive the
+upgrade with no re-auth; regenerable caches/logs are skipped; the copy logs a count only (never file names or
+contents). The co-installed OpenCode's dirs are left untouched.
+
+**No auto-update.** The Marid binary does not check for or install updates — the OpenCode "vX available…"
+popup and self-overwrite are disabled; updates come only through the signed release download (issue-1).
 
 ---
 

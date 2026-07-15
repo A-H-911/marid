@@ -626,7 +626,7 @@
         "id": "NFR-010",
         "kind": "non_functional",
         "statement": "Documentation quality: README plan per §19; docs validated in CI",
-        "status": "Draft",
+        "status": "Met (README + docs validated in CI; validate_package.py docs/ green; WBS-8.6 reconciled docs to the PH-8 deep-rebrand + data isolation)",
         "source": "§18, §19",
         "priority": "MVP"
       },
@@ -3124,7 +3124,7 @@
         "id": "PH-8",
         "name": "Isolation & deep rebrand",
         "goal": "Total DATA isolation from a co-installed OpenCode (dirs/config; OPENCODE_* env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first",
-        "status": "not-started",
+        "status": "in-progress",
         "depends_on": [
           "PH-6"
         ],
@@ -4550,11 +4550,22 @@
         "every flame render visually verified; ui typecheck clean; ui 7/7; lint 0 errors",
         "AC-030 -> Met (both halves); legacy non-v3 favicons left (referenced by excluded packages/console)"
       ]
+    },
+    {
+      "date": "2026-07-15",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 6 (WBS-8.6) docs + diagrams + register reconcile - this PR at operator merge gate (INV-005). Brought the docs package into line with the deep-rebrand + total DATA isolation now shipped on develop. usage.md: new 'Data isolation & coexistence' section (per-OS data/state/config/cache/managed dirs = the XDG layout on every OS, not ~/Library or %AppData%; marid.json config rule + project-opencode.json fallback + global reads ~/.config/marid only; five-var OPENCODE_* env-pierce table with boot WARN, value-safe; one-time v0.2.0 migration; no auto-update). README: data-isolation Security-model bullet -> usage. branding.md: ADR-0018 note flipped Proposed->realized (agent identity + TUI flame/two-tone/render-gate + web flame assets + lockup). architecture.md: P-6/P-7 rows flipped planned->realized with real sites (packages/core/src/global.ts:17, config.ts maridConfigNames) + reconcile recipes. CLAUDE.md P-6/P-7/P-8/P-9/P-CI-5 added; CONTRIBUTING.md dev command fixed (bun run src/marid.ts, not bun dev). NFR-010 Draft->Met. Diagrams 01/05/13 reviewed and left as-is (architecture-level, already Marid-accurate; opencode labels are kept internal package names DEC-009); optional isolation diagram skipped. TUI+Telegram screenshots deferred to operator (headless capture cannot be faithful). AC-025..031 already all Met - no verdict change. validate_package.py docs/ = OK; docs-only, no code touched. Also flipped stale trackers: #62 TUI logo now MERGED (7e4157b94c); WBS-8.1 done (#54 42a7e4724d); WBS-8.4/8.5 done; PH-8 status not-started->in-progress.",
+      "items_completed": [
+        "usage.md: Data isolation & coexistence section (dirs per OS, marid.json config, OPENCODE_* pierce table, v0.2.0 migration, no auto-update)",
+        "README: data-isolation Security-model bullet",
+        "branding.md: ADR-0018 note Proposed->realized (identity + TUI + web surfaces); XDG boundary reconciled",
+        "architecture.md: P-6/P-7 planned->realized with real sites + reconcile recipes",
+        "CLAUDE.md: P-6/P-7/P-8/P-9/P-CI-5 in Current-surface; CONTRIBUTING.md dev-command fix",
+        "NFR-010 Draft->Met; PH-8 status not-started->in-progress; WBS-8.1/8.4/8.5 done; #62 MERGED 7e4157b94c",
+        "Diagrams 01/05/13 reviewed & left (already Marid-accurate); screenshots deferred to operator",
+        "validate_package.py docs/ = OK"
+      ]
     }
-
-
-
-
   ],
   "change_log": [
     {
@@ -4811,10 +4822,12 @@
       "actor": "execution-agent",
       "action": "PH-8 web phase MERGED (PR #63 squash 19ad4279f3 -> develop, all 20 CI green); superseded + closed #61 (its 5b commits are in develop via #63). Delivered: 5b flame assets + web auth-gate + navigation-safe token (P-9) + brand lockup. P-9: the token arrives once via ?auth_token= and lived only in the boot server in-memory http.password; navigating into a re-resolved local-server connection whose URL isn't byte-identical to the boot server (active localhost:4096 vs boot 127.0.0.1:4096) dropped it -> /global/health 401 -> false Unauthorized even with a valid token. Fix at the createSdkForServer chokepoint: persist the token to sessionStorage at boot (entry.tsx) + inject on any loopback connection missing a password (isLoopbackUrl guard keeps it off remote/desktop servers; !password guard leaves an explicit-password server untouched). Additive AuthGate + Unauthorized token-entry screen on the already-running global health poll; upstream disableHealthCheck (#29319) untouched; P-9 registered in architecture.md; unit-guarded by server.test.ts isLoopbackUrl. Brand lockup: marid-logo.png (old pixel wordmark + grey halo box, never updated in the flame rebrand) -> shared inline-SVG Logo + WordmarkV2 (gradient flame + two-tone Marid #2F6BFF/#F0731F, flame height = M cap-height, operator-approved). AC-030 stays Met. Root-caused + verified live via chrome-devtools.",
       "target": "packages/app/src/{utils/server.ts,entry.tsx,app.tsx,utils/server.test.ts} + packages/ui/src/{components/logo.tsx,v2/components/wordmark-v2.tsx} + docs/architecture/architecture.md (P-9) + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-15T18:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 6 (WBS-8.6) docs/diagrams/register reconcile - this PR at operator merge gate (INV-005). Reconciled the docs package to the shipped PH-8 deep-rebrand + data isolation; flipped P-6/P-7 planned->realized (with real sites + reconcile recipes), the ADR-0018 branding note ->realized, NFR-010 ->Met, PH-8 status ->in-progress, and the stale #62/#54/WBS-8.4/8.5 tracker rows. Diagrams 01/05/13 left as-is (reviewed, not stale); TUI+Telegram screenshots deferred to operator. AC-025..031 already Met. validate OK; docs-only, no code touched.",
+      "target": "docs/usage.md, README.md, docs/branding/branding.md, docs/architecture/architecture.md, CLAUDE.md, CONTRIBUTING.md, docs/requirements/non-functional.md, docs/progress/{progress-log,status-report}.md, docs/planning/{roadmap,work-breakdown,milestones}.md, docs/keystone-state.json"
     }
-
-
-
-
   ]
 }
