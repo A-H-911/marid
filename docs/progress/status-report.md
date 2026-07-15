@@ -16,7 +16,7 @@ generation: derived
 | | |
 |---|---|
 | Reporting date | 2026-07-14 |
-| Active work | **PH-8 Phase 5a (WBS-8.5) — web UI rebrand, code half, at the operator gate.** `packages/app` + `packages/ui` only (`packages/desktop` EXCLUDED per CON-004). **Killed the 3 runtime `opencode.ai` fetches** (the mandatory AC-030 half): changelog → committed local `packages/app/public/changelog.json` (Marid entries); notification icon + hardcoded-project avatar → local `-v3` assets. Web "OpenCode" strings → Marid (desktop-menu, WSL copy + its test, `favicon.tsx`, help-button). Web GO-upsell removed at root (`usage-exceeded-dialogs.tsx` + `dialog-usage-exceeded.tsx` deleted — closes the `retry.ts` opencode.ai residual); Zen/Go de-marketed in render code (IDs kept); apiKey fields masked; click-through links → `github.com/A-H-911/marid`. `TEST-WEB` static-source guard (`marid-no-remote.test.ts`, CI via turbo `@opencode-ai/app#test`) fails on any re-added `opencode.ai` network reference — verified both directions. One required typecheck fix (`titlebar.tsx` latent `VITE_OPENCODE_CHANNEL?` undefined guard). app+ui typecheck clean; ui 7/7; app 577 pass (1 pre-existing `skipIf(CI)` parity drift, not ours); lint 0 errors. Cosmetic → unconditional "Marid", no new `P-*`. **AC-030 → Partial** (icons pending 5b). **4b MERGED** (PR #59 `049089b79a`) → **AC-029 Met**; TUI/CLI rebrand complete. Prior PH-8 merged: WBS-8.1 (#54), 8.2 (#55/#56), Phase-3 (#57), 4a (#58) — **AC-025/026/027/028/029/031 Met**. **STOP: awaits operator merge (INV-005).** |
+| Active work | **PH-8 Phase 5b (WBS-8.5) — web UI rebrand, visual assets, at the operator gate.** The flame identity across every web brand surface (`packages/ui`). **`Mark` + `Splash`** (`components/logo.tsx`) rewritten from the OpenCode square glyph to the **Marid flame silhouette** (kept `--icon-*` fills + viewBoxes → theme coloring + call-sites unchanged). **`favicon-v3.svg`** → full-color gradient flame (edge `#FBD24A→#F5901E→#DC2A16`, core `#FDEFB0→#F8B73C`). **Raster set** regenerated from that master SVG: favicon 96/`.ico`, apple-touch 180, PWA 192/512 (maskable), 1200×630 `social-share.png` OG card (flame + two-tone "Marid"). Pipeline: Chrome-headless SVG render + a pure-JS `node zlib` box downscaler (no ImageMagick; Chrome mis-sizes 180/192 windows). Every flame render **visually verified**. ui typecheck clean; ui 7/7; lint 0 errors. Legacy non-`-v3` favicons left (referenced by the excluded `packages/console`). **AC-030 → Met** (both halves; operator visual sign-off = merge gate). **5a MERGED** (PR #60 `67f56b8edd`). Prior PH-8 merged: WBS-8.1 (#54), 8.2 (#55/#56), Phase-3 (#57), 4a (#58), 4b (#59), 5a (#60) — **AC-025/026/027/028/029/031 Met; AC-030 Met on 5b merge**. **STOP: awaits operator merge (INV-005).** |
 | Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
 | Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
@@ -33,7 +33,7 @@ generation: derived
 | PH-4 Telegram | done | yes | MS-005 (PR #23) | 3-OS `marid-telegram` green; INV-001 backstop; AC-010/011/012 Met |
 | PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
 | PH-6 Telegram-first | **done** | yes | **MS-007 (2026-07-12)**: Marid Gateway + full Telegram + bidirectional mirroring + 4 live test tiers; WBS-6.3 (#44) · 6.1 (#46) · 6.5 (#47) · 6.2/6.4/6.6/6.7 (#48 `4409d92f`) | AC-017/019/020/021/024 all Met; EXP-005/007/008/009 PASS; INV-001 leak fixed (ADR-0016/0017); zero upstream edit, no P-\* |
-| PH-8 Isolation & deep rebrand | **Phase 5a (web code) at operator gate; Phase 5b (web visual assets) next** | 8.1/8.2/Phase-3/4a/4b merged; 5a at gate | #54 (sync) · #55/#56 (isolation+config+pierce) · #57 (agent identity) · #58 (4a mechanical + GO-upsell) · #59 (4b logo) · this PR (5a web code) | **AC-025/026/027/028/029/031 Met** — TUI/CLI rebrand complete; **AC-030 Partial** (web code done, icons pending 5b) |
+| PH-8 Isolation & deep rebrand | **Phase 5b (web visual assets) at operator gate; Phase 6 (docs) next** | 8.1/8.2/Phase-3/4a/4b/5a merged; 5b at gate | #54 (sync) · #55/#56 (isolation+config+pierce) · #57 (agent identity) · #58 (4a) · #59 (4b) · #60 (5a web code) · this PR (5b visual assets) | **AC-025/026/027/028/029/031 Met**; **AC-030 Met on 5b merge** — web rebrand complete (code + flame assets) |
 
 ## Acceptance snapshot
 
@@ -56,21 +56,25 @@ mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-**PH-8 Phase 5a (WBS-8.5) — web UI rebrand, code half, at the operator gate.** `packages/app` + `packages/ui`
-only (`packages/desktop` EXCLUDED per CON-004). The mandatory AC-030 half is done: **the 3 runtime `opencode.ai`
-fetches are killed** — release-notes changelog → committed local `packages/app/public/changelog.json` (same parser
-shape, real Marid v0.2.0/v0.3.0 entries; operator chose repoint-with-content over disable), notification icon +
-hardcoded-project avatar → local `-v3` assets. Web "OpenCode" strings → Marid (desktop-menu, WSL install/update
-copy + its test, `packages/ui` `favicon.tsx`, help-button). Web GO-upsell removed at the root
-(`usage-exceeded-dialogs.tsx` + `dialog-usage-exceeded.tsx` + call site deleted — the web has no inline
-retry-message surface, so this closes the `retry.ts` `opencode.ai/workspace/.../go` residual 4a flagged); Zen/Go
-de-marketed in render code (provider IDs kept). apiKey fields masked (`type="password"`); click-through links →
-`github.com/A-H-911/marid`. **`TEST-WEB`** (`marid-no-remote.test.ts`, CI via turbo `@opencode-ai/app#test`)
-static-source-guards against any re-added `opencode.ai` network reference — verified both directions. One required
-typecheck fix (`titlebar.tsx` latent `VITE_OPENCODE_CHANNEL?` undefined guard, 1-line). app+ui typecheck clean; ui
-7/7; app **577 pass** (1 fail = pre-existing `skipIf(CI)` i18n-parity drift, not ours); `bun lint` 0 errors.
-Cosmetic → **unconditional** "Marid", no new `P-*`. **AC-030 → Partial** (icons pending 5b). **Next:** Phase 5b
-(favicon SVG + `Mark`/`Splash` glyph + raster set via claude-design, operator visual review → AC-030 Met).
+**PH-8 Phase 5b (WBS-8.5) — web UI rebrand, visual assets, at the operator gate.** The flame identity across every
+web brand surface (`packages/ui`). **`Mark` + `Splash`** (`components/logo.tsx`) rewritten from the OpenCode
+square-in-square glyph to the **Marid flame silhouette** (a teardrop matching the TUI `logo.ts` DNA), keeping the
+`--icon-*` fill vars + viewBoxes so theme coloring and all call-sites are unchanged (monochrome at those small UI
+glyphs). **`favicon-v3.svg`** → a full-color gradient flame (edge `#FBD24A→#F5901E→#DC2A16`, core
+`#FDEFB0→#F8B73C`) on the `#131010` ground. **Raster set regenerated from that master SVG:** favicon 96/`.ico`
+(16/32/48), apple-touch 180, PWA 192/512 (maskable), and a 1200×630 **`social-share.png`** OG card (flame +
+two-tone "Marid" wordmark + tagline); the two SVG sources are committed alongside. Pipeline: Chrome-headless render
+of the SVG + a **pure-JS `node zlib` box downscaler** (no ImageMagick — Windows `convert` is the NTFS tool, and
+Chrome mis-sizes the 180/192 headless windows). Every flame render **visually verified** (favicon 96/512,
+apple-touch 180, social card, Mark + Splash). ui typecheck clean; ui 7/7; `bun lint` 0 errors. **AC-030 → Met**
+(both halves; operator visual sign-off = merge gate). **Deviation:** legacy non-`-v3` favicons +
+`social-share-{zen,black}.png` left in place — still referenced by the EXCLUDED `packages/console`, so deletion is
+out of scope. **Next:** Phase 6 (docs/diagrams) → Phase 7 (release v0.3.0).
+
+**(5a, merged 2026-07-14, PR #60 `67f56b8edd`)** — web code half: 3 runtime `opencode.ai` fetches killed
+(changelog → local `changelog.json`, notification icon + avatar → local `-v3`), web strings → Marid, GO-upsell
+removed at root (closed the `retry.ts` residual), Zen/Go de-marketed (IDs kept), apiKey masked, click-throughs →
+`github.com/A-H-911/marid`, `TEST-WEB` guard + a latent `titlebar.tsx` typecheck fix. AC-030 no-fetch half Met.
 
 **(4b, merged 2026-07-14, PR #59 `049089b79a`)** — §94 logo redesign: `logo.ts` the single mark source (taller
 6-row flame + `leftCore` mask + 6-row "MARID" wordmark), data-driven gradients (edge `#FBD24A→#F5901E→#DC2A16`,

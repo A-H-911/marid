@@ -11,7 +11,39 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
-## 2026-07-14 — PH-8 Phase 5a (WBS-8.5): web UI rebrand — code half — unmerged, at the operator gate
+## 2026-07-14 — PH-8 Phase 5b (WBS-8.5): web UI rebrand — visual assets — unmerged, at the operator gate
+- **Done:** the visual half of the web rebrand — the flame identity across every web brand surface (`packages/ui`).
+  **`Mark` + `Splash`** (`packages/ui/src/components/logo.tsx`) rewritten from the OpenCode square-in-square glyph
+  to the **Marid flame silhouette** (a teardrop matching the TUI `logo.ts` DNA), keeping the `--icon-*` fill vars +
+  viewBoxes so theme coloring and all call-sites work unchanged (monochrome at those small UI glyphs, matching the
+  surrounding icon color). **`favicon-v3.svg`** → a full-color gradient flame (edge `#FBD24A→#F5901E→#DC2A16`, core
+  `#FDEFB0→#F8B73C`) on the `#131010` ground. **Raster set regenerated from that master SVG:** `favicon-96x96-v3.png`,
+  `favicon-v3.ico` (16/32/48), `apple-touch-icon-v3.png` (180), `web-app-manifest-{192,512}.png` (maskable), and a
+  1200×630 **`social-share.png`** OG card (flame + two-tone "Marid" wordmark + tagline). Committed the two SVG
+  sources (`favicon-v3.svg`, `images/social-share.svg`) alongside the rasters.
+- **Pipeline:** Chrome-headless render of the master SVG → PNG, then a **pure-JS box downscaler** (`node zlib`, no
+  deps) for 180/192/96/ico — Windows has no ImageMagick (`convert` is the NTFS tool) and Chrome mis-sizes the
+  180/192 headless windows, so downscaling the good 512 render was the reliable path.
+- **Local-dev fix (folded in):** operator review found the running web broken locally — favicon + manifest served as
+  path-text because `packages/app/public/*` are git symlinks that Windows (`core.symlinks=false`) checks out as text
+  stubs. Added a `vite.js` plugin (`marid:resolve-public-symlinks`) that resolves any such stub to its real target —
+  dev middleware (registered in the `configureServer` hook body so it beats vite's public serving) + a `writeBundle`
+  copy for the build. Generic (no hardcoded list), no-op on POSIX. **Verified via chrome-devtools MCP** against the
+  running stack (marid `serve` :4096 + vite :3000, opened with an admin `?auth_token=`): console clean (no 401, no
+  manifest error), `/site.webmanifest` + `/favicon-*` return real Marid content, `/global/event` SSE connects, home
+  renders branded. (The 401 was operational — the secured gateway needs a token; not a code defect.)
+- **Verification:** every flame render **visually inspected** (favicon 96/512, apple-touch 180, social card, Mark +
+  Splash silhouettes) — all correct. ui typecheck clean; ui tests 7/7; `bun lint` 0 errors.
+- **Decisions:** **AC-030 → Met** (both halves: 5a no-fetch + 5b icons-read-Marid). **Deviations:** legacy non-`-v3`
+  favicons + `social-share-{zen,black}.png` **left in place** — the plan assumed they were unreferenced, but they're
+  still referenced by `packages/console` (EXCLUDED from the Marid build per CON-004), so deleting them is out of
+  scope and would break an excluded package. Maskable PWA icons use the favicon's ~9% top padding — fine for
+  rounded-square launchers, retunable if a full-circle mask clips the tip. Flame art is **blind-authored** →
+  **operator visual sign-off is the merge gate**; geometry + gradients are data-only, trivially retunable.
+  **Blockers:** operator merge (INV-005). **Next:** Phase 6 (docs/diagrams) → Phase 7 (release v0.3.0).
+  `validate_package.py docs/` = OK.
+
+## 2026-07-14 — PH-8 Phase 5a (WBS-8.5): web UI rebrand — code half — MERGED (PR #60 `67f56b8edd`)
 - **Done:** the CI-verifiable code half of the web rebrand (`packages/app` + `packages/ui` only; `packages/desktop`
   EXCLUDED per CON-004). **Killed the 3 runtime `opencode.ai` fetches** (the mandatory AC-030 half): release-notes
   changelog → committed local `packages/app/public/changelog.json` (same parser shape, real Marid v0.2.0/v0.3.0
