@@ -11,6 +11,29 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-15 — PH-8 WBS-8.6: docs + diagrams + register reconcile (Phase 6) — this PR, at the operator gate
+- **Done:** brought the docs package into line with the deep-rebrand + data isolation now shipped on `develop`.
+  **usage.md** — new "Data isolation & coexistence" section: the per-OS data/state/config/cache/managed dirs (the
+  XDG layout on **every** OS — `<home>/.local/share/marid` etc., not `~/Library`/`%AppData%`), the `marid.json`
+  config-name rule (+ project-`opencode.json` fallback, global reads `~/.config/marid/` only), the five kept
+  `OPENCODE_*` data-layer overrides that pierce isolation (boot WARN, value never logged), the one-time v0.2.0
+  migration, and the no-auto-update note. **README** — a "Data isolation from co-installed OpenCode" bullet in the
+  Security model → usage. **branding.md** — flipped the ADR-0018 note from Proposed/future to Approved/realized
+  (agent identity + TUI flame/two-tone/render-gate + web flame assets + lockup), reconciled the "XDG dir names stay
+  upstream" boundary. **architecture.md** — P-6/P-7 rows flipped planned→realized with real sites
+  (`packages/core/src/global.ts:17`, `config.ts maridConfigNames`) + reconcile recipes. **CLAUDE.md** —
+  P-6/P-7/P-8/P-9/P-CI-5 added to the Current-surface list, P-2 XDG note corrected. **CONTRIBUTING.md** — dev
+  command fixed to `bun run --cwd packages/opencode src/marid.ts` (`bun dev` runs the un-isolated upstream).
+  **NFR-010** Draft→Met. Trackers reconciled; `validate_package.py docs/` = OK.
+- **Decisions:** diagrams 01/05/13 **not re-rendered** — reviewed each spec; they are architecture-level and
+  already Marid-accurate, and neither the cosmetic rebrand nor the runtime dir-namespacing changes what they
+  depict (their `opencode` labels are the kept internal package names, DEC-009). Optional isolation diagram
+  skipped (marked optional; no gap demands it). AC-025..031 already Met (folded in as each phase landed) — no
+  audit-verdict change this PR.
+- **Deviations:** TUI + Telegram **screenshots deferred** — can't be faithfully captured headlessly; the operator
+  is the visual gate (README already flags "captures follow in a later pass"). Surfaced at the checkpoint.
+- **Blockers:** operator merge (INV-005). **Next:** Phase 7 — release v0.3.0 (develop→main sync PR → `v0.3.0` tag).
+
 ## 2026-07-15 — PH-8 web auth-gate + navigation-safe token (P-9) + brand lockup — MERGED (PR #63 `19ad4279f3`)
 - **Done:** the web-phase PR squash-merged to `develop` (`19ad4279f3`, all 20 CI green). Based on the 5b branch, so it
   **superseded #61** (closed) and carried the 5b flame assets + the auth-gate + the brand lockup. **(1) Auth survives
@@ -32,7 +55,7 @@ lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 - **Deviations:** `marid-logo.png` now unused by the app (README still references it — out of web scope).
 - **Blockers:** none. **Next:** the TUI logo follow-up (PR #62, below) → Phase 6 (docs/diagrams) → Phase 7 (v0.3.0).
 
-## 2026-07-14 — PH-8 TUI logo follow-up: goodbye "OpenCode" residual + flame-height retune — at the operator gate (PR #62)
+## 2026-07-14 — PH-8 TUI logo follow-up: goodbye "OpenCode" residual + flame-height retune — MERGED (PR #62 `7e4157b94c`)
 - **Done:** operator local-review of the TUI surfaced two art defects that string-greps + CI could not catch (block-ASCII
   art is invisible to `grep`). **(1) `/exit` goodbye still spelled "OpenCode"** — `packages/tui/src/util/presentation.ts`
   carried its OWN hardcoded block-art logo that 4a/4b never touched. Rewrote it to render the SAME mark as the startup
