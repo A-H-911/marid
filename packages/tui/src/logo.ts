@@ -11,14 +11,14 @@
 // column below — the render logic in the two consumers is generic.
 export const logo = {
   left: [
-    "  ▄ ",
-    " ███",
-    " ▜█▛",
+    " ▟█▙ ",
+    "▐███▌",
+    " ▜█▛ ",
   ],
   leftCore: [
-    "    ",
-    "  █ ",
-    "  █ ",
+    "     ",
+    "  █  ",
+    "  █  ",
   ],
   right: [
     "█▄ ▄█ ▄▀▀▄ █▀▀▄ ▀█▀ █▀▀▄",

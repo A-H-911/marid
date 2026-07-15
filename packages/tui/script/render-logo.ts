@@ -96,8 +96,12 @@ const html = `<!doctype html><meta charset="utf-8"><style>
   main { padding: 28px 32px; display: flex; flex-direction: column; gap: 26px; }
   h2 { font: 600 12px/1 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase;
     color: #6b6b6b; margin: 0 0 10px; }
-  .term { display: inline-block; }
-  .row { white-space: pre; line-height: 1; height: 1.02em; }
+  /* Calibrated to a real terminal cell: monospace 1ch:1em is ~0.6 aspect, but a terminal cell is
+     ~0.5 (w:h ≈ 1:2, measured from the operator's screenshot). scaleX squeezes 0.6 -> 0.5 so block
+     art is stretched vertically exactly as a real terminal renders it (the earlier harness lied by
+     rendering cells too wide). */
+  .term { display: inline-block; font-size: 30px; transform: scaleX(0.83); transform-origin: top left; }
+  .row { white-space: pre; line-height: 1; height: 1em; }
   .row span { display: inline-block; width: 1ch; }
 </style><main>
   ${block("Startup logo — cli/ui.ts logo()", logo(""))}

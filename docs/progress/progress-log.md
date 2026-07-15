@@ -16,9 +16,13 @@ lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
   art is invisible to `grep`). **(1) `/exit` goodbye still spelled "OpenCode"** — `packages/tui/src/util/presentation.ts`
   carried its OWN hardcoded block-art logo that 4a/4b never touched. Rewrote it to render the SAME mark as the startup
   logo, imported from `logo.ts` (**single source of truth** — a rebrand or glyph change can't leave a stale goodbye
-  again), in the understated dim style; kept the `marid -s` hint. **(2) startup flame too tall** — the 6-row flame
-  towered over the 3-row "MARID" wordmark. Redesigned `logo.ts` to a **3-row candle flame** (operator-picked from
-  harness-rendered options), same height as the letters, with a 3-stop full-range gradient (`#FBD24A→#F5901E→#DC2A16`).
+  again), **in FULL COLOR** (flame gradient + two-tone "MARID", matching the startup banner — operator wanted it not
+  monochrome); kept the `marid -s` hint. **(2) startup flame too tall** — the 6-row flame towered over the 3-row
+  "MARID" wordmark. Redesigned `logo.ts` to a **3-row teardrop flame** (solid full-height rounded top `▟█▙`, body with
+  bright core, tapered base; a tight 1-cell gap), same height as the letters, 3-stop gradient (`#FBD24A→#F5901E→#DC2A16`).
+  **Critically: the visual harness was recalibrated to a real terminal's ~0.5 cell aspect** — the first harness rendered
+  cells ~square, which hid the vertical stretch and gave false confidence (the operator saw a stretched flame the harness
+  didn't show). The flame was then operator-picked + tuned at the faithful aspect, verified in the operator's own terminal.
   Both renderers (`component/logo.tsx`, `cli/ui.ts`) + the goodbye update from the shared data.
 - **New dev tool:** `packages/tui/script/render-logo.ts` — a visual harness that renders the logo + goodbye ANSI to an
   HTML preview (screenshot via headless Chrome), so terminal art can be reviewed without a live TTY. This is how the
