@@ -11,7 +11,7 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
-## 2026-07-15 — PH-8 WBS-8.6: docs + diagrams + register reconcile (Phase 6) — this PR, at the operator gate
+## 2026-07-15 — PH-8 WBS-8.6: docs + diagrams + register reconcile (Phase 6) — MERGED (PR #64 `f022fbf005`)
 - **Done:** brought the docs package into line with the deep-rebrand + data isolation now shipped on `develop`.
   **usage.md** — new "Data isolation & coexistence" section: the per-OS data/state/config/cache/managed dirs (the
   XDG layout on **every** OS — `<home>/.local/share/marid` etc., not `~/Library`/`%AppData%`), the `marid.json`
@@ -32,7 +32,7 @@ lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
   audit-verdict change this PR.
 - **Deviations:** TUI + Telegram **screenshots deferred** — can't be faithfully captured headlessly; the operator
   is the visual gate (README already flags "captures follow in a later pass"). Surfaced at the checkpoint.
-- **Blockers:** operator merge (INV-005). **Next:** Phase 7 — release v0.3.0 (develop→main sync PR → `v0.3.0` tag).
+- **Blockers:** none — **MERGED as PR #64 (squash `f022fbf005`)** 2026-07-16. **Next:** Phase 7 (WBS-8.7) — release v0.3.0 (RC dry-run → develop→main sync PR → `v0.3.0` tag).
 
 ## 2026-07-15 — PH-8 web auth-gate + navigation-safe token (P-9) + brand lockup — MERGED (PR #63 `19ad4279f3`)
 - **Done:** the web-phase PR squash-merged to `develop` (`19ad4279f3`, all 20 CI green). Based on the 5b branch, so it
