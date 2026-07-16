@@ -1,7 +1,7 @@
 ---
 status: Approved (name Approved at gate 3; logo realized WBS-5.4; deep rebrand realized PH-8 / ADR-0018)
 version: v0.3
-updated: 2026-07-15
+updated: 2026-07-16
 owner: operator (STK-001)
 ---
 
@@ -35,10 +35,18 @@ WBS-5.4 (design iterated in a Claude Design project); the **realized** identity 
   white/gray mark, but **blue face `#2F6BFF` + orange offset `#F0731F`** (`text-shadow` offset).
 - Flame: vertical **yellow → orange → red** gradient — `#FBD24A → #F5901E → #DC2A16`, with a brighter core
   (`#FDEFB0 → #F8B73C`) and a warm glow. Reads from 512 px down to a 16 px favicon.
-- Deliverables (committed under `docs/branding/`): `mark.svg` (the flame, portable vector); `logo-light.png`
-  + `logo-dark.png` (the full flame+wordmark lockup, Pixelify baked in — **PNG, because GitHub does not load
-  web fonts in SVG `<text>`**, so a portable wordmark SVG would not render). The terminal glyph lives in
-  `packages/tui/src/logo.ts` (+ `packages/opencode/src/cli/ui.ts`), flame in ember orange.
+- Deliverables (committed under `docs/branding/`): `mark.svg` (the flame, portable vector). The terminal glyph
+  lives in `packages/tui/src/logo.ts` (+ `packages/opencode/src/cli/ui.ts`).
+
+**README assets refreshed to the shipped v0.3.0 identity (PH-8, 2026-07-16).** The old WBS-5.4 lockups
+(`logo-light.png`/`logo-dark.png`, flame + Pixelify block wordmark) never tracked the deep rebrand, so the README
+still showed the pre-flame mark. Regenerated to the **#63-approved lockup** rasterized (`docs/branding/logo-v3.png`
+— gradient flame teardrop from `favicon-v3.svg` + two-tone "Marid" `#2F6BFF`/`#F0731F` in a bold sans, flame
+height ≈ "M" cap-height; **PNG, font baked**, transparent bg → works on both GitHub themes) and `mark.svg` → the
+new gradient flame. New README screenshot `docs/branding/screenshots/tui-v3.png` — a **real** `marid` TUI home
+frame (flame + two-tone MARID + prompt + footer), captured headlessly via opentui's `createTestRenderer` +
+`captureSpans()` → HTML → headless Chrome. New filenames carry a
+`-v3` suffix to bust GitHub's camo image cache. (Telegram capture dropped — not required.)
 
 ## Rebrand boundary (per ADR-0001/Shaheen reject #3)
 

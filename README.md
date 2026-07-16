@@ -1,9 +1,5 @@
 <p align="center">
-  <picture>
-    <source srcset="docs/branding/logo-dark.png" media="(prefers-color-scheme: dark)">
-    <source srcset="docs/branding/logo-light.png" media="(prefers-color-scheme: light)">
-    <img src="docs/branding/logo-light.png" alt="Marid" width="440">
-  </picture>
+  <img src="docs/branding/logo-v3.png" alt="Marid" width="440">
 </p>
 
 <p align="center"><strong>Marid</strong> — your agents, summoned anywhere.</p>
@@ -54,9 +50,14 @@ Everything else is upstream capability, reused as-is.
 ## Screenshots
 
 <p align="center">
-  <img src="docs/branding/screenshots/web.png" alt="Marid web UI — a new session" width="820">
+  <img src="docs/branding/screenshots/tui-v3.png" alt="Marid TUI — a new session" width="820">
 </p>
-<p align="center"><em>The web UI, served by <code>marid serve</code> — a new session (flame wordmark, model picker, composer). The TUI and Telegram captures follow in a later pass.</em></p>
+<p align="center"><em>The <code>marid</code> TUI — the flame + two-tone wordmark, the prompt composer, and the footer.</em></p>
+
+<p align="center">
+  <img src="docs/branding/screenshots/web.png" alt="Marid web UI" width="820">
+</p>
+<p align="center"><em>The web UI, served by <code>marid serve</code>.</em></p>
 
 ## Architecture
 
