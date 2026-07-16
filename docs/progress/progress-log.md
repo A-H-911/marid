@@ -11,6 +11,26 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-16 — PH-8 Phase 7 (WBS-8.7): public v0.3.0 RELEASED — MS-009 MET, PH-8 complete
+- **Done:** cut the public **[v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0)** release, closing MS-009
+  and completing PH-8. Sequence (each an operator gate): **GATE 0** RC dry-run — `v0.3.0-rc.1` via
+  `workflow_dispatch` built all 7 targets → 21 signed assets + 3-OS install-smoke green, proving the release build
+  on current `develop` (then deleted). **GATE 1** PR #64→#65 tracker prep (docs-only) merged to develop. **GATE 2**
+  `develop → main` sync PR #66 **merge-commit** (`378ba650`, preserves ancestry) — 17 required checks green.
+  **GATE 3** `v0.3.0` tag on `378ba650` via `gh api` refs → `marid-release.yml` green → **21 signed assets** (7
+  targets × archive/.sha256/.minisig) published + **3-OS install-smoke green**. **GATE 4** this tracker close.
+- **Verified:** pre-tag `git diff f022fbf005 378ba650` = **docs-only** → the tag build is byte-identical to the
+  green RC build (the RC was a faithful proxy because the tracker PRs don't touch the binary). Release
+  `isDraft:false isPrerelease:false`, 21 assets, now "Latest". All 6 reported v0.2.0 issues map to a Met AC
+  (1→AC-027, 2→AC-031, 3→AC-029, 4→AC-028, 5→AC-030, 6→AC-025+026); AC-025..031 all Met.
+- **Decisions:** version is tag-driven (`OPENCODE_VERSION`) — `package.json` stays upstream `1.17.18`, no
+  version-file edit. Draft-first pipeline (a failed build never publishes). RC-first kept the real `v0.3.0` tag
+  pristine.
+- **Deviations:** `install-smoke` exercises **3 of 7 targets** (linux-x64/darwin-arm64/windows-x64); arm64/musl
+  are build+sign only (matches v0.2.0; WBS-8.7 DoD asks only "3-OS install-smoke"). Real active-session TUI +
+  Telegram **screenshots** remain a tracked fast-follow (never a v0.3.0 gate).
+- **Blockers:** none. **Next:** PH-8 is complete. Open work: **PH-7 WhatsApp** (operator-gated, not started).
+
 ## 2026-07-15 — PH-8 WBS-8.6: docs + diagrams + register reconcile (Phase 6) — MERGED (PR #64 `f022fbf005`)
 - **Done:** brought the docs package into line with the deep-rebrand + data isolation now shipped on `develop`.
   **usage.md** — new "Data isolation & coexistence" section: the per-OS data/state/config/cache/managed dirs (the
