@@ -3124,7 +3124,7 @@
         "id": "PH-8",
         "name": "Isolation & deep rebrand",
         "goal": "Total DATA isolation from a co-installed OpenCode (dirs/config; OPENCODE_* env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first",
-        "status": "in-progress",
+        "status": "done",
         "depends_on": [
           "PH-6"
         ],
@@ -4565,6 +4565,18 @@
         "Diagrams 01/05/13 reviewed & left (already Marid-accurate); screenshots deferred to operator",
         "validate_package.py docs/ = OK"
       ]
+    },
+    {
+      "date": "2026-07-16",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 7 (WBS-8.7): public v0.3.0 RELEASED - MS-009 MET, PH-8 complete. GATE0 RC dry-run (v0.3.0-rc.1 workflow_dispatch: all 7 targets -> 21 signed assets + 3-OS install-smoke green, proving the release build on develop, then deleted); GATE1 tracker-prep PR #65 (squash 417b0010db) to develop; GATE2 develop->main sync PR #66 MERGE-COMMIT 378ba650 (17 required checks green); GATE3 v0.3.0 tag on 378ba650 via gh api refs -> marid-release.yml green -> release published (isDraft false, Latest) with 21 assets (7 targets: linux-arm64/x64/x64-musl, darwin-arm64/x64, win32-arm64/x64; each archive/.sha256/.minisig) + 3-OS install-smoke green. Pre-tag git diff f022fbf005..378ba650 = docs-only so the tag build is byte-identical to the green RC. Version tag-driven via OPENCODE_VERSION (package.json stays upstream 1.17.18). All 6 reported v0.2.0 issues -> Met AC (1->027,2->031,3->029,4->028,5->030,6->025+026); AC-025..031 all Met. Deviation: install-smoke exercises 3 of 7 targets (arm64/musl build-only). Screenshots (TUI/Telegram) remain a tracked fast-follow. Next: PH-7 WhatsApp (operator-gated). validate OK.",
+      "items_completed": [
+        "RC dry-run v0.3.0-rc.1: 7 targets, 21 assets, 3-OS smoke green (deleted after)",
+        "PR #65 tracker-prep merged (squash 417b0010db)",
+        "develop->main sync PR #66 merge-commit 378ba650 (17 checks green)",
+        "v0.3.0 tag on 378ba650 -> release published: 21 signed assets + 3-OS install-smoke green",
+        "MS-009 MET; PH-8 done; WBS-8.7 done; keystone PH-8 status->done"
+      ]
     }
   ],
   "change_log": [
@@ -4828,6 +4840,12 @@
       "actor": "execution-agent",
       "action": "PH-8 Phase 6 (WBS-8.6) docs/diagrams/register reconcile - MERGED as PR #64 (squash f022fbf005) 2026-07-16. Reconciled the docs package to the shipped PH-8 deep-rebrand + data isolation; flipped P-6/P-7 planned->realized (with real sites + reconcile recipes), the ADR-0018 branding note ->realized, NFR-010 ->Met, PH-8 status ->in-progress, and the stale #62/#54/WBS-8.4/8.5 tracker rows. Diagrams 01/05/13 left as-is (reviewed, not stale); TUI+Telegram screenshots deferred to operator. AC-025..031 already Met. validate OK; docs-only, no code touched.",
       "target": "docs/usage.md, README.md, docs/branding/branding.md, docs/architecture/architecture.md, CLAUDE.md, CONTRIBUTING.md, docs/requirements/non-functional.md, docs/progress/{progress-log,status-report}.md, docs/planning/{roadmap,work-breakdown,milestones}.md, docs/keystone-state.json"
+    },
+    {
+      "timestamp": "2026-07-16T05:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 7 (WBS-8.7): public v0.3.0 released - MS-009 MET, PH-8 complete. RC dry-run proved the 7-target build; develop->main sync PR #66 merge-commit 378ba650; v0.3.0 tag on 378ba650 via gh api refs fired marid-release.yml -> 21 signed assets + 3-OS install-smoke green, release published (Latest). Flipped MS-009->MET, PH-8->done, WBS-8.7->done, keystone PH-8 status->done, acceptance-audit AC-029/030 finalized. All 6 issues -> Met AC. Next: PH-7 WhatsApp (operator-gated).",
+      "target": "git tag v0.3.0 (378ba650) + GH release; docs/planning/{roadmap,work-breakdown,milestones}.md, docs/progress/{progress-log,status-report}.md, docs/validation/acceptance-audit.md, docs/keystone-state.json"
     }
   ]
 }
