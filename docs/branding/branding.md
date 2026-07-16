@@ -43,7 +43,9 @@ WBS-5.4 (design iterated in a Claude Design project); the **realized** identity 
 still showed the pre-flame mark. Regenerated to the **#63-approved lockup** rasterized (`docs/branding/logo-v3.png`
 — gradient flame teardrop from `favicon-v3.svg` + two-tone "Marid" `#2F6BFF`/`#F0731F` in a bold sans, flame
 height ≈ "M" cap-height; **PNG, font baked**, transparent bg → works on both GitHub themes) and `mark.svg` → the
-new gradient flame. New README screenshot `docs/branding/screenshots/tui-v3.png` — a **real** `marid` TUI home
+new gradient flame. New README screenshots: `docs/branding/screenshots/web-v3.png` — the **real** web UI new-session view (flame
+wordmark + composer + model picker, captured live via Playwright against `marid serve`) — and
+`docs/branding/screenshots/tui-v3.png` — a **real** `marid` TUI home
 frame (flame + two-tone MARID + prompt + footer), captured headlessly via opentui's `createTestRenderer` +
 `captureSpans()` → HTML → headless Chrome. New filenames carry a
 `-v3` suffix to bust GitHub's camo image cache. (Telegram capture dropped — not required.)

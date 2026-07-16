@@ -55,9 +55,9 @@ Everything else is upstream capability, reused as-is.
 <p align="center"><em>The <code>marid</code> TUI — the flame + two-tone wordmark, the prompt composer, and the footer.</em></p>
 
 <p align="center">
-  <img src="docs/branding/screenshots/web.png" alt="Marid web UI" width="820">
+  <img src="docs/branding/screenshots/web-v3.png" alt="Marid web UI — a new session" width="820">
 </p>
-<p align="center"><em>The web UI, served by <code>marid serve</code>.</em></p>
+<p align="center"><em>The web UI against <code>marid serve</code> — a new session (flame wordmark, model picker, composer).</em></p>
 
 ## Architecture
 
