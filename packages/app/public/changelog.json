@@ -1,0 +1,36 @@
+{
+  "releases": [
+    {
+      "tag": "0.3.0",
+      "highlights": [
+        {
+          "source": "desktop",
+          "items": [
+            {
+              "title": "Marid rebrand",
+              "description": "The app is now fully Marid across the TUI, CLI, and web UI — new flame logo, favicon, and social card."
+            },
+            {
+              "title": "Total data isolation",
+              "description": "Marid stores its data, config, and auth under its own app directory, so it runs side by side with a co-installed OpenCode without collisions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "0.2.0",
+      "highlights": [
+        {
+          "source": "desktop",
+          "items": [
+            {
+              "title": "First Marid release",
+              "description": "Initial private distribution with the Marid gateway, isolated instances, and the Telegram channel gateway."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 ---
-status: Proposed (name Approved at gate 3; plan approved with gate 13; logo realized WBS-5.4)
-version: v0.2
-updated: 2026-07-08
+status: Approved (name Approved at gate 3; logo realized WBS-5.4; deep rebrand realized PH-8 / ADR-0018)
+version: v0.3
+updated: 2026-07-15
 owner: operator (STK-001)
 ---
 
@@ -43,9 +43,30 @@ WBS-5.4 (design iterated in a Claude Design project); the **realized** identity 
 ## Rebrand boundary (per ADR-0001/Shaheen reject #3)
 
 User-visible surfaces only: CLI bin name, TUI title + startup logo, README, release names (patch-surface
-P-2). Internal identifiers, env prefixes (`OPENCODE_*`), XDG dir names, and DB names stay upstream to
-keep the sync surface small — revisit only if a conflict with genuine OpenCode installs on the same
-machine emerges (instance dirs already prevent it).
+P-2). Internal identifiers and env prefixes (`OPENCODE_*`) stay upstream to keep the sync surface small.
+XDG dir names originally stayed upstream too, "revisit only if a conflict with genuine OpenCode installs on
+the same machine emerges" — **that condition emerged at v0.2.0 and PH-8 moved them** (see the ADR-0018 note
+below); DB names stay upstream (now inside the isolated dir).
+
+> **PH-8 revisited this boundary and moved it (that "revisit only if" condition emerged).** Running the public
+> v0.2.0 binary *plain* (not via `marid instance`) beside a co-installed OpenCode shared machine-global
+> dirs/auth/model/sessions/DB. **[ADR-0018](../adrs/adr-0018-data-isolation-deep-rebrand.md)** (Approved
+> 2026-07-13) and [DEC-022..027](../decisions/open-decision-register.md) resolved it, now **realized**: the
+> **XDG dir names isolate to `marid`** (data isolation via a build-time app-name — P-6), the config filename is
+> **`marid.json`** (P-7, project-`opencode.json` fallback), **`OPENCODE_*` env stays** (ecosystem compat, with
+> boot-time disclosure of the five data-layer overrides that still pierce isolation), and the **DB file name
+> stays** `opencode.db` (internal, now inside the isolated dir — DEC-027). PH-8 also extended the rebrand past
+> this "user-visible surfaces only" line, all **shipped on `develop`**:
+> - **Agent self-identity** → Marid at the single system-prompt choke point, with a CI guard forbidding
+>   `\bopencode\b` in emitted prompts (P-8, DEC-026, AC-028).
+> - **TUI surfaces** — startup logo redrawn to a **flame teardrop + two-tone wordmark** behind a truecolor
+>   **render gate** (crisp-mono fallback on 256-color terminals), `/exit` goodbye, sidebar footer "● Marid",
+>   notification title, and the removal of the OpenCode-GO upsell (P-2, AC-029).
+> - **Web UI** — favicon / PWA icons / social-share / `Mark`+`Splash` glyphs / notification icon regenerated
+>   from the flame, all `opencode.ai` remotes dropped, and the home/crash brand lockup reshaped to a shared
+>   inline-SVG flame + two-tone "Marid" (P-2 expansion + P-9 auth-gate, AC-030).
+>
+> The two-tone wordmark spec below (blue `#2F6BFF` / orange `#F0731F`) is what those surfaces apply.
 
 **User-Agent dropped from P-2 (WBS-5.4):** the brief originally listed the user-agent, but the real request
 UAs are hardcoded `opencode/${version}` across ~15 provider/plugin source sites (`session/llm/request.ts`,

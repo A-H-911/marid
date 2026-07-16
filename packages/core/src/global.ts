@@ -7,7 +7,14 @@ import { Flock } from "./util/flock"
 import { Flag } from "./flag/flag"
 import { makeGlobalNode } from "./effect/app-node"
 
-const app = "opencode"
+// MARID P-6 (WBS-8.2 data isolation): the app-name seams every machine-global
+// dir below (data/cache/config/state/tmp + the Flock). The marid binary bakes
+// "marid" here via a build-time define in script/marid-build.ts
+// ("process.env.__MARID_APP": '"marid"' rewrites this exact dot-notation read);
+// dev sets it at runtime in src/marid.ts's first-import bootstrap. Upstream
+// entry (src/index.ts) leaves __MARID_APP unset → stays "opencode", so upstream
+// behaviour and every non-marid test are byte-unchanged.
+const app = process.env.__MARID_APP ?? "opencode"
 const data = path.join(xdgData!, app)
 const cache = path.join(xdgCache!, app)
 const config = path.join(xdgConfig!, app)

@@ -1,7 +1,7 @@
 ---
 status: Draft
 version: v0.1
-updated: 2026-07-03
+updated: 2026-07-13
 owner: operator (STK-001)
 ---
 
@@ -34,6 +34,12 @@ governance: Proposed / Approved / Rejected / Superseded / Deferred. Nothing here
 | DEC-019 | Telegram real-client test strategy | **four tiers** (fake-server=gate + userbot + Web-Playwright local/on-demand + native-mobile manual) · fake-server-only · GUI-as-required-gate | operator: real automated testing incl. the native app | PH-6 | Approved | C-10 / ADR-0013 |
 | DEC-020 | WhatsApp real-client test strategy | fake-WA-at-WAHA-boundary = gate + burner real-protocol probe (manual) + native-app (manual); **NO deterministic real-protocol tier** · second-account-as-gate · official-Cloud-API-sandbox | WhatsApp has no test DC/sandbox; Baileys mock is private (R-12) | PH-7 | Approved | C-13 / ADR-0014 |
 | DEC-021 | WhatsApp permission-approval UX | **token-bound text reply** · interactive buttons · WAHA-Plus lists · polls | buttons dead/deprecated on unofficial WhatsApp; lists paid/fragile (R-12) | PH-7 | Approved | C-14 / ADR-0015 |
+| DEC-022 | Machine-state isolation mechanism | **app-name change isolates dirs; KEEP `OPENCODE_*` env + detect/disclose pierce** · rename env for isolation · no isolation | operator: total DATA isolation but keep `OPENCODE_*` env (plugin/ecosystem compat) | PH-8 | Approved | 2026-07-13 (plan §2); realized by ADR-0018 D1; DEC-009 reuse |
+| DEC-023 | Config filename + fallback | **`marid.json` primary; project-level `opencode.json` fallback; global reads `~/.config/marid/` only** · global `opencode` fallback · marid-only | operator: project fallback YES, global fallback NO (avoids model/provider bleed) | PH-8 | Approved | 2026-07-13 (plan §2 i); ADR-0018 D2 |
+| DEC-024 | `.opencode/` project dirs (agents/skills/plugins/commands) | **keep upstream-named** · rename to `.marid/` | operator: keep (ecosystem compat, like kept env) | PH-8 | Approved | 2026-07-13 (plan §2 ii); ADR-0018 D3 |
+| DEC-025 | Upgrade migration | **one-time copy** of the old opencode data/state into the marid dirs (marker; no re-run) · fresh + re-issue · no migration | operator: one-time copy (no auth outage; gateway tokens + Telegram pairing survive) | PH-8 | Approved | 2026-07-13 (plan §2 iii); ADR-0018 D4 |
+| DEC-026 | Agent-identity / prompt transform scope | **full** (identity + self-doc-fetch → Marid docs + support URLs → Marid repo) · identity-only · none | operator: full transform | PH-8 | Approved | 2026-07-13 (plan §2 iv); ADR-0018 D6 |
+| DEC-027 | Rename the sessions DB file | **keep `opencode.db` inside the isolated marid dir** · rename to `marid.db` | operator: keep (dir isolation already isolates it; rename needs 2 upstream branches, no operator-visible benefit) | PH-8 | Approved | 2026-07-13 (operator gate at ADR-0018 Phase-0 exit); ADR-0018 D5 |
 
 ## Tensions logged at Stage 6 (contradiction/dependency detection)
 
@@ -188,3 +194,48 @@ ownership** (a channel can view a mirrored session but only owns→approve). Rec
 **native mobile app (mobilewright)** = operator-requested manual/occasional check (never a gate). Honors "always
 executed" without flaky remote gates. C-10 front-runners A+B (complementary) + fake-server gate + C manual.
 Realized ADR-0013; feasibility gated by EXP-007/009/010.
+
+## DEC-022 … DEC-027 detail — PH-8 isolation & deep rebrand (2026-07-13)
+
+Inputs the operator locked while planning PH-8 (twice-reviewed plan §2, 2026-07-13). **DEC-022..027 are all
+Approved** — DEC-022..026 as plan-locked inputs, and **DEC-027 confirmed KEEP `opencode.db` at the Phase-0
+operator gate (2026-07-13).** They are *realized* by
+**[ADR-0018](../adrs/adr-0018-data-isolation-deep-rebrand.md)**, **Approved at that same PH-8 Phase-0 gate**
+(INV-005) — the design is settled and PH-8 code phases (WBS-8.1+) are authorized.
+
+**Context.** The public `marid` v0.2.0 binary, run beside a co-installed OpenCode, leaks the OpenCode
+identity and shares machine-global state (auth/model/sessions/config/DB) — six reported issues (see ADR-0018
+Context). This is exactly the on-machine conflict `branding.md`'s "Rebrand boundary" said it would *"revisit
+only if"* it emerged. PH-8 revisits it: **dir names change (isolation); env stays; DB name stays.**
+
+**DEC-022 — machine-state isolation via app-name; keep `OPENCODE_*` env + disclose pierce (Approved).** All
+data/state/config dirs and the file lock derive from one upstream app-name constant; a build-time
+`__MARID_APP` define isolates them at once (ADR-0018 D1, **P-6**). `OPENCODE_*` env is **kept** (DEC-009
+reuse — third-party plugins + Marid's own instance/test infra read it); data-layer overrides that *pierce*
+isolation are **detected and disclosed** (boot WARN + `usage.md` table + negative tests), never silently
+honored.
+
+**DEC-023 — config `marid.json` primary; project-`opencode.json` fallback; no global fallback (Approved).**
+A repo's checked-in `opencode.json` still works; a global `~/.config/opencode/` fallback is **rejected** — it
+would re-import the reported model/provider bleed. ADR-0018 D2, **P-7**.
+
+**DEC-024 — `.opencode/` project dirs kept upstream-named (Approved).** Agents/skills/plugins/commands
+discovery keeps the upstream name (ecosystem compat, like kept env); isolation targets machine-global state,
+not project-local opt-in content. ADR-0018 D3.
+
+**DEC-025 — migration = one-time copy (Approved).** First run with no marid dir copies the old opencode
+data/state (auth.json, `${data}/marid` gateway tokens, DB, model.json, Telegram pairing) into the marid dirs
+once (marker prevents re-run, logged) → no auth outage, pairing survives. ADR-0018 D4.
+
+**DEC-026 — full agent-identity transform (Approved).** Marid-owned wrap of `provider()`'s output at the
+single system-prompt choke point: identity → Marid, self-doc-fetch → Marid docs/neutralized, support URLs →
+Marid repo; CI guard forbids `\bopencode\b` in emitted prompts outside an allowlist. ADR-0018 D6, **P-8**
+(conditional).
+
+**DEC-027 — no DB rename (Approved).** The DB file stays `opencode.db` *inside* the isolated marid dir (dir
+isolation already isolates it; renaming needs two upstream branches, conflicts with marid-instance, no
+operator-visible benefit). **The operator confirmed KEEP `opencode.db` (no rename) at the ADR-0018 Phase-0
+gate (2026-07-13).** ADR-0018 D5.
+
+**Traceability:** realized by ADR-0018 (Approved 2026-07-13); opens PH-8 / MS-009 (roadmap/WBS/milestones) + AC-025..031;
+amends `branding.md` "Rebrand boundary"; pre-registers P-6/P-7/P-8 + a P-2 expansion in `architecture.md`.

@@ -322,6 +322,11 @@ Marid is built for a **single operator on a private network**, and the defaults 
   reach privileged routes, override tools/permissions, or escape its bound agent.
 - **Per-instance isolation** — each instance namespaces its data, cache, config, state, and temp trees; instances
   do not share credentials or storage.
+- **Data isolation from co-installed OpenCode** — the base `marid` binary keeps all machine-global state under its
+  own `marid` dirs, reads `marid.json` config, and never shares auth, model, sessions, or config with an OpenCode
+  on the same machine. `OPENCODE_*` env is kept for plugin compatibility (data-layer overrides are disclosed at
+  boot), and a first-run migration carries your v0.2.0 tokens/pairing across. See
+  [usage → Data isolation & coexistence](docs/usage.md#data-isolation--coexistence).
 - **Containment posture** (ADR-0007) — secrets live only in environment or hashed stores and never land in logs,
   diagnostics, or the audit stream. Instructions inside channel or upstream content are treated as **data, never
   executed** (INV-004).

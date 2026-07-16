@@ -9,8 +9,11 @@
 // from index.ts, an upstream PR that adds/removes a top-level command will NOT
 // be reflected here automatically. Reconcile this command list against index.ts
 // on each upstream sync (upstream-sync-strategy.md checklist item).
+import "./marid-env" // MUST stay first: sets __MARID_APP before global.ts loads (WBS-8.2 P-6)
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
+import { maridMigrate } from "./marid-migrate"
+import { disclosePierce } from "./marid-pierce"
 import { RunCommand } from "./cli/cmd/run"
 import { GenerateCommand } from "./cli/cmd/generate"
 import { ConsoleCommand } from "./cli/cmd/account"
@@ -131,6 +134,15 @@ const cli = yargs(args)
     process.exit(1)
   })
   .strict()
+
+// WBS-8.2 (DEC-025 / AC-031): one-time copy of a pre-isolation OpenCode install
+// into the isolated marid dirs, so upgrading a machine that ran marid v0.2.0
+// keeps auth, gateway tokens, sessions DB, and model selection. Best-effort —
+// a failure degrades to a fresh marid dir (re-auth), never blocks the CLI.
+await maridMigrate().catch((e) => process.stderr.write("[marid] migration skipped: " + errorMessage(e) + EOL))
+
+// WBS-8.2 (AC-026): disclose any OPENCODE_* env var that pierces data isolation.
+disclosePierce()
 
 try {
   if (args.includes("-h") || args.includes("--help")) {

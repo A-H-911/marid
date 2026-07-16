@@ -1,7 +1,7 @@
 ---
 status: Approved (gate 5, 2026-07-03; amended 2026-07-12 — PH-6 gateway + mirroring realized, additive; @marid/gateway rename + gateway/channel-gateway disambiguation)
 version: v1.2
-updated: 2026-07-12
+updated: 2026-07-14
 owner: operator (STK-001)
 ---
 
@@ -77,6 +77,57 @@ graph TB
 | P-4 (**reserved / deferred**) | Flip the `marid export` default to sanitized (`packages/opencode/src/cli/cmd/export.ts` — `--sanitize` currently opt-in). **Not applied.** Reserved as the (a) option of ADR-0007's sub-decision; **operator chose interim (c) on 2026-07-07** (documentation guardrail — operators pass `--sanitize` for channel/untrusted transcripts), so P-4 stays deferred. Activate only on a later operator decision, at PH-5. | Raw-transcript export is an operator-local data-handling footgun (channel tokens cannot reach `export`); a value-redactor is the durable fix, PH-5 | 1-line default flip (if chosen) | Low (isolated default) |
 | P-CI | CI test-timing/env edits for GitHub-hosted runners — enumerated in `upstream-sync-strategy.md` (P-CI-1..4); prefer fixes in `ci.yml` over upstream test edits (P-CI-4 = env-scaled timing, knob in `ci.yml`). Surface as of PH-2: scaled read-sites in `packages/opencode` tests **and** `packages/core/test/util/flock.test.ts`, plus a one-line `turbo.json` `globalPassThroughEnv` entry (knob transport — turbo strict env mode otherwise strips the scale from non-opencode test tasks) | Free 2-core runners are slower/variable vs upstream's runners | Small, per-test + 1 config line | Low (re-apply on conflict) |
 | P-ENTRY (additive) | marid binary entry `packages/opencode/src/marid.ts` + profile build `packages/opencode/script/marid-build.ts` — **new files, zero upstream edits**. `src/marid.ts` mirrors `src/index.ts`'s command wiring (branded `marid`, authenticated `serve`, adds `token` + `instance`); `marid-build.ts` mirrors `build.ts`'s defines/worker-paths (swaps entrypoint + binary name). Chosen over a parameterizing edit to `index.ts`/`build.ts` (operator decision 2026-07-04). | `index.ts`/`build.ts` execute on import and aren't reusable builders; additive is more sync-durable than an edit that conflicts | 0 upstream lines (2 new files) | **Drift**: an upstream command added to `index.ts`, or a defines change in `build.ts`, is NOT auto-reflected — reconcile both on each sync (checklist in `upstream-sync-strategy.md`) |
+| P-6 (**realized, PH-8** — ADR-0018 D1, PR #55 `a979a20e01`) | **Data-dir isolation via app-name.** The single upstream app-name constant `packages/core/src/global.ts:17` — `const app = process.env.__MARID_APP ?? "opencode"` (**dot notation**) — seeds every machine-global path (`~/.local/share\|state/marid`, `~/.config/marid`, cache, tmp) **and** the `Flock` name. The profile build `packages/opencode/script/marid-build.ts` bakes `"process.env.__MARID_APP": '"marid"'` (rewrites that exact read); the dev entry sets it via a first-position side-effect import `src/marid-env.ts` (`process.env["__MARID_APP"] ??= "marid"`, **bracket notation**, before any global-loading import). `config/managed.ts:25` gates the MDM dir on the same app-name; migration `src/marid-migrate.ts` one-time-copies the old opencode dirs (DEC-025, AC-031); `src/marid-pierce.ts` discloses the five kept `OPENCODE_*` data-layer overrides at boot (DEC-022, AC-026). Unset `__MARID_APP` → byte-identical upstream. | One constant seeds every machine-global path + lock; a build-time swap isolates all at once vs editing every path site | Upstream 1 line (`global.ts:17`) + additive build define + marid modules | Low — **Marid wins on reconcile**: re-apply the `?? "opencode"` widen if a sync reverts `global.ts:17`; define/env/modules are Marid-owned. The compiled-define branch is only guarded by the 3-OS `marid-build` isolation smoke |
+| P-7 (**realized, PH-8** — ADR-0018 D2, PRs #55/#56) | **Config filename discovery + writers.** `packages/opencode/src/config/config.ts` `maridConfigNames(app)` returns `[marid.json, marid.jsonc]` when app≠`opencode` (empty for upstream → no regression); marid names are **discovered first** (the created default) and **merged last** (win over a co-existing `opencode.json`) at global + project levels; a **project-level `opencode.json` is read as fallback**; the **global level reads `~/.config/marid/` only** (no `~/.config/opencode/` fallback — that would re-import the reported provider/model bleed). Writer `cli/cmd/mcp.ts:400` writes `marid.json`; `config/managed.ts` managed dir isolates (shared with P-6). **`.opencode/` project dirs kept upstream-named** (`config.ts:440`, DEC-024). All app-name-gated. | Distribution config identity the app-name change doesn't cover; a global fallback would re-import the reported model/provider bleed | Upstream — a few small gated sites | Medium — **Marid wins on reconcile**: keep `maridConfigNames`' first-discover / last-merge order and the kept `.opencode/` name if a sync reshuffles config discovery |
+| P-8 (**realized, PH-8** — ADR-0018 D6, 2026-07-13) | **Agent-identity transform** at the single system-prompt choke point (`packages/opencode/src/session/system.ts` `provider()`): `selectPrompt()` picks the prompt, `provider()` maps it through Marid-owned `session/marid-identity.ts maridizePrompt()` — identity/self-doc-fetch/support-URL → Marid; app-name-gated (upstream unchanged). CI guard `agent-identity.test.ts` forbids `\bopencode\b` in any emitted `prompt/*.txt`. **Required a 1-line upstream edit** (the `.map()` wrap in `provider()`), so it is a `P-8` row (not additive). | Full identity rebrand (DEC-026) at the sole consumer | Upstream (choke point, ~1 line) + new marid module | Low — Marid wins on reconcile |
+| P-9 (**realized, PH-8** — WBS-8.5 web auth) | **Web token-persistence auth-gate.** Functional edits to shared `packages/app` (web + desktop): (1) `utils/server.ts` `createSdkForServer` falls back to a tab-session-persisted token for any **loopback** connection missing a `password` — `isLoopbackUrl` guard keeps the token off remote/desktop servers, the `!password` guard leaves an explicitly-passworded local server untouched; (2) `entry.tsx` boot persists the `?auth_token=` value to `sessionStorage`; (3) `app.tsx` adds an additive `AuthGate` + `Unauthorized` token-entry screen reacting to the already-running global health poll (`ServerHealth.unauthorized`, set on a 401 in `utils/server-health.ts`). Fixes the token dropping after the app navigates into a re-resolved local-server connection (session route) whose URL isn't byte-identical to the boot server's → 401 → false Unauthorized. Does **not** touch the upstream `disableHealthCheck` flag (#29319). | A secured gateway needs the token on every request; it arrives once (`?auth_token=`, stripped from the URL) and must survive navigation | Upstream (shared app) — a few small sites + additive components; unit-guarded (`server.test.ts` `isLoopbackUrl`) | Low–medium — Marid wins on reconcile |
+
+**P-2 expansion (PH-8 — ADR-0018 D8):** the existing **P-2** branding row extends to the deep-rebrand
+surfaces — TUI exit logo + `marid -s` hint (`packages/tui/src/util/presentation.ts`), sidebar footer, notification
+title (`attention.ts`), update toast, **GO-upsell removal** + **two-tone wordmark** (`packages/tui/src/logo.ts` /
+`logo.tsx` / `packages/opencode/src/cli/ui.ts`) behind a render gate, and the **web assets** (`packages/ui` /
+`packages/app` favicon/PWA/social/`Mark`+`Splash`/notification icon, release-notes repoint). Same class as P-2
+today (product identity, config-first, **Marid wins on reconcile**); enumerated at WBS-8.4/8.5.
+
+**WBS-8.4 4a done (2026-07-14, at operator gate):** the **mechanical** half of the TUI/CLI rebrand landed —
+every user-facing "OpenCode" string in the shipped `marid` binary → Marid: main TUI (exit hint, notification
+title + sound-pack name, update toast, both sidebar footers, permission prose, ~12 tips' wrong-binary
+`opencode …`→`marid …` hints, model-error hints, crash screen + bug-report → Marid repo, docs link → Marid
+repo), the `--mini` run mode (permission/prompt prose), and `uninstall.ts`. **GO-upsell removed at the root**
+(TUI dialog subsystem + `bg-pulse*` deleted, rate-limit handler removed, server `retry.ts` free-limit message
+neutralized — the inline footer renders `retry.message`, so the dialog delete alone left it visible); both
+providers de-marketed (IDs kept). Cosmetic → **unconditional** "Marid" (not `__MARID_APP`-gated), per PH-5 P-2;
+no new `P-*`. **WBS-8.4 4b done (2026-07-14, at operator gate):** §94 logo redesign — taller 6-row flame
+(`logo.ts` with a `leftCore` inner-highlight mask), flame gradient `#FBD24A→#F5901E→#DC2A16` + core
+`#FDEFB0→#F8B73C`, **two-tone split wordmark** blue `#2F6BFF` (MAR) / orange `#F0731F` (ID) behind a
+**truecolor render gate** (`supportsTrueColor()` via `COLORTERM`; single-tone `theme.text`/reset fallback on
+256-color) — applied in both renderers (`component/logo.tsx` + `cli/ui.ts`; the hardcoded non-TTY wordmark array
+is gone, both renderers now generate from the shared glyph data). Splash badge → compact Marid flame
+(`cli/cmd/run/splash.ts`); `go` glyph deleted (zero importers after 4a). AC-029 → Met (operator visual sign-off
+= merge gate). **WBS-8.5 5a done (2026-07-14, at operator gate):** the **code** half of the web rebrand
+(`packages/app` + `packages/ui`; `packages/desktop` EXCLUDED per CON-004). Killed the 3 runtime `opencode.ai`
+fetches — release-notes changelog → a committed local `packages/app/public/changelog.json` (same parser shape,
+Marid entries), notification icon + hardcoded-project avatar → local `-v3` assets. Web "OpenCode" strings → Marid
+(desktop-menu, wsl install/update copy + its test, `favicon.tsx` apple-web-app-title, help-button). Web GO-upsell
+removed at the root (`usage-exceeded-dialogs.tsx` + `dialog-usage-exceeded.tsx` deleted, call site gone — the web
+has no inline retry-message surface, so this also closes the `retry.ts` `opencode.ai/workspace/.../go` residual);
+Zen/Go de-marketed in render code (connect-provider + unpaid-model dialogs; provider IDs kept). apiKey fields →
+`type="password"`. opencode.ai click-through links (docs/help/feedback/themes) → `github.com/A-H-911/marid`. A
+`TEST-WEB` static-source guard (`marid-no-remote.test.ts`) fails CI on any re-added `opencode.ai` network
+reference (allowlist: i18n display strings, the dev-only hostname heuristic, comments). One required typecheck fix
+(`titlebar.tsx` `ChannelIndicator` — an app-touching change forces a cache-miss rebuild that surfaces a latent
+`VITE_OPENCODE_CHANNEL?` undefined-unsafety; 1-line guard). Cosmetic → **unconditional** "Marid", no new `P-*`;
+Marid wins on reconcile (highest sync-churn phase). **WBS-8.5 5a MERGED (PR #60 `67f56b8edd`). WBS-8.5 5b done
+(2026-07-14, at operator gate):** the **visual assets**. `Mark`+`Splash` (`packages/ui/src/components/logo.tsx`)
+rewritten from the OpenCode square-in-square glyph to the Marid flame silhouette — kept the `--icon-*` fills +
+viewBoxes so theme coloring + all call-sites are unchanged (monochrome at those small UI call sites, matching the
+surrounding icon color). `favicon-v3.svg` → a full-color gradient flame (edge `#FBD24A→#F5901E→#DC2A16`, core
+`#FDEFB0→#F8B73C` — the TUI flame DNA) on the `#131010` ground. Raster set regenerated from that master SVG:
+favicon-96×96/`.ico`, apple-touch 180, PWA 192/512 (maskable), and a 1200×630 `social-share.png` OG card (flame +
+two-tone "Marid" wordmark). Pipeline was Chrome-headless rendering of the SVG + a pure-JS box downscaler
+(`node zlib`, no ImageMagick — Windows `convert` is the NTFS tool, and Chrome mis-sized the 180/192 windows).
+Legacy non-`-v3` favicons left in place (still referenced by the excluded `packages/console`). AC-030 → Met
+(operator visual sign-off = merge gate).
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
 **PH-6 (gateway + mirroring) added no `P-*`:** the four `/marid/*` routes and the `owns ∪ bound` SSE filter

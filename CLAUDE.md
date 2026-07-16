@@ -67,8 +67,10 @@ Six dependency-ordered phases, each exiting at a measurable milestone:
 - **Ending a phase:** operator review checkpoint. Review PRs against `docs/handoff/review-prompts.md`
   (esp. patch-surface discipline — flag any upstream edit not registered as a `P-*`).
 - **Current status:** see `docs/progress/status-report.md` (the live snapshot) + `docs/planning/roadmap.md`.
-  (As of this writing: **PH-0..6 done**; **MS-007 MET** (2026-07-12, PR #48 `4409d92f`) — all PH-6 acceptance
-  criteria Met and the Telegram gateway stack merged to `develop`. **PH-7 WhatsApp** is operator-gated, not started.)
+  (As of this writing: **PH-0..6 done** (MS-007 MET, PR #48 `4409d92f`); **PH-8 Isolation & deep rebrand in
+  progress** — WBS-8.0..8.5 merged and AC-025..031 all Met (data isolation, agent identity, TUI + web rebrand),
+  **WBS-8.6 docs reconcile at the operator gate, WBS-8.7 v0.3.0 release remains**. **PH-7 WhatsApp** is
+  operator-gated, not started.)
 
 ## Tracking protocol (MANDATORY — do not let the trackers drift)
 
@@ -111,13 +113,21 @@ last-resort upstream-file edit**. Current surface:
 
 - **~~P-1~~ (dropped)** — marid-auth attaches as an outer wrapper around the exported
   `Server.Default.app.fetch`; no server edit (resolved by EXP-004).
-- **P-2 (branding)** — user-visible surfaces only (README, CLI bin, TUI title, user-agent), per
-  `docs/branding/branding.md`; done at PH-5. Internal `OPENCODE_*` env prefixes, XDG dir names, and DB
-  names **stay upstream** to keep the sync surface small.
+- **P-2 (branding)** — user-visible surfaces (README, CLI bin, TUI title + flame/two-tone logo, exit/footer/
+  notif, web assets), per `docs/branding/branding.md`; PH-5 + expanded at PH-8. Internal `OPENCODE_*` env
+  prefixes and the DB file name **stay upstream**; XDG **dir names now isolate to `marid`** (P-6, was in the
+  "stay upstream" list until the v0.2.0 coexistence issue moved it).
 - **P-3 (config)** — distribution config defaults (e.g. `lsp:false`), prefer config files over code.
-- **P-CI (CI timing/env)** — enumerated `P-CI-1..4` in `upstream-sync-strategy.md`. New CI timing
-  flakes are fixed by routing the budget through `OPENCODE_TIMING_SCALE` (P-CI-4), **not** another
-  one-off widening.
+- **P-6 (PH-8, data isolation)** — build-time app-name `__MARID_APP` at `packages/core/src/global.ts:17`
+  isolates every machine-global dir + the `Flock`; baked by `marid-build.ts`, dev via `src/marid-env.ts`.
+- **P-7 (PH-8, config filename)** — `marid.json`/`.jsonc` primary (project-`opencode.json` fallback; global
+  reads `~/.config/marid/` only), gated in `config/config.ts` `maridConfigNames`; `.opencode/` dirs kept.
+- **P-8 (PH-8, agent identity)** — `maridizePrompt()` wrap at the `session/system.ts provider()` choke point.
+- **P-9 (PH-8, web auth)** — token-persistence auth-gate in shared `packages/app` (`createSdkForServer` +
+  `AuthGate`).
+- **P-CI (CI timing/env)** — enumerated `P-CI-1..5` in `upstream-sync-strategy.md`. New CI timing flakes are
+  fixed by routing the budget through `OPENCODE_TIMING_SCALE` (P-CI-4), **not** another one-off widening.
+  (P-CI-5 = the generated SDK v2 effort-values widen from the WBS-8.1 sync.)
 
 ## Git & CI flow
 

@@ -6,12 +6,13 @@ import { FileComponentProvider } from "@opencode-ai/ui/context/file"
 import { MarkedProvider } from "@opencode-ai/ui/context/marked"
 import { File } from "@opencode-ai/session-ui/file"
 import { Font } from "@opencode-ai/ui/font"
-import { Splash } from "@opencode-ai/ui/logo"
+import { Splash, Flame } from "@opencode-ai/ui/logo"
 import { ThemeProvider } from "@opencode-ai/ui/theme/context"
 import { MetaProvider } from "@solidjs/meta"
-import { type BaseRouterProps, Navigate, Route, Router, useParams, useSearchParams } from "@solidjs/router"
+import { type BaseRouterProps, Navigate, Route, Router, useNavigate, useParams, useSearchParams } from "@solidjs/router"
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query"
 import { Effect } from "effect"
+import { base64Encode } from "@opencode-ai/core/util/encode"
 import {
   type Component,
   createEffect,
@@ -32,7 +33,7 @@ import { CommandProvider, useCommand, type CommandOption } from "@/context/comma
 import { CommentsProvider } from "@/context/comments"
 import { FileProvider } from "@/context/file"
 import { ServerSDKProvider } from "@/context/server-sdk"
-import { ServerSyncProvider } from "@/context/server-sync"
+import { ServerSyncProvider, useServerSync } from "@/context/server-sync"
 import { GlobalProvider, useGlobal } from "@/context/global"
 import { HighlightsProvider } from "@/context/highlights"
 import { LanguageProvider, type Locale, useLanguage } from "@/context/language"
@@ -43,6 +44,7 @@ import { PermissionProvider } from "@/context/permission"
 import { usePlatform } from "@/context/platform"
 import { PromptProvider } from "@/context/prompt"
 import { ServerConnection, ServerProvider, serverName, useServer } from "@/context/server"
+import { authTokenFromCredentials } from "@/utils/server"
 import { SettingsProvider, useSettings } from "@/context/settings"
 import { TabsProvider, useTabs, type DraftTab } from "@/context/tabs"
 import { SDKProvider, useSDK } from "@/context/sdk"
@@ -52,9 +54,10 @@ import LegacyLayout from "@/pages/layout"
 import NewLayout from "@/pages/layout-new"
 import { ErrorPage } from "./pages/error"
 import { useCheckServerHealth } from "./utils/server-health"
-import { legacySessionServer, requireServerKey, sessionHref } from "./utils/session-route"
+import { legacySessionHref, legacySessionServer, requireServerKey, sessionHref } from "./utils/session-route"
+import { createSessionLineage } from "@/pages/session/session-lineage"
 
-import { SessionPage, TargetSessionRouteContent } from "@/pages/session"
+import { SessionPage, SessionRouteErrorBoundary, TargetSessionRouteContent } from "@/pages/session"
 import { NewHome, LegacyHome } from "@/pages/home"
 
 const NewSession = lazy(() => import("@/pages/new-session"))
@@ -88,10 +91,14 @@ const SessionRoute = () => {
     tabs.newDraft({ server: server.key, directory: sdk().directory }, search.prompt)
   })
 
-  return <SessionPage />
+  return (
+    <SessionRouteErrorBoundary sessionID={params.id}>
+      <SessionPage />
+    </SessionRouteErrorBoundary>
+  )
 }
 
-const TargetSessionRoute = () => {
+function TargetServerRoute(props: ParentProps) {
   const params = useParams<{ serverKey: string; id: string }>()
   const global = useGlobal()
   const conn = createMemo(() => {
@@ -105,12 +112,45 @@ const TargetSessionRoute = () => {
     // re-resolves reactively instead); both rely on this key for server changes.
     <Show when={requireServerKey(params.serverKey)} keyed>
       <ServerSDKProvider server={conn}>
-        <ServerSyncProvider server={conn}>
-          <TargetSessionRouteContent />
-        </ServerSyncProvider>
+        <ServerSyncProvider server={conn}>{props.children}</ServerSyncProvider>
       </ServerSDKProvider>
     </Show>
   )
+}
+
+const TargetSessionRoute = () => (
+  <TargetServerRoute>
+    <TargetSessionRouteContent />
+  </TargetServerRoute>
+)
+
+function LegacyTargetSessionRoute() {
+  const params = useParams<{ serverKey: string; id: string }>()
+  return (
+    <TargetServerRoute>
+      <SessionRouteErrorBoundary sessionID={params.id} serverKey={requireServerKey(params.serverKey)}>
+        <LegacyTargetSessionRedirect />
+      </SessionRouteErrorBoundary>
+    </TargetServerRoute>
+  )
+}
+
+function LegacyTargetSessionRedirect() {
+  const params = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const sync = useServerSync()
+  const current = createSessionLineage(
+    () => params.id,
+    () => sync().session.lineage,
+  )
+
+  createEffect(() => {
+    const directory = current()?.session.directory
+    if (!directory) return
+    navigate(legacySessionHref(directory, params.id), { replace: true })
+  })
+
+  return null
 }
 
 // Wraps the non-draft routes. They are gated on (and keyed to) the globally selected
@@ -136,6 +176,7 @@ function LegacyServerLayout(props: ParentProps<{ serverScoped?: JSX.Element }>) 
 
 function DraftRoute() {
   const [search] = useSearchParams<{ draftId?: string }>()
+  const settings = useSettings()
   const tabs = useTabs()
   return (
     <Show when={tabs.ready()}>
@@ -144,7 +185,14 @@ function DraftRoute() {
         keyed
         fallback={<Navigate href="/" />}
       >
-        {(draft) => <ResolvedDraftRoute draft={draft} />}
+        {(draft) => (
+          <Show
+            when={settings.general.newLayoutDesigns()}
+            fallback={<Navigate href={`/${base64Encode(draft.directory)}/session`} />}
+          >
+            <ResolvedDraftRoute draft={draft} />
+          </Show>
+        )}
       </Show>
     </Show>
   )
@@ -413,7 +461,7 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean; start
       </Show>
       <Show when={loading()}>
         <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background-base">
-          <Splash class="w-16 h-20 opacity-50 animate-pulse" />
+          <Flame class="w-16 h-20 opacity-80 animate-pulse" />
         </div>
       </Show>
     </>
@@ -434,7 +482,7 @@ function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key:
   return (
     <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base gap-6 p-6">
       <div class="flex flex-col items-center max-w-md text-center">
-        <Splash class="w-12 h-15 mb-4" />
+        <Flame class="w-12 h-15 mb-4" />
         <p class="text-14-regular text-text-base">
           {unreachable()[0]}
           <span class="text-text-strong font-medium">{name()}</span>
@@ -476,6 +524,70 @@ function ServerKey(props: ParentProps) {
   )
 }
 
+// Marid: a secured gateway returns 401 for a missing/invalid token. Instead of rendering the shell +
+// raw 401 errors, gate on the (already-running) global health poll and show a clear unauthorized state
+// with a token entry. Additive — does not touch the upstream ConnectionGate / disableHealthCheck flag.
+function Unauthorized() {
+  const [token, setToken] = createSignal("")
+  const submit = (event: Event) => {
+    event.preventDefault()
+    const value = token().trim()
+    if (!value) return
+    const params = new URLSearchParams(location.search)
+    params.set("auth_token", authTokenFromCredentials({ password: value }))
+    location.search = params.toString() // reloads authenticated
+  }
+  return (
+    <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base p-6">
+      <div class="flex flex-col items-center max-w-sm w-full text-center">
+        <Flame class="w-14 h-[4.375rem] mb-5" />
+        <p class="text-14-regular text-text-strong font-medium">Unauthorized</p>
+        <p class="mt-1.5 text-14-regular text-text-weak">
+          Marid requires a token to connect. Paste your token to continue.
+        </p>
+        <form onSubmit={submit} class="flex flex-col gap-2 w-full mt-5">
+          <input
+            type="password"
+            value={token()}
+            onInput={(e) => setToken(e.currentTarget.value)}
+            placeholder="mar_…"
+            autofocus
+            class="w-full px-3 py-2 rounded-md bg-surface-base text-14-regular text-text-strong text-center outline-none"
+          />
+          <button
+            type="submit"
+            class="w-full px-3 py-2 rounded-md bg-surface-base hover:bg-surface-raised-base-hover text-14-regular text-text-strong transition-colors"
+          >
+            Connect
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function AuthGate(props: ParentProps) {
+  const global = useGlobal()
+  const server = useServer()
+  // Wait for the (already-running) global health poll to resolve before rendering the shell, so an
+  // unauthorized session never mounts the app + spams raw 401s. Once known: 401 → Unauthorized, else shell.
+  const health = createMemo(() => global.servers.health[server.key])
+  return (
+    <Show
+      when={health() !== undefined}
+      fallback={
+        <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-background-base">
+          <Flame class="w-16 h-20 opacity-80 animate-pulse" />
+        </div>
+      }
+    >
+      <Show when={!health()?.unauthorized} fallback={<Unauthorized />}>
+        {props.children}
+      </Show>
+    </Show>
+  )
+}
+
 export function AppInterface(props: {
   children?: JSX.Element
   defaultServer: ServerConnection.Key
@@ -505,8 +617,9 @@ export function AppInterface(props: {
       servers={props.servers}
     >
       <GlobalProvider>
-        <SettingsProvider>
-          <ConnectionGate disableHealthCheck={props.disableHealthCheck} startup={props.startup}>
+        <AuthGate>
+          <SettingsProvider>
+            <ConnectionGate disableHealthCheck={props.disableHealthCheck} startup={props.startup}>
             <Show when={useSettings().general.newLayoutDesigns().toString()} keyed>
               <Dynamic
                 component={props.router ?? Router}
@@ -525,8 +638,9 @@ export function AppInterface(props: {
                 <Routes serverScoped={props.serverScoped} />
               </Dynamic>
             </Show>
-          </ConnectionGate>
-        </SettingsProvider>
+            </ConnectionGate>
+          </SettingsProvider>
+        </AuthGate>
       </GlobalProvider>
     </ServerProvider>
   )
@@ -542,7 +656,14 @@ function Routes(props: { serverScoped?: JSX.Element }) {
           <LegacyServerLayout serverScoped={props.serverScoped}>{routeProps.children}</LegacyServerLayout>
         )}
       >
-        <Show when={!settings.general.newLayoutDesigns()}>{<Route path="/" component={LegacyHome} />}</Show>
+        <Show when={!settings.general.newLayoutDesigns()}>
+          {
+            <>
+              <Route path="/" component={LegacyHome} />
+              <Route path="/server/:serverKey/session/:id" component={LegacyTargetSessionRoute} />
+            </>
+          }
+        </Show>
         <Route path="/:dir" component={DirectoryLayout}>
           <Route path="/" component={() => <Navigate href="session" />} />
           <Route path="/session/:id?" component={SessionRoute} />
@@ -550,15 +671,15 @@ function Routes(props: { serverScoped?: JSX.Element }) {
       </Route>
       <Show when={settings.general.newLayoutDesigns()}>
         <Route path="/" component={NewHome} />
-        <Route path="/:dir/session/:id" component={LegacyTargetSessionRoute} />
+        <Route path="/:dir/session/:id" component={NewLayoutLegacySessionRedirect} />
+        <Route path="/server/:serverKey/session/:id" component={TargetSessionRoute} />
       </Show>
       <Route path="/new-session" component={DraftRoute} />
-      <Route path="/server/:serverKey/session/:id" component={TargetSessionRoute} />
     </>
   )
 }
 
-function LegacyTargetSessionRoute() {
+function NewLayoutLegacySessionRedirect() {
   const server = useServer()
   const tabs = useTabs()
   const params = useParams<{ id: string }>()

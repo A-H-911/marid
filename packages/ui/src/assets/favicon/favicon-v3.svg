@@ -1,7 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="512" height="512" fill="#131010"></rect>
-<path d="M320 224V352H192V224H320Z" fill="#5A5858"></path>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M384 416H128V96H384V416ZM320 160H192V352H320V160Z" fill="white"></path>
-</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
-@media (prefers-color-scheme: dark) { :root { filter: none; } }
-</style></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="marid-flame" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#FBD24A"/>
+      <stop offset="0.5" stop-color="#F5901E"/>
+      <stop offset="1" stop-color="#DC2A16"/>
+    </linearGradient>
+    <linearGradient id="marid-core" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#FDEFB0"/>
+      <stop offset="1" stop-color="#F8B73C"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#131010"/>
+  <g transform="translate(72,26) scale(4.6)">
+    <path d="M40 7.5C52.5 25 65 35 65 52.5C65 75 53.5 91.5 40 92.5C26.5 91.5 15 75 15 52.5C15 35 27.5 25 40 7.5Z" fill="url(#marid-flame)"/>
+    <path d="M40 32.5C47 43 52.5 49.5 52.5 60C52.5 72 47 80 40 81C33 80 27.5 72 27.5 60C27.5 49.5 33 43 40 32.5Z" fill="url(#marid-core)"/>
+  </g>
+</svg>

@@ -1,15 +1,15 @@
 import { EOL } from "os"
 import { Schema } from "effect"
-import { logo as glyphs } from "./logo"
-
-// Plain (non-TTY) marid banner: flame + wordmark, block chars only (this branch prints
-// rows verbatim, so no shadow marks). The colored TTY banner is drawn from tui/logo below.
-const wordmark = [
-  `  ▟▙                          `,
-  ` ▟██▙ █▄ ▄█ ▄▀▀▄ █▀▀▄ ▀█▀ █▀▀▄`,
-  ` ▜██▛ █ ▀ █ █▄▄█ █▄▄▀  █  █  █`,
-  `  ▀▀  █   █ █  █ █ ▀▄ ▄█▄ █▄▄▀`,
-]
+import {
+  logo as glyphs,
+  FLAME_EDGE,
+  FLAME_CORE,
+  WORDMARK_BLUE,
+  WORDMARK_ORANGE,
+  WORDMARK_SPLIT,
+  supportsTrueColor,
+  hexToRgb,
+} from "./logo"
 
 export class CancelledError extends Schema.TaggedErrorClass<CancelledError>()("UICancelledError", {}) {}
 
@@ -48,58 +48,46 @@ export function empty() {
 }
 
 export function logo(pad?: string) {
-  if (!process.stdout.isTTY && !process.stderr.isTTY) {
-    const result = []
-    for (const row of wordmark) {
-      if (pad) result.push(pad)
-      result.push(row)
-      result.push(EOL)
-    }
-    return result.join("").trimEnd()
+  const tty = process.stdout.isTTY || process.stderr.isTTY
+  // Render gate: only split the wordmark blue/orange where 24-bit color is signalled.
+  const truecolor = tty && supportsTrueColor()
+  const reset = "\x1b[0m"
+  const bold = "\x1b[1m"
+  const ansi = (hex: string) => {
+    const [r, g, b] = hexToRgb(hex)
+    return `\x1b[38;2;${r};${g};${b}m`
   }
+  const EDGE = FLAME_EDGE.map(ansi)
+  const CORE = FLAME_CORE.map(ansi)
+  const BLUE = ansi(WORDMARK_BLUE)
+  const ORANGE = ansi(WORDMARK_ORANGE)
+  const at = (list: string[], index: number) => list[index] ?? list[list.length - 1]
+
+  const flame = (line: string, core: string, row: number) =>
+    Array.from(line)
+      .map((char, col) => {
+        if (char === " ") return " "
+        if (!tty) return char
+        const fg = core[col] && core[col] !== " " ? at(CORE, row) : at(EDGE, row)
+        return `${fg}${char}${reset}`
+      })
+      .join("")
+
+  const word = (line: string) =>
+    Array.from(line)
+      .map((char, col) => {
+        if (char === " ") return " "
+        if (!truecolor) return char
+        return `${bold}${col < WORDMARK_SPLIT ? BLUE : ORANGE}${char}${reset}`
+      })
+      .join("")
 
   const result: string[] = []
-  const reset = "\x1b[0m"
-  const left = {
-    fg: "\x1b[38;2;240;114;30m", // marid flame — ember orange
-    shadow: "\x1b[38;5;235m",
-    bg: "\x1b[48;5;235m",
-  }
-  const right = {
-    fg: reset,
-    shadow: "\x1b[38;5;238m",
-    bg: "\x1b[48;5;238m",
-  }
-  const gap = " "
-  const draw = (line: string, fg: string, shadow: string, bg: string) => {
-    const parts: string[] = []
-    for (const char of line) {
-      if (char === "_") {
-        parts.push(bg, " ", reset)
-        continue
-      }
-      if (char === "^") {
-        parts.push(fg, bg, "▀", reset)
-        continue
-      }
-      if (char === "~") {
-        parts.push(shadow, "▀", reset)
-        continue
-      }
-      if (char === " ") {
-        parts.push(" ")
-        continue
-      }
-      parts.push(fg, char, reset)
-    }
-    return parts.join("")
-  }
   glyphs.left.forEach((row, index) => {
     if (pad) result.push(pad)
-    result.push(draw(row, left.fg, left.shadow, left.bg))
-    result.push(gap)
-    const other = glyphs.right[index] ?? ""
-    result.push(draw(other, right.fg, right.shadow, right.bg))
+    result.push(flame(row, glyphs.leftCore[index] ?? "", index))
+    result.push(" ")
+    result.push(word(glyphs.right[index] ?? ""))
     result.push(EOL)
   })
   return result.join("").trimEnd()

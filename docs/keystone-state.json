@@ -626,7 +626,7 @@
         "id": "NFR-010",
         "kind": "non_functional",
         "statement": "Documentation quality: README plan per §19; docs validated in CI",
-        "status": "Draft",
+        "status": "Met (README + docs validated in CI; validate_package.py docs/ green; WBS-8.6 reconciled docs to the PH-8 deep-rebrand + data isolation)",
         "source": "§18, §19",
         "priority": "MVP"
       },
@@ -1117,6 +1117,36 @@
         "id": "DEC-021",
         "title": "WhatsApp permission-approval UX = token-bound text reply (not interactive buttons)",
         "status": "Approved"
+      },
+      {
+        "id": "DEC-022",
+        "title": "PH-8 machine-state isolation via a build-time app-name; KEEP OPENCODE_* env + detect/disclose pierce",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-023",
+        "title": "PH-8 config marid.json primary; project-level opencode.json fallback; global reads ~/.config/marid only (no opencode global fallback)",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-024",
+        "title": "PH-8 .opencode/ project dirs (agents/skills/plugins/commands) kept upstream-named",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-025",
+        "title": "PH-8 upgrade migration = one-time copy of the old opencode data/state into the marid dirs (marker; no re-run)",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-026",
+        "title": "PH-8 agent-identity/prompt transform scope = full (identity + self-doc-fetch + support URLs -> Marid)",
+        "status": "Approved"
+      },
+      {
+        "id": "DEC-027",
+        "title": "PH-8 keep the sessions DB file opencode.db inside the isolated marid dir (no rename)",
+        "status": "Approved"
       }
     ],
     "adrs": [
@@ -1270,6 +1300,14 @@
         "date": "2026-07-11",
         "context": "Companion to ADR-0016: turning the filter ON exposed that the gateway's own-session visibility had depended on the leak - it subscribes owning zero sessions then creates one per turn mid-stream, absent from the frozen subscribe-time snapshot, so its own reply frames were filtered out. marid token create defaults to non-admin client scope, so web/TUI/API share the SDK+filter -> a server-side fix is required.",
         "decision": "The filter resolves visibility LAZILY on first sight of a session id: keep the subscribe snapshot as initial cache, re-read ownership once for an unknown id, positive-cache; do NOT negative-cache (a session's created frame races ahead of its ownership record; the reply lands after -> admitted). filterSseStream/keepFrame take an async predicate. Rejected A (channel-client re-subscribe) and B-timer. Marid-owned, no upstream edit, no P-*."
+      },
+      {
+        "id": "ADR-0018",
+        "title": "Total data isolation from a co-installed OpenCode + deep rebrand (PH-8)",
+        "status": "Approved",
+        "date": "2026-07-13",
+        "context": "Public marid v0.2.0, run plain (not via marid instance) beside a co-installed OpenCode, leaks the OpenCode identity and shares machine-global state (auth.json provider nvidia-custom, model.json, sessions DB, config) - six reported issues (update popup; model/token surprise = shared dir, NOT a bundled secret; TUI OpenCode surfaces; agent self-identity; web UI; total dir/auth/session/config/DB sharing). This is the on-machine conflict branding.md's Rebrand boundary said it would revisit only if it emerged.",
+        "decision": "Total DATA isolation via a build-time __MARID_APP app-name define (isolates data/state/config dirs + Flock at once, P-6); KEEP OPENCODE_* env unchanged (DEC-009 reuse) + detect-and-disclose data-layer pierce (boot WARN + usage table + negative tests, DEC-022); config marid.json primary with project-level opencode.json fallback and no global opencode fallback (DEC-023, P-7); .opencode/ project dirs kept upstream-named (DEC-024); one-time-copy migration from populated v0.2.0 (DEC-025); no DB rename - opencode.db stays inside the isolated marid dir (DEC-027, Approved); full agent-identity transform wrapping provider() output at the single choke point + CI guard (DEC-026, P-8 conditional); update popup off via P-3 autoupdate:false + env; deep TUI + web rebrand with two-tone wordmark behind a render gate (P-2 expansion). Approved at the PH-8 Phase-0 operator gate (INV-005, 2026-07-13); PH-8 code phases (WBS-8.1+) authorized. Realizes DEC-022..027; opens MS-009 + AC-025..031 + WBS-8.0..8.7."
       }
     ],
     "risks": [
@@ -2829,6 +2867,41 @@
         "id": "AC-024",
         "statement": "Given the Marid Gateway (PH-6), a plain unattached TUI/Web/API request path behaves identically to today; a mirroring/registry fault degrades to non-mirrored behavior without breaking auth or plain clients; and the new attach/binding endpoints are OpenAPI-documented + health-covered + TEST-CONTRACT-pinned (blast-radius isolation)",
         "status": "Proposed"
+      },
+      {
+        "id": "AC-025",
+        "statement": "Given a machine with co-installed OpenCode, the built marid binary's effective data/state/config read paths are the marid dirs only (asserted from the boot log / config directories(), never dir existence); no foreign auth (nvidia-custom) or model.json bleeds in; the co-installed OpenCode dirs are untouched (issue-6)",
+        "status": "Met"
+      },
+      {
+        "id": "AC-026",
+        "statement": "Given global data-layer OPENCODE_* overrides (OPENCODE_CONFIG_DIR, OPENCODE_DB=<abs>, OPENCODE_CONFIG/_CONTENT, OPENCODE_AUTH_CONTENT), the binary boots, logs a WARN naming each active override, and behaves as disclosed (isolation pierced, not silently defeated); a plain OPENCODE_*-reading plugin still works (issue-6)",
+        "status": "Met"
+      },
+      {
+        "id": "AC-027",
+        "statement": "Given the fresh marid binary, no upstream update-available popup appears (P-3 autoupdate:false + bootstrap env) and no auto-update overwrites the binary (issue-1)",
+        "status": "Met"
+      },
+      {
+        "id": "AC-028",
+        "statement": "Given the running agent, What is your role? and what can you do / where do I report bugs? answer as Marid (never opencode; Marid docs/repo URLs); a CI guard asserts no emitted system prompt matches /\\bopencode\\b/i outside an allowlist (issue-4)",
+        "status": "Met"
+      },
+      {
+        "id": "AC-029",
+        "statement": "Given the TUI, the startup logo, /exit goodbye, sidebar footer, and OS notification all read Marid (flame + two-tone wordmark, marid -s hint, dot Marid version); the OpenCode-GO upsell is gone; the two-tone wordmark passes a render gate incl. a 256-color terminal (crisp-mono fallback if illegible) (issue-3)",
+        "status": "Met"
+      },
+      {
+        "id": "AC-030",
+        "statement": "Given the web UI (not binary-embedded), favicon/PWA icons/social-share/Mark+Splash glyphs/notification icon read Marid (from the flame); no opencode.ai remote is fetched (release-notes / notification repointed or disabled) (issue-5)",
+        "status": "Met"
+      },
+      {
+        "id": "AC-031",
+        "statement": "Given a populated v0.2.0 opencode data dir and no marid dir, first run copies auth.json + ${data}/marid gateway tokens + sessions DB + model.json + Telegram pairing into the marid dirs exactly once (marker prevents re-run, logged), so gateway bearer tokens and Telegram pairing survive the upgrade with no auth outage (issue-2)",
+        "status": "Met"
       }
     ],
     "phases": [
@@ -3045,6 +3118,40 @@
         "risks": [
           "RISK-013",
           "RISK-014"
+        ]
+      },
+      {
+        "id": "PH-8",
+        "name": "Isolation & deep rebrand",
+        "goal": "Total DATA isolation from a co-installed OpenCode (dirs/config; OPENCODE_* env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first",
+        "status": "in-progress",
+        "depends_on": [
+          "PH-6"
+        ],
+        "work_items": [
+          "WBS-8.0",
+          "WBS-8.1",
+          "WBS-8.2",
+          "WBS-8.3",
+          "WBS-8.4",
+          "WBS-8.5",
+          "WBS-8.6",
+          "WBS-8.7"
+        ],
+        "exit_criteria": [
+          "AC-025..031 Met (data isolation, env-pierce disclosure, no update popup, agent identity, TUI branding, web branding, one-time migration) + all 6 reported v0.2.0 issues map to a passing check; v0.3.0 released (MS-009). ADR-0018 + DEC-022..027 Approved 2026-07-13; WBS-8.0-8.6 merged (docs #64 f022fbf005), AC-025..031 all Met; WBS-8.7 v0.3.0 release cutting (RC build proven)."
+        ],
+        "acceptance_refs": [
+          "AC-025",
+          "AC-026",
+          "AC-027",
+          "AC-028",
+          "AC-029",
+          "AC-030",
+          "AC-031"
+        ],
+        "risks": [
+          "RISK-001"
         ]
       }
     ]
@@ -4331,6 +4438,133 @@
         "WBS-6.6 status flipped to done (merged, PR #48); WBS-6.1-6.7 unmerged tails dropped",
         "AC-017/019/020/021/024 evidence appended: landed on develop via PR #48"
       ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 (Isolation & deep rebrand) OPENED - Phase 0 Keystone scoping + ADR, docs-only, at the operator gate. Post-v0.2.0 mission (twice-reviewed plan): total DATA isolation from a co-installed OpenCode (dirs/config; OPENCODE_* env kept) + deep rebrand (agent identity, TUI, web) + upstream-sync-first. Authored ADR-0018 (Proposed) + MS-009 + AC-025..031 (one per reported v0.2.0 issue; issue->AC->test table in the ADR) + WBS-8.0..8.7 (mirror plan Phase 0..7) + DEC-022..027 (022..026 Approved operator-locked plan-section-2 inputs; 027 no-DB-rename Proposed). Amended branding.md 'Rebrand boundary' (pointer, not rewrite) + pre-registered P-6/P-7/P-8 + P-2 expansion in architecture.md. STOP: no code phase (WBS-8.1 upstream sync onward) starts until the operator approves ADR-0018 + merges this docs PR (INV-005). validate_package.py docs/ = OK.",
+      "items_completed": [
+        "PH-8 opened; MS-009 + AC-025..031 + WBS-8.0..8.7 + DEC-022..027 recorded",
+        "ADR-0018 authored (Proposed) - realizes DEC-022..027; at the Phase-0 operator gate",
+        "P-6/P-7/P-8 + P-2 expansion pre-registered in architecture.md; branding.md boundary pointer added",
+        "Docs-only: zero code touched; next = WBS-8.1 upstream sync on approval"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 WBS-8.1 (upstream sync) - MERGE DONE, at the operator merge gate. Merged upstream/dev f47684787a into develop as a merge commit f3e48a6c93 (keeps upstream ancestry, cf PR #31): 79 commits / 242 files. Only conflicts were 6 i18n files (packages/app/src/i18n/{ar,br,de,fr,ja,pl}.ts) - Marid app.name.desktop 'Marid Desktop' vs upstream translation refresh - resolved Marid-wins (all 17 langs keep 'Marid Desktop', zero 'OpenCode Desktop'); no workflow leakage, P-2 branding intact, bun.lock auto-merge correct. Fixed one inherited generated-SDK type drift: upstream's generated SDK v2 type sdk/js/src/v2/gen/types.gen.ts lagged its own ProviderReasoningOption schema (provider.ts effort values Schema.Array(Schema.NullOr(Schema.String))) - widened the effort values Array<string> to Array<string|null> (type-only, behavior-neutral, P-CI-5). Verified: root bun turbo typecheck 34/34 packages, TEST-CONTRACT (test/marid/contract.test.ts) 38 pass, marid-gateway suite 124 pass. Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate ruling 2026-07-13; DEC-027 = keep opencode.db) folded into this same PR. Corrected sync numbers: real delta 79c/242f (not the plan's 167/458 - plan measured from the baseline tag but PR #31 already advanced develop's merge-base to 14a5529793). STOP: WBS-8.2 data isolation starts only after the operator merges this sync PR (INV-005). validate_package.py docs/ = OK.",
+      "items_completed": [
+        "Merged upstream/dev f47684787a into develop (merge commit f3e48a6c93, 79 commits / 242 files)",
+        "6 i18n conflicts resolved Marid-wins (all 17 langs keep 'Marid Desktop')",
+        "Fixed inherited generated SDK v2 type drift: types.gen.ts effort values Array<string> -> Array<string|null> to match the NullOr schema (P-CI-5)",
+        "root bun turbo typecheck 34/34, TEST-CONTRACT 38 pass, marid-gateway 124 pass",
+        "Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate 2026-07-13; DEC-027 = keep opencode.db)"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 WBS-8.2 part 1 (total DATA isolation) - unmerged, at the operator gate. P-6 app-name seam: global.ts:10 const app = process.env.__MARID_APP ?? 'opencode' (single point all machine-global dirs derive from - DB/auth/model/mcp-auth/config via Global.Path), baked into the binary via a marid-build.ts define ('process.env.__MARID_APP': JSON.stringify('marid')) and set in dev by a first-position side-effect import src/marid-env.ts (bracket notation survives the define). One-time migration (DEC-025/AC-031): src/marid-migrate.ts marker-triggered copy of pre-isolation OpenCode data+state (auth/tokens/DB/model) into marid dirs, skips repos/log, INV-002 count-only logging. No update popup (AC-027): marid-env sets OPENCODE_DISABLE_AUTOUPDATE=1 (guard cli/upgrade.ts:10). Coordinated seam: marid-instance/paths.ts:51 opencode->marid + test flips. Tests: new subprocess-driven data-isolation.test.ts (5: seam nests marid, unset->opencode regression, migration copy/skip/idempotency/fresh-machine, INV-002) + live instance-isolation green + a 3-OS marid-build binary isolation smoke (the only check of the baked-define branch). marid-instance 42, contract 38, opencode typecheck clean. Scope split: this is WBS-8.2 part 1 (P-6 + migration + autoupdate); part 2 = P-7 marid.json filename + AC-026 pierce WARN + managed.ts. AC-027 + AC-031 Met; AC-025 Partial (binary smoke pending CI). STOP for operator merge (INV-005). validate_package.py docs/ = OK.",
+      "items_completed": [
+        "P-6: global.ts app-name seam + marid-build.ts define + src/marid-env.ts dev bootstrap",
+        "src/marid-migrate.ts one-time marker-based migration (DEC-025/AC-031), INV-002 count-only logging",
+        "OPENCODE_DISABLE_AUTOUPDATE=1 kills the update popup (AC-027)",
+        "marid-instance/paths.ts opencode->marid coordination + paths.test flips",
+        "data-isolation.test.ts (5) + live instance-isolation + 3-OS marid-build binary isolation smoke",
+        "AC-027 + AC-031 -> Met; AC-025 -> Partial (binary define pending CI smoke)"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 WBS-8.2 part 2 (config filename P-7 + env-pierce disclosure AC-026) - unmerged, at the operator gate. P-7: marid.json/marid.jsonc primary config name at every level (global globalConfigFile candidates + merge chain marid-last-wins; project + .opencode via mcp.ts writer; managed loop), opencode.json(c) still works (backward-compat), created default is now marid.json; managed-config dir isolated to marid (managed.ts mac/win/linux). AC-026: new src/marid-pierce.ts disclosePierce() warns at boot when OPENCODE_CONFIG_DIR/CONFIG/CONFIG_CONTENT/AUTH_CONTENT/DB pierce isolation - names var + redirect, keeps honored (DEC-022), INV-002 never prints value. Tests: config-pierce.test.ts (4) + config regression flipped to marid.json default; typecheck clean. AC-025 -> Met (3-OS marid-build binary smoke green in PR #55) + AC-026 -> Met; WBS-8.2 complete. Next: Phase 3 agent identity. validate OK.",
+      "items_completed": [
+        "P-7 marid.json primary config name (global/project/managed) in config.ts + mcp.ts",
+        "managed.ts managed-config dir opencode->marid (3 platforms)",
+        "AC-026: src/marid-pierce.ts disclosePierce() boot WARN, INV-002 value-safe",
+        "config-pierce.test.ts (4) + config regression test flipped to marid.json default",
+        "AC-025 -> Met (binary smoke green in #55), AC-026 -> Met; WBS-8.2 complete"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 3 (WBS-8.3) agent identity -> Marid (P-8) - unmerged, at the operator gate. New Marid-owned session/marid-identity.ts maridizePrompt() rewrites the emitted system prompt at the single choke point (session/system.ts provider() now delegates to selectPrompt() and maps through the transform; 1-line upstream edit = realized P-8 row in architecture.md). Scope (DEC-026): identity You-are-OpenCode -> Marid, feedback repo github.com/anomalyco/opencode -> Marid repo, self-doc-fetch opencode.ai/docs -> Marid repo. App-name-gated (upstream opencode byte-unchanged, same __MARID_APP lever as P-6/P-7). agent-identity.test.ts (19): identity/URL rebrand, .opencode/ preserved (DEC-024), opencode-app regression verbatim, CI guard = every shipped prompt/*.txt (read from disk, sync-added covered) emits no \bopencode\b after transform. typecheck clean. AC-028 -> Met. Next: Phase 4 TUI rebrand. validate OK.",
+      "items_completed": [
+        "session/marid-identity.ts maridizePrompt() app-name-gated brand/URL transform",
+        "session/system.ts provider() -> selectPrompt() + .map(maridizePrompt) wrap (P-8, 1-line upstream edit)",
+        "architecture.md P-8 row realized; DEC-026 full-scope identity",
+        "agent-identity.test.ts (19) incl. disk-read CI guard over all prompt/*.txt",
+        "AC-028 -> Met"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 4a (WBS-8.4) TUI/CLI mechanical rebrand + GO-upsell removal - unmerged, at operator gate. Every user-facing OpenCode string in the shipped marid binary -> Marid across the main TUI, the --mini run mode, and uninstall (exit hint marid -s, notification title + sound-pack name, update toast, both sidebar footers dot-Marid-version, permission prose, ~12 tips wrong-binary opencode...->marid... hints, model-error hints, crash screen + bug-report -> Marid repo, docs link -> Marid repo). GO-upsell removed at the root: deleted the TUI dialog subsystem (dialog-retry-action + bg-pulse + bg-pulse-render) and the rate-limit handler/consts in routes/session/index.tsx, and neutralized the server source session/retry.ts (the inline retry footer renders retry.message, so deleting the dialog alone left subscribe-to-Go visible); both providers de-marketed (IDs kept). Cosmetic -> unconditional Marid (not __MARID_APP-gated) per PH-5 P-2, under the existing P-2 row, no new P-*. typecheck clean both packages; presentation/app-lifecycle/retry/permission tests green. AC-029 -> Partial (logo + two-tone render gate = PR 4b).",
+      "items_completed": [
+        "main TUI + --mini + uninstall OpenCode strings -> Marid (unconditional per PH-5 P-2)",
+        "wrong-binary tip hints opencode <cmd> -> marid <cmd> (functional bug fix)",
+        "GO-upsell deleted: dialog-retry-action + bg-pulse* + routes/session/index.tsx handler; server retry.ts free-limit message neutralized",
+        "dialog-provider.tsx de-marketed OpenCode Zen + Go (marketing blocks + Recommended tag), provider IDs kept",
+        "tests: presentation/app-lifecycle/permission.shared updated; retry green (const symbol); typecheck clean both pkgs",
+        "AC-029 -> Partial; go glyph + splash + logo redesign = PR 4b"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 4b (WBS-8.4) §94 logo redesign + two-tone render gate - unmerged, at operator gate (visual sign-off). logo.ts single mark source: taller 6-row flame + leftCore inner-highlight mask + 6-row MARID wordmark; data-driven gradients (edge #FBD24A->#F5901E->#DC2A16, core #FDEFB0->#F8B73C); two-tone split wordmark blue #2F6BFF (MAR) / orange #F0731F (ID) behind a truecolor render gate (supportsTrueColor via COLORTERM; single-tone crisp-mono fallback on 256-color, AC-029). Both renderers rewritten to color per-cell from shared data (component/logo.tsx opentui RGBA + cli/ui.ts ANSI, hexToRgb helper; hardcoded non-TTY wordmark array removed). splash.ts badge -> compact Marid flame + OpenCode/opencode--mini-s fixed; go glyph + dead marks deleted (zero importers after 4a). logo.test.ts (6): gate true/false + equal-height/core-subset/split invariants. typecheck clean both pkgs; presentation green. Flame art blind-authored (headless) - operator visual sign-off (truecolor+256-color) is the merge gate; glyph/colors data-only. AC-029 -> Met on merge.",
+      "items_completed": [
+        "logo.ts: 6-row flame + leftCore mask + 6-row wordmark + gradients + supportsTrueColor + hexToRgb; go/marks removed",
+        "component/logo.tsx + cli/ui.ts: per-cell edge/core flame + gated blue/orange split wordmark",
+        "cli/cmd/run/splash.ts: badge -> Marid flame, OpenCode -> Marid, opencode --mini -s -> marid --mini -s",
+        "logo.test.ts (6): render gate + 3-renderer alignment invariants",
+        "AC-029 -> Met (operator visual sign-off = merge gate); next = Phase 5 web"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 5a (WBS-8.5) web UI rebrand code half - unmerged, at operator gate. packages/app + packages/ui only (packages/desktop EXCLUDED per CON-004). Killed the 3 runtime opencode.ai fetches (mandatory AC-030 half): release-notes changelog -> committed local packages/app/public/changelog.json (same parser shape, Marid v0.2.0/v0.3.0 entries; operator chose repoint-with-content over disable); notification icon + hardcoded-project avatar -> local -v3 assets. Web OpenCode strings -> Marid (desktop-menu app/docs/support, WSL install/update copy + its 4 test assertions/titles, ui favicon.tsx apple-web-app-title, help-button aria+body). Web GO-upsell removed at root: usage-exceeded-dialogs.tsx + dialog-usage-exceeded.tsx + session.tsx call site deleted (web has no inline retry-message surface -> also closes the retry.ts opencode.ai/workspace/.../go residual 4a flagged); Zen/Go de-marketed in render code (connect-provider Zen block + taglines, unpaid-model dialogs; provider IDs kept). apiKey fields -> type=password; opencode.ai click-through links (docs/help/feedback/themes) -> github.com/A-H-911/marid; en.ts residual 'Free models provided by OpenCode' -> 'Free models'. TEST-WEB marid-no-remote.test.ts static-source guard (CI via turbo @opencode-ai/app#test) fails on any re-added opencode.ai network reference (allowlist: i18n display strings, dev-only hostname heuristic, comments); verified both directions (green now, red on a re-added fetch). One required typecheck fix: titlebar.tsx ChannelIndicator latent VITE_OPENCODE_CHANNEL? undefined guard (env.d.ts types it optional; an app-touching change forces a cache-miss rebuild that surfaces it). app+ui typecheck clean; ui 7/7; app 577 pass (1 fail = pre-existing skipIf(CI) i18n-parity drift from WBS-8.1 sync, not ours); lint 0 errors. Cosmetic -> unconditional Marid, no new P-*. AC-030 -> Partial (icons pending 5b). 4b MERGED PR #59 049089b79a.",
+      "items_completed": [
+        "highlights.tsx CHANGELOG_URL -> /changelog.json + committed public/changelog.json (Marid entries)",
+        "entry.tsx notification icon + layout/helpers.ts project avatar -> local -v3 assets",
+        "web OpenCode strings -> Marid (desktop-menu, wsl settings-model + test, ui favicon.tsx, help-button)",
+        "web GO-upsell deleted (usage-exceeded-dialogs + dialog-usage-exceeded + call site); Zen/Go de-marketed; closes retry.ts residual",
+        "apiKey fields type=password; opencode.ai click-through links -> github.com/A-H-911/marid; en.ts brand string neutralized",
+        "TEST-WEB marid-no-remote.test.ts (CI-run) guards no-opencode.ai-fetch, verified both directions; titlebar.tsx typecheck fix",
+        "AC-030 -> Partial; visual assets (favicon SVG + Mark/Splash + rasters) = PR 5b"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 5b (WBS-8.5) web UI rebrand visual assets - unmerged, at operator gate. The flame identity across every web brand surface (packages/ui). Mark + Splash (components/logo.tsx) rewritten from the OpenCode square-in-square glyph to the Marid flame silhouette (teardrop matching the TUI logo.ts DNA), keeping the --icon-* fill vars + viewBoxes so theme coloring and all call-sites work unchanged (monochrome at those small UI glyphs). favicon-v3.svg -> full-color gradient flame (edge #FBD24A->#F5901E->#DC2A16, core #FDEFB0->#F8B73C) on the #131010 ground. Raster set regenerated from that master SVG: favicon-96x96-v3.png, favicon-v3.ico (16/32/48), apple-touch-icon-v3.png (180), web-app-manifest-{192,512}.png (maskable), and a 1200x630 social-share.png OG card (flame + two-tone Marid wordmark + tagline); the two SVG sources (favicon-v3.svg, images/social-share.svg) committed alongside the rasters. Pipeline: Chrome-headless render of the master SVG + a pure-JS node zlib box downscaler (no ImageMagick - Windows convert is the NTFS tool, and Chrome mis-sizes the 180/192 headless windows). Every flame render visually inspected (favicon 96/512, apple-touch 180, social card, Mark + Splash silhouettes) - all correct. ui typecheck clean; ui 7/7; lint 0 errors. AC-030 -> Met (both halves; operator visual sign-off = merge gate). Deviation: legacy non-v3 favicons + social-share-{zen,black}.png left in place (still referenced by the EXCLUDED packages/console per CON-004 - deletion out of scope). 5a MERGED PR #60 67f56b8edd.",
+      "items_completed": [
+        "components/logo.tsx: Mark + Splash rewritten OpenCode square glyph -> Marid flame silhouette (kept --icon-* fills + viewBoxes)",
+        "assets/favicon/favicon-v3.svg -> full-color gradient flame; assets/images/social-share.svg new OG-card source",
+        "raster set regenerated from master SVG: favicon-96x96-v3.png, favicon-v3.ico, apple-touch-icon-v3.png (180), web-app-manifest-{192,512}.png, social-share.png (1200x630)",
+        "pipeline: Chrome-headless SVG render + pure-JS node-zlib box downscaler (no ImageMagick; Chrome mis-sizes 180/192 windows)",
+        "every flame render visually verified; ui typecheck clean; ui 7/7; lint 0 errors",
+        "AC-030 -> Met (both halves); legacy non-v3 favicons left (referenced by excluded packages/console)"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "author": "execution-agent",
+      "summary": "PH-8 Phase 6 (WBS-8.6) docs + diagrams + register reconcile - MERGED as PR #64 (squash f022fbf005) 2026-07-16. Brought the docs package into line with the deep-rebrand + total DATA isolation now shipped on develop. usage.md: new 'Data isolation & coexistence' section (per-OS data/state/config/cache/managed dirs = the XDG layout on every OS, not ~/Library or %AppData%; marid.json config rule + project-opencode.json fallback + global reads ~/.config/marid only; five-var OPENCODE_* env-pierce table with boot WARN, value-safe; one-time v0.2.0 migration; no auto-update). README: data-isolation Security-model bullet -> usage. branding.md: ADR-0018 note flipped Proposed->realized (agent identity + TUI flame/two-tone/render-gate + web flame assets + lockup). architecture.md: P-6/P-7 rows flipped planned->realized with real sites (packages/core/src/global.ts:17, config.ts maridConfigNames) + reconcile recipes. CLAUDE.md P-6/P-7/P-8/P-9/P-CI-5 added; CONTRIBUTING.md dev command fixed (bun run src/marid.ts, not bun dev). NFR-010 Draft->Met. Diagrams 01/05/13 reviewed and left as-is (architecture-level, already Marid-accurate; opencode labels are kept internal package names DEC-009); optional isolation diagram skipped. TUI+Telegram screenshots deferred to operator (headless capture cannot be faithful). AC-025..031 already all Met - no verdict change. validate_package.py docs/ = OK; docs-only, no code touched. Also flipped stale trackers: #62 TUI logo now MERGED (7e4157b94c); WBS-8.1 done (#54 42a7e4724d); WBS-8.4/8.5 done; PH-8 status not-started->in-progress.",
+      "items_completed": [
+        "usage.md: Data isolation & coexistence section (dirs per OS, marid.json config, OPENCODE_* pierce table, v0.2.0 migration, no auto-update)",
+        "README: data-isolation Security-model bullet",
+        "branding.md: ADR-0018 note Proposed->realized (identity + TUI + web surfaces); XDG boundary reconciled",
+        "architecture.md: P-6/P-7 planned->realized with real sites + reconcile recipes",
+        "CLAUDE.md: P-6/P-7/P-8/P-9/P-CI-5 in Current-surface; CONTRIBUTING.md dev-command fix",
+        "NFR-010 Draft->Met; PH-8 status not-started->in-progress; WBS-8.1/8.4/8.5 done; #62 MERGED 7e4157b94c",
+        "Diagrams 01/05/13 reviewed & left (already Marid-accurate); screenshots deferred to operator",
+        "validate_package.py docs/ = OK"
+      ]
     }
   ],
   "change_log": [
@@ -4522,6 +4756,78 @@
       "actor": "execution-agent",
       "action": "Gateway/channel-gateway diagram disambiguation (docs-only, follows the @marid/gateway rename). Restructured to ONE Marid Gateway (@marid/gateway) node = auth + /marid/* binding + owns-union-bound mirroring, FRONTING the reused upstream HTTP+SSE API / /doc / /global/health (DEC-009: fronts, never absorbs); marid-telegram is the CHANNEL gateway, a client. Fixed architecture.md's self-contradiction ('marid-auth becomes the channel gateway' -> @marid/gateway is the API/ingress gateway). TUI two-edge caveat honored (dashed in-process/no-token to engine + attach/token to gateway; no blanket TUI->gateway). Touched: README (3 Mermaid topologies + prose + kept/removed table), architecture.md (container view + components table + Marid Gateway section, v1.2), Tarseem specs 01/02/05/13/20 + re-rendered PNG/SVG, diagrams/README legend. No governed ids in diagram labels (G-IDS). validate = OK.",
       "target": "README.md+docs/architecture/architecture.md+docs/architecture/diagrams/Marid/specs/{01-architecture-overview,02-package-dependencies,05-data-flow,13-deployment,20-gateway-mirroring}.json+docs/architecture/diagrams/Marid/{same}.{png,svg}+docs/architecture/diagrams/README.md+keystone-state(change_log)"
+    },
+    {
+      "timestamp": "2026-07-13T00:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 (Isolation & deep rebrand) opened - Phase 0 Keystone scoping + ADR, docs-only, at the operator gate. Authored ADR-0018 (Proposed): total DATA isolation via a build-time __MARID_APP app-name (P-6) + KEEP OPENCODE_* env with pierce disclosure (DEC-022) + config marid.json with project opencode.json fallback / no global fallback (DEC-023, P-7) + .opencode kept upstream-named (DEC-024) + one-time-copy migration (DEC-025) + full agent-identity transform (DEC-026, P-8) + no DB rename (DEC-027, Proposed) + autoupdate:false + two-tone wordmark/web (P-2 expansion). Opened PH-8 + MS-009 + AC-025..031 + WBS-8.0..8.7 + DEC-022..027. Amended branding.md boundary (pointer). DEC-022..026 Approved (operator plan-section-2, 2026-07-13); ADR-0018 realization Proposed until the Phase-0 gate (INV-005) - no code phase starts until Approved. validate_package.py docs/ = OK.",
+      "target": "docs/adrs/adr-0018-data-isolation-deep-rebrand.md(new)+docs/planning/{roadmap,milestones,work-breakdown}+docs/validation/acceptance-criteria+docs/decisions/open-decision-register+docs/branding/branding+docs/architecture/architecture+docs/progress/{progress-log,status-report}+keystone-state(decisions/adrs/acceptance_criteria/phases/progress/change_log)"
+    },
+    {
+      "timestamp": "2026-07-13T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 WBS-8.1 upstream sync merged (merge commit into develop, keeps upstream ancestry): upstream/dev f47684787a, 79 commits / 242 files; only conflicts 6 i18n files resolved Marid-wins. Fixed inherited generated-SDK v2 type drift (types.gen.ts effort values Array<string> -> Array<string|null> to match the NullOr schema; type-only, P-CI-5). root bun turbo typecheck 34/34, TEST-CONTRACT 38 pass, marid-gateway 124 pass. Flipped ADR-0018 + DEC-027 to Approved (operator Phase-0 gate 2026-07-13; DEC-027 = keep opencode.db). At the operator merge gate (INV-005).",
+      "target": "merge f3e48a6c93 (develop + upstream/dev f47684787a) + packages/sdk/js/src/v2/gen/types.gen.ts + docs/adrs/adr-0018 + docs/decisions/open-decision-register + docs/architecture/upstream-sync-strategy(P-CI-5) + docs/progress/{progress-log,status-report}"
+    },
+    {
+      "timestamp": "2026-07-13T13:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 WBS-8.2 part 1: total DATA isolation. P-6 app-name seam (global.ts:10) baked via marid-build define + dev src/marid-env.ts; one-time migration src/marid-migrate.ts (DEC-025/AC-031, INV-002 count-only); OPENCODE_DISABLE_AUTOUPDATE=1 (AC-027); marid-instance/paths.ts opencode->marid. New data-isolation.test.ts (5) + 3-OS marid-build binary isolation smoke. AC-027/031 Met, AC-025 Partial (binary smoke pending CI). At operator gate (INV-005).",
+      "target": "packages/core/src/global.ts + packages/opencode/{script/marid-build.ts,src/marid-env.ts,src/marid.ts,src/marid-migrate.ts,test/marid/data-isolation.test.ts} + packages/marid-instance/{src/paths.ts,test/paths.test.ts} + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-13T14:30:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 WBS-8.2 part 2: P-7 config filename (marid.json primary; global/project/managed; opencode.json still works) + managed.ts dir isolation + AC-026 env-pierce disclosure (src/marid-pierce.ts, INV-002 value-safe). config-pierce.test.ts (4). AC-025 Met (binary smoke green #55), AC-026 Met; WBS-8.2 complete. At operator gate (INV-005).",
+      "target": "packages/opencode/src/config/{config.ts,managed.ts} + packages/opencode/src/cli/cmd/mcp.ts + packages/opencode/src/{marid-pierce.ts,marid.ts} + packages/opencode/test/{marid/config-pierce.test.ts,config/config.test.ts} + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-13T15:30:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 3 agent identity: session/marid-identity.ts maridizePrompt() rewrites emitted system prompt at the session/system.ts provider() choke point (P-8, app-name-gated, upstream unchanged); identity+feedback-repo+doc-fetch -> Marid. agent-identity.test.ts (19) incl. disk-read CI guard (no \bopencode\b in any emitted prompt/*.txt). AC-028 Met. At operator gate (INV-005).",
+      "target": "packages/opencode/src/session/{marid-identity.ts,system.ts} + packages/opencode/test/marid/agent-identity.test.ts + docs/architecture/architecture.md(P-8) + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 4a (WBS-8.4) TUI/CLI mechanical rebrand + GO-upsell removal. Every user-facing OpenCode string in the shipped marid binary -> Marid (main TUI + --mini run mode + uninstall): exit hint marid -s, notification, both sidebar footers, permission prose, wrong-binary tip hints opencode<cmd>->marid<cmd>, model-error hints, crash screen + docs -> Marid repo. GO-upsell removed at root: TUI dialog subsystem (dialog-retry-action + bg-pulse + bg-pulse-render) deleted + rate-limit handler removed + server retry.ts free-limit message neutralized (inline footer renders retry.message); both providers de-marketed, IDs kept. Cosmetic unconditional Marid per PH-5 P-2, no new P-*. typecheck clean both pkgs; presentation/app-lifecycle/retry/permission.shared tests green. AC-029 -> Partial (logo + render gate = PR 4b). At operator gate (INV-005).",
+      "target": "packages/tui/src/{util/presentation.ts,attention.ts,app.tsx,util/error.ts,component/error-component.tsx,component/dialog-provider.tsx,routes/session/{index.tsx,sidebar.tsx,permission.tsx},feature-plugins/{sidebar/footer.tsx,home/tips-view.tsx}} minus component/{dialog-retry-action,bg-pulse,bg-pulse-render} + packages/opencode/src/{session/retry.ts,cli/cmd/{uninstall.ts,run/{footer.permission.tsx,footer.prompt.tsx,permission.shared.ts}}} + tests + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T18:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 4b (WBS-8.4) §94 logo redesign + two-tone render gate. logo.ts single mark source: taller 6-row flame + leftCore inner-highlight mask + 6-row MARID wordmark; gradients edge #FBD24A->#F5901E->#DC2A16 / core #FDEFB0->#F8B73C; two-tone split wordmark blue #2F6BFF (MAR) / orange #F0731F (ID) behind a truecolor render gate (supportsTrueColor via COLORTERM; single-tone crisp-mono fallback on 256-color). component/logo.tsx (opentui RGBA) + cli/ui.ts (ANSI, hexToRgb) rewritten to color per-cell from shared data; splash.ts badge -> Marid flame + strings fixed; go/marks deleted. logo.test.ts (6) = gate + alignment invariants. typecheck clean; presentation green. Flame art blind-authored - operator visual sign-off is the merge gate. AC-029 -> Met on merge. At operator gate (INV-005).",
+      "target": "packages/tui/src/{logo.ts,component/logo.tsx} + packages/opencode/src/cli/{ui.ts,cmd/run/splash.ts} + packages/tui/test/logo.test.ts + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T20:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 5a (WBS-8.5) web UI rebrand code half. packages/app + packages/ui only (desktop EXCLUDED per CON-004). Killed 3 runtime opencode.ai fetches: changelog -> committed local public/changelog.json (Marid entries), notification icon + hardcoded-project avatar -> local -v3 assets. Web OpenCode strings -> Marid (desktop-menu, wsl copy + test, ui favicon.tsx, help-button); web GO-upsell removed at root (usage-exceeded-dialogs + dialog-usage-exceeded + call site deleted, closes retry.ts opencode.ai residual); Zen/Go de-marketed in render code (provider IDs kept); apiKey fields type=password; click-through links -> github.com/A-H-911/marid; en.ts brand string neutralized. TEST-WEB marid-no-remote.test.ts static-source guard (CI via turbo @opencode-ai/app#test) fails on any re-added opencode.ai network reference; verified both directions. titlebar.tsx latent VITE_OPENCODE_CHANNEL? undefined typecheck fix (1-line). Cosmetic unconditional Marid, no new P-*. AC-030 -> Partial (icons pending 5b). app+ui typecheck clean; ui 7/7; app 577 pass (1 pre-existing skipIf(CI) parity drift); lint 0 errors. At operator gate (INV-005).",
+      "target": "packages/app + packages/ui web sources + packages/app/public/changelog.json + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T22:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 5b (WBS-8.5) web UI rebrand visual assets. packages/ui only. Mark + Splash (components/logo.tsx) rewritten OpenCode square glyph -> Marid flame silhouette (kept --icon-* fills + viewBoxes). favicon-v3.svg -> full-color gradient flame (edge #FBD24A->#F5901E->#DC2A16, core #FDEFB0->#F8B73C) on #131010. Raster set regenerated from master SVG: favicon-96x96-v3.png, favicon-v3.ico (16/32/48), apple-touch-icon-v3.png (180), web-app-manifest-{192,512}.png (maskable), social-share.png (1200x630 OG card, flame + two-tone Marid); SVG sources committed. Pipeline: Chrome-headless SVG render + pure-JS node-zlib box downscaler (no ImageMagick; Chrome mis-sizes 180/192 windows). Every render visually verified. ui typecheck clean; ui 7/7; lint 0 errors. AC-030 -> Met (both halves; operator visual sign-off = merge gate). Legacy non-v3 favicons left (referenced by excluded packages/console). At operator gate (INV-005).",
+      "target": "packages/ui/src/components/logo.tsx + packages/ui/src/assets/{favicon/{favicon-v3.svg,favicon-96x96-v3.png,favicon-v3.ico,apple-touch-icon-v3.png,web-app-manifest-192x192.png,web-app-manifest-512x512.png},images/{social-share.png,social-share.svg}} + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-14T23:30:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 TUI logo follow-up (operator local-review). (1) /exit goodbye still spelled OpenCode - presentation.ts had its own hardcoded block-art logo 4a/4b never touched (block-ASCII art is invisible to string greps); rewrote it to render logo.ts's mark dim (single source of truth) + kept marid -s hint. (2) startup flame too tall (6-row towered over 3-row MARID); redesigned logo.ts to a 3-row candle flame (operator-picked from harness options) + 3-stop gradient #FBD24A->#F5901E->#DC2A16; both renderers + goodbye update from shared data. New dev tool packages/tui/script/render-logo.ts (ANSI->HTML->headless-Chrome visual harness; zero-dep, xterm.js/asciinema absent). presentation.test.ts structural guard added; logo.test.ts green; typecheck 34/34. AC-029 stays Met (residual close + retune, operator visual sign-off). At operator gate (INV-005).",
+      "target": "packages/tui/src/{logo.ts,util/presentation.ts} + packages/tui/script/render-logo.ts + packages/tui/test/util/presentation.test.ts + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-15T14:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 web phase MERGED (PR #63 squash 19ad4279f3 -> develop, all 20 CI green); superseded + closed #61 (its 5b commits are in develop via #63). Delivered: 5b flame assets + web auth-gate + navigation-safe token (P-9) + brand lockup. P-9: the token arrives once via ?auth_token= and lived only in the boot server in-memory http.password; navigating into a re-resolved local-server connection whose URL isn't byte-identical to the boot server (active localhost:4096 vs boot 127.0.0.1:4096) dropped it -> /global/health 401 -> false Unauthorized even with a valid token. Fix at the createSdkForServer chokepoint: persist the token to sessionStorage at boot (entry.tsx) + inject on any loopback connection missing a password (isLoopbackUrl guard keeps it off remote/desktop servers; !password guard leaves an explicit-password server untouched). Additive AuthGate + Unauthorized token-entry screen on the already-running global health poll; upstream disableHealthCheck (#29319) untouched; P-9 registered in architecture.md; unit-guarded by server.test.ts isLoopbackUrl. Brand lockup: marid-logo.png (old pixel wordmark + grey halo box, never updated in the flame rebrand) -> shared inline-SVG Logo + WordmarkV2 (gradient flame + two-tone Marid #2F6BFF/#F0731F, flame height = M cap-height, operator-approved). AC-030 stays Met. Root-caused + verified live via chrome-devtools.",
+      "target": "packages/app/src/{utils/server.ts,entry.tsx,app.tsx,utils/server.test.ts} + packages/ui/src/{components/logo.tsx,v2/components/wordmark-v2.tsx} + docs/architecture/architecture.md (P-9) + docs trackers"
+    },
+    {
+      "timestamp": "2026-07-15T18:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-8 Phase 6 (WBS-8.6) docs/diagrams/register reconcile - MERGED as PR #64 (squash f022fbf005) 2026-07-16. Reconciled the docs package to the shipped PH-8 deep-rebrand + data isolation; flipped P-6/P-7 planned->realized (with real sites + reconcile recipes), the ADR-0018 branding note ->realized, NFR-010 ->Met, PH-8 status ->in-progress, and the stale #62/#54/WBS-8.4/8.5 tracker rows. Diagrams 01/05/13 left as-is (reviewed, not stale); TUI+Telegram screenshots deferred to operator. AC-025..031 already Met. validate OK; docs-only, no code touched.",
+      "target": "docs/usage.md, README.md, docs/branding/branding.md, docs/architecture/architecture.md, CLAUDE.md, CONTRIBUTING.md, docs/requirements/non-functional.md, docs/progress/{progress-log,status-report}.md, docs/planning/{roadmap,work-breakdown,milestones}.md, docs/keystone-state.json"
     }
   ]
 }

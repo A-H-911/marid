@@ -7,7 +7,10 @@ import { isRecord } from "@/util/record"
 
 export type Err = ReturnType<NamedError["toObject"]>
 
-export const GO_UPSELL_MESSAGE = "Free usage exceeded, subscribe to Go"
+// Neutral free-limit notice shown in the TUI retry footer (Marid drops the "subscribe to Go"
+// upsell). The action below still carries the upstream upsell copy, consumed only by the web UI
+// (rebranded in the PH-8 web phase); the TUI dialog that used it was removed in the TUI rebrand.
+export const GO_UPSELL_MESSAGE = "Free usage limit reached"
 export const GO_UPSELL_URL = "https://opencode.ai/go"
 export type RetryReason = "free_tier_limit" | "account_rate_limit" | (string & {})
 

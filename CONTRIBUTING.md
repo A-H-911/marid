@@ -45,10 +45,13 @@ Authoritative references — **read these, this guide only points to them**:
 - Install and run:
 
   ```bash
-  bun install          # on Windows, if the native tree-sitter build fails: bun install --ignore-scripts
-  bun dev              # runs the marid CLI (TUI) from packages/opencode
-  bun dev <directory>  # run against a specific directory
+  bun install                                   # Windows, if the native tree-sitter build fails: bun install --ignore-scripts
+  bun run --cwd packages/opencode src/marid.ts  # runs the *marid* CLI (TUI) — data-isolated (__MARID_APP)
+  bun run --cwd packages/opencode src/marid.ts <directory>   # run against a specific directory
   ```
+
+  > Run **`src/marid.ts`**, not `bun dev`: `bun dev` runs the upstream `index.ts` entry (the un-isolated
+  > `opencode` app), so isolation/rebrand behaviour won't reflect. `marid.ts` sets `__MARID_APP` first (P-6).
 
   > Windows: `bun install` rewrites the tracked `bun.lock`; run `git checkout -- bun.lock` afterward.
   > Tests must run from a package dir (`cd packages/opencode && bun test`), never the repo root. See the

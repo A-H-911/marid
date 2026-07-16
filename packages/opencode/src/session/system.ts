@@ -9,9 +9,11 @@ import PROMPT_BEAST from "./prompt/beast.txt"
 import PROMPT_GEMINI from "./prompt/gemini.txt"
 import PROMPT_GPT from "./prompt/gpt.txt"
 import PROMPT_KIMI from "./prompt/kimi.txt"
+import PROMPT_META from "./prompt/meta.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
+import { maridizePrompt } from "./marid-identity"
 import type { Provider } from "@/provider/provider"
 import type { Agent } from "@/agent/agent"
 import { Permission } from "@/permission"
@@ -24,6 +26,13 @@ import { MCP } from "@/mcp"
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
 
 export function provider(model: Provider.Model) {
+  // MARID P-8 (WBS-8.2 Phase 3, AC-028): rebrand the emitted identity/URLs at this
+  // single choke point (no-op for the upstream opencode app). See marid-identity.ts.
+  return selectPrompt(model).map((prompt) => maridizePrompt(prompt))
+}
+
+function selectPrompt(model: Provider.Model) {
+  if (model.api.id.includes("muse-spark")) return [PROMPT_META]
   if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3"))
     return [PROMPT_BEAST]
   if (model.api.id.includes("gpt")) {

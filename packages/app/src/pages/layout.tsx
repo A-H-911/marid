@@ -54,7 +54,7 @@ import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme/context"
 import { useCommand, type CommandOption } from "@/context/command"
 import { ConstrainDragXAxis, getDraggableId } from "@/utils/solid-dnd"
 import { DebugBar } from "@/components/debug-bar"
-import { HelpButton } from "@/components/help-button"
+import { HelpButton, TabsInfoPopup } from "@/components/help-button"
 import { Titlebar, type TitlebarUpdate } from "@/components/titlebar"
 import { useDirectoryPicker } from "@/components/directory-picker"
 import { ServerConnection, useServer } from "@/context/server"
@@ -2238,7 +2238,7 @@ export default function LegacyLayout(props: ParentProps) {
       settingsKeybind={() => command.keybind("settings.open")}
       onOpenSettings={openSettings}
       helpLabel={() => language.t("sidebar.help")}
-      onOpenHelp={() => platform.openLink("https://opencode.ai/desktop-feedback")}
+      onOpenHelp={() => platform.openLink("https://github.com/A-H-911/marid")}
       renderPanel={() =>
         mobile ? <SidebarPanel project={currentProject} mobile /> : <SidebarPanel project={currentProject} merged />
       }
@@ -2395,6 +2395,7 @@ export default function LegacyLayout(props: ParentProps) {
         </div>
         {import.meta.env.DEV && import.meta.env.VITE_DISABLE_DEBUG_BAR !== "1" && <DebugBar />}
       </div>
+      <TabsInfoPopup />
       <HelpButton />
       <ToastRegion v2={false} />
     </div>

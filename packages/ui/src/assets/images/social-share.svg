@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="marid-flame" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#FBD24A"/>
+      <stop offset="0.5" stop-color="#F5901E"/>
+      <stop offset="1" stop-color="#DC2A16"/>
+    </linearGradient>
+    <linearGradient id="marid-core" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#FDEFB0"/>
+      <stop offset="1" stop-color="#F8B73C"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#131010"/>
+  <g transform="translate(360,185) scale(2.6)">
+    <path d="M40 7.5C52.5 25 65 35 65 52.5C65 75 53.5 91.5 40 92.5C26.5 91.5 15 75 15 52.5C15 35 27.5 25 40 7.5Z" fill="url(#marid-flame)"/>
+    <path d="M40 32.5C47 43 52.5 49.5 52.5 60C52.5 72 47 80 40 81C33 80 27.5 72 27.5 60C27.5 49.5 33 43 40 32.5Z" fill="url(#marid-core)"/>
+  </g>
+  <text x="600" y="345" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="150" font-weight="700" letter-spacing="-4" dominant-baseline="middle">
+    <tspan fill="#2F6BFF">Mar</tspan><tspan fill="#F0731F">id</tspan>
+  </text>
+  <text x="602" y="440" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="34" font-weight="400" fill="#8A8785" dominant-baseline="middle">A private agent platform</text>
+</svg>

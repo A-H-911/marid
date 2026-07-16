@@ -7,7 +7,7 @@ import { type Platform, PlatformProvider } from "@/context/platform"
 import { dict as en } from "@/i18n/en"
 import { dict as zh } from "@/i18n/zh"
 import { handleNotificationClick } from "@/utils/notification-click"
-import { authFromToken } from "@/utils/server"
+import { authFromToken, authTokenFromCredentials, persistServerAuth } from "@/utils/server"
 import pkg from "../package.json"
 import { ServerConnection } from "./context/server"
 
@@ -69,7 +69,7 @@ const notify: Platform["notify"] = async (title, description, href) => {
 
   const notification = new Notification(title, {
     body: description ?? "",
-    icon: "https://opencode.ai/favicon-96x96-v3.png",
+    icon: "/favicon-96x96-v3.png",
   })
 
   notification.onclick = () => {
@@ -155,6 +155,9 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 
 if (root instanceof HTMLElement) {
   const auth = authFromToken(new URLSearchParams(location.search).get("auth_token"))
+  // Persist for the tab session so it survives navigation into a re-resolved local-server connection
+  // (see persistServerAuth in utils/server.ts). Only stored when a token was actually supplied.
+  if (auth) persistServerAuth(authTokenFromCredentials(auth))
   clearAuthToken()
   const server: ServerConnection.Http = {
     type: "http",

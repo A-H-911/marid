@@ -20,9 +20,10 @@ generation: derived
   [roadmap](planning/roadmap.md), [acceptance criteria](validation/acceptance-criteria.md). Decisions in the
   [ADRs](adrs/) and approved registers are FINAL.
 - **Where you are now:** the live [status report](progress/status-report.md) and
-  [acceptance audit](validation/acceptance-audit.md). **PH-0..6 done; MS-007 MET** (2026-07-12, PR #48
-  `4409d92f`) — all PH-6 acceptance criteria Met and the Telegram gateway stack merged to `develop`. **PH-7
-  WhatsApp** is operator-gated and not started. Do not re-litigate settled decisions.
+  [acceptance audit](validation/acceptance-audit.md). **PH-0..6 done** (MS-007 MET, 2026-07-12, PR #48
+  `4409d92f`); **PH-8 Isolation & deep rebrand in progress** — WBS-8.0..8.5 merged, AC-025..031 all Met (data
+  isolation, agent identity, TUI + web rebrand); **WBS-8.6 docs reconcile at the operator gate, WBS-8.7 v0.3.0
+  release remains**. **PH-7 WhatsApp** is operator-gated and not started. Do not re-litigate settled decisions.
 
 ## Invariants — never violate (a violation requires a new ADR)
 
@@ -58,5 +59,6 @@ generation: derived
 ## Kickoff
 
 Start from [handoff/initial-prompt.md](handoff/initial-prompt.md); subsequent phases use
-[handoff/follow-up-prompts.md](handoff/follow-up-prompts.md) (active phase: **PH-6 Telegram gateway** — see the
-live [status report](progress/status-report.md); PH-7 WhatsApp is operator-gated and not started).
+[handoff/follow-up-prompts.md](handoff/follow-up-prompts.md) (active phase: **PH-8 Isolation & deep rebrand** —
+WBS-8.6 docs at the gate, WBS-8.7 v0.3.0 release remains; see the live
+[status report](progress/status-report.md); PH-7 WhatsApp is operator-gated and not started).

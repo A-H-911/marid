@@ -12,6 +12,7 @@
 
 import { $ } from "bun"
 import fs from "fs"
+import os from "os"
 import path from "path"
 import { fileURLToPath } from "url"
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
@@ -113,6 +114,11 @@ for (const item of targets) {
     entrypoints: ["./src/marid.ts", parserWorker, workerPath],
     define: {
       FFF_LIBC: JSON.stringify(item.abi === "musl" ? "musl" : "gnu"),
+      // MARID P-6 (WBS-8.2): bake the app-name so the compiled binary isolates
+      // all machine-global dirs under `marid` (rewrites the dot-notation read in
+      // @opencode-ai/core/global.ts). Dev sets __MARID_APP at runtime instead
+      // (src/marid-env.ts); the binary needs no runtime env.
+      "process.env.__MARID_APP": JSON.stringify("marid"),
       OPENCODE_VERSION: `'${Script.version}'`,
       OPENCODE_MODELS_DEV: generated.modelsData,
       OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + workerRelativePath,
@@ -132,6 +138,39 @@ for (const item of targets) {
       process.exit(1)
     })
     console.log(`Smoke test passed: ${String(versionOutput).trim()}`)
+
+    // WBS-8.2 P-6 isolation smoke: prove the baked __MARID_APP define actually
+    // took. A define that fails to match doesn't error — it silently leaves the
+    // app-name "opencode", shipping a NON-isolated binary green. This is the ONLY
+    // check that exercises the binary's baked-define branch (dev/tests use the
+    // runtime-env branch). global.ts mkdir's the data dir at module load, so even
+    // `--version` materialises it; assert it lands under `marid`, not `opencode`.
+    const probeRoot = path.join(os.tmpdir(), `marid-smoke-${process.pid}`)
+    fs.rmSync(probeRoot, { recursive: true, force: true })
+    await $`${binaryPath} --version`
+      .env({
+        ...process.env,
+        XDG_DATA_HOME: path.join(probeRoot, "data"),
+        XDG_CONFIG_HOME: path.join(probeRoot, "config"),
+        XDG_STATE_HOME: path.join(probeRoot, "state"),
+        XDG_CACHE_HOME: path.join(probeRoot, "cache"),
+      })
+      .quiet()
+      .catch((e) => {
+        console.error(`Isolation smoke failed for ${name}:`, e)
+        process.exit(1)
+      })
+    const isolated = fs.existsSync(path.join(probeRoot, "data", "marid"))
+    const leaked = fs.existsSync(path.join(probeRoot, "data", "opencode"))
+    fs.rmSync(probeRoot, { recursive: true, force: true })
+    if (!isolated || leaked) {
+      console.error(
+        `Isolation smoke FAILED for ${name}: expected the data dir under 'marid' (baked __MARID_APP define), ` +
+          `got isolated=${isolated} leaked-opencode=${leaked}`,
+      )
+      process.exit(1)
+    }
+    console.log(`Isolation smoke passed: binary writes under 'marid' (P-6 define OK)`)
   }
 
   await $`rm -rf ./dist/${name}/bin/tui`
