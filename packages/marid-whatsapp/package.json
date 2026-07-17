@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "version": "1.17.13",
+  "name": "@marid/whatsapp",
+  "description": "Marid WhatsApp gateway — a standalone channel process that speaks only the public Marid HTTP+SSE API with a scoped channel token (ADR-0005), reaching WhatsApp outbound-only via a WAHA sidecar (ADR-0010)",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "bun test --timeout 30000",
+    "typecheck": "tsgo --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:"
+  },
+  "dependencies": {
+    "@marid/channel-client": "workspace:*"
+  }
+}
