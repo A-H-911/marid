@@ -28,7 +28,8 @@ The loop for any non-trivial change:
 4. **Update the trackers** in the same change (the *tracking protocol* — see CLAUDE.md): progress log,
    status report, acceptance audit, roadmap/work-breakdown/milestones, `keystone-state.json`.
 5. **Validate the docs package:** `python <keystone-skill>/scripts/validate_package.py docs/` must print
-   `RESULT: OK`.
+   `RESULT: OK`. Requires **Keystone ≥ 1.0.0** — 0.1.0 lacks the `G-PROGRESS` gate entirely and reports 31
+   false duplicate-definition findings against the acceptance audit's bare `AC-` ids.
 6. **Open a PR into `develop`** (squash). All **17 required checks** must be green.
 7. **The operator merges** — never self-merge or merge unprompted (**INV-005**).
 

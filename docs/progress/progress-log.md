@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-15
+updated: 2026-07-17
 owner: operator (STK-001)
 ---
 
@@ -10,6 +10,53 @@ owner: operator (STK-001)
 Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blockers / Next.** Machine mirror
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
+
+## 2026-07-17 — Tracker reconcile: ADR-0019 propagation + docs-package validator conformance — unmerged, at the operator gate
+- **Done:** finished the tracking protocol that **PR #71** (`6b9e29ae5d`) left 3/5 complete — it updated the
+  [acceptance audit](../validation/acceptance-audit.md) + `keystone-state.json` but skipped this log and the
+  [status report](status-report.md), which still advertised the closed items as open backlog. Propagated
+  [ADR-0019](../adrs/adr-0019-channel-secret-containment-final.md) everywhere it was owed: the audit's MVP
+  tally (`14/16 Met` + **2 Not-met**, replacing the self-contradicting "1 Partial + 1 Not-met" that survived
+  next to already-flipped rows), the audit's post-MVP paragraph (**AC-017 Pending→Met**, stale since MS-007),
+  its PH-5→**PH-8/MS-009** scope line, and the status report's snapshot / residuals / backlog / `Upcoming`
+  tense. **Deferred-work register:** item 1 `Resolved`→**Done** and item 9 `Superseded`→**Done** (both were
+  off the register's own enum); **item 6 `In progress`→Done** — stale ~8 days: DEC-010 (2026-07-03) made the
+  repo public, protection is live (17 required checks), and the WBS-5.1 "private releases" premise was
+  reconciled *to public* at MS-006 (AC-014 Met on the public `v0.1.0`); its source doc
+  [deviation-branch-protection](../decisions/deviation-branch-protection.md) flipped Proposed→**Superseded**
+  (it still read "making the repo public is a non-starter" and ended "STOP — awaiting operator decision").
+  **New item 11:** the `packages/core` `process.test.ts` emission-order flake, with its doctrine home added
+  to the **P-CI-4 watch-list**.
+- **Fixed — the docs package was failing validation and no doc change caused it.** `G-PROGRESS` **32
+  findings → 0**; `validate_package.py docs/` = **OK** (all 7 gates). **Root cause:** Keystone **0.1.0 has no
+  `G-PROGRESS` gate at all** and printed OK, so every historical "validate = OK" was true *against 0.1.0*;
+  the installed **1.0.0 added the gate**, which then choked on the audit's `AC-` cells being markdown links
+  (`[AC-001](acceptance-criteria.md)` never `fullmatch`es `ID_TOKEN_RE`, so the whole table was skipped →
+  "no Verdict column" → all 31 criteria reported missing). Those links were **our own workaround**, added by
+  `ad10384679` to silence 0.1.0's G-IDS duplicate-definition findings; 1.0.0 fixed that root cause properly
+  (its `audit_view` carve-out reads audit cells as *references*), making the links obsolete **and harmful**.
+  The fix is a **revert to bare ids** — the format the package was generated with at `276c10c0fc` (#22).
+  Verified on a throwaway copy before touching the package; **G-IDS stays PASS**.
+- **Decisions:** (1) **verdict vocabulary conformed** (operator-directed) — `G-PROGRESS` admits only
+  `Met | Partial | Not-met | Pending`, which has no value for *superseded* (AC-007) or
+  *accepted-with-deviation* (AC-016), so both rows read **`Not-met`** with the true disposition **leading**
+  their Notes. Literally accurate for AC-016 (ADR-0019 says "NOT Met"); it under-describes AC-007, which is
+  **void, not failed**. ADR-0019's substance is untouched and now carries a note recording this; widening
+  Keystone's `ALLOWED_VERDICTS` (`Superseded`/`Accepted` are already valid `DOCUMENT_STATUSES` in that tool)
+  reverts the two cells with no ADR change. (2) **Version floor recorded** — the package now requires
+  **Keystone ≥ 1.0.0** (governance / CLAUDE.md / CONTRIBUTING); against 0.1.0 the bare ids report 31 bogus
+  duplicate-definitions, so the two versions are **mutually exclusive** and a green 0.1.0 run is not
+  evidence. (3) Flake **tracked, not fixed** — no code touched.
+- **Deviations:** the flake went to the **P-CI-4 watch-list**, not a new P-CI-3 row: P-CI-3 enumerates
+  upstream test edits that *exist*, and we made none. CLAUDE.md's "route new timing flakes through
+  `OPENCODE_TIMING_SCALE` (P-CI-4)" **does not apply as written** — `it.effect` is called with no `opts`, so
+  there is no per-test budget to scale; only constants inside the child `-e` script. Recorded on the entry.
+  Dated snapshots ([mvp-readiness-report](../validation/mvp-readiness-report.md), `handoff-manifest.json`,
+  pre-07-16 entries in this log) deliberately **left as history**. The audit's `status: Draft` left alone —
+  flipping it is a governance act (INV-005), not bookkeeping.
+- **Blockers:** none — docs-only, zero `packages/` changes; `validate_package.py docs/` = OK.
+  **Next:** operator review → squash into `develop`; then a `develop → main` docs sync when convenient.
+  Open work is unchanged: **PH-7 WhatsApp** (operator-gated, not started).
 
 ## 2026-07-16 — PH-8 Phase 7 (WBS-8.7): public v0.3.0 RELEASED — MS-009 MET, PH-8 complete
 - **Done:** cut the public **[v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0)** release, closing MS-009
