@@ -15,6 +15,16 @@ carrying its containment posture forward unchanged and closing its one open clau
 redactor) · relates to [AC-016](../validation/acceptance-criteria.md), RISK-007, RISK-004, INV-002 ·
 raised by the post-v0.3.0 acceptance sweep (2026-07-16)
 
+> **Note on how this ADR is expressed in the acceptance audit (2026-07-17, operator-directed — substance
+> unchanged).** This ADR's dispositions are *superseded* (AC-007) and *accepted-with-deviation* (AC-016).
+> Keystone's `G-PROGRESS` gate admits only `Met | Partial | Not-met | Pending`, so the
+> [acceptance audit](../validation/acceptance-audit.md) carries **`Not-met`** for both rows, with the true
+> disposition leading each row's Notes. For AC-016 that label is literally accurate — this ADR itself says
+> "NOT Met, and will not be built". For AC-007 it under-describes a criterion that is **void, not failed**.
+> The decision below is unaffected: nothing here was re-litigated, only re-labelled to fit the validator's
+> vocabulary. If Keystone's `ALLOWED_VERDICTS` is widened to accept `Superseded`/`Accepted` (both already
+> valid `DOCUMENT_STATUSES` in that tool), those two cells revert with no change to this ADR.
+
 **Context.** [ADR-0007](adr-0007-channel-secret-containment.md) (Approved 2026-07-07) established that
 channel secret safety in Marid is **authorization-boundary containment, not egress redaction**, and
 deferred a configured-secret-value redactor to **PH-5**. PH-5 shipped and **MS-006 was accepted at

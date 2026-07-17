@@ -32,4 +32,9 @@ traceability matrix (gate G-TRACE). Superseding creates a new ID and sets `super
 ## Change discipline
 Docs are the source of truth; code follows docs. Update the state trackers (progress-log, status-report,
 acceptance audit, `keystone-state.json`) in the same change that lands the work. Validate with
-`scripts/validate_package.py` (bundled with the Keystone skill) before any PR.
+`scripts/validate_package.py` (bundled with the Keystone skill, **≥ 1.0.0**) before any PR. The version
+floor is load-bearing: the acceptance audit's `AC-` cells are **bare ids** (`| AC-001 |`, not a markdown
+link), which 1.0.0's `audit_view` carve-out reads as *references*. Against **0.1.0** the same file reports
+31 bogus `duplicate definition … within family 'validation'` findings, and 0.1.0 has no `G-PROGRESS` gate at
+all — so a green 0.1.0 run is not evidence. Do not "fix" the audit by re-linking those cells: that is what
+broke `G-PROGRESS` before (see [progress-log](../progress/progress-log.md), 2026-07-17).

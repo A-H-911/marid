@@ -23,7 +23,8 @@ How a contributor (human or agent) changes the Marid planning package without br
 ## Workflow for a change
 1. Edit the owning register/artifact; bump its `version` / `updated`.
 2. Re-derive dependents (traceability matrix, status report, acceptance audit) and `keystone-state.json`.
-3. Run the mechanical gates: `python <keystone>/scripts/validate_package.py docs/` → must be `RESULT: OK`.
+3. Run the mechanical gates: `python <keystone>/scripts/validate_package.py docs/` → must be `RESULT: OK`
+   (Keystone **≥ 1.0.0**; 0.1.0 has no `G-PROGRESS` gate and misreads the audit's bare `AC-` ids).
 4. Update [progress-log](../progress/progress-log.md) + [status-report](../progress/status-report.md).
 5. Open a squash PR into `develop`; all required checks green; merge only on explicit operator instruction.
 

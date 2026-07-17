@@ -7,7 +7,9 @@ Part 2 is upstream-derived and describes the code, Part 1 describes how we work 
 
 **Standing context:** this manual imports the plan's ambient control surface — @docs/AGENTS.md — which
 carries the invariants, hard constraints, and the tracking protocol. The `docs/` package is a
-**Keystone v1.0.0** package; validate it with `python <keystone-skill>/scripts/validate_package.py docs/`.
+**Keystone v1.0.0** package; validate it with `python <keystone-skill>/scripts/validate_package.py docs/`
+(**requires Keystone ≥ 1.0.0** — 0.1.0 has no `G-PROGRESS` gate and misreads the audit's bare `AC-` ids as
+duplicate definitions).
 
 ---
 
@@ -85,8 +87,9 @@ are a defect. **Concrete trigger:**
 > (4) flip the status in `docs/planning/{roadmap,work-breakdown,milestones}.md`;
 > (5) reconcile `docs/keystone-state.json` (`progress[]` + `change_log[]` + the affected register).
 
-Then re-run `validate_package.py docs/` (must be `RESULT: OK`) before opening the PR. Do this in the same
-change that lands the work, not "later."
+Then re-run `validate_package.py docs/` (Keystone **≥ 1.0.0**; must be `RESULT: OK` — all 7 gates, incl.
+`G-PROGRESS`) before opening the PR. Do this in the same change that lands the work, not "later." It is a
+**local gate — CI never runs it**, so nothing else will catch a regression here.
 
 ## Invariants & approvals (these gate every action)
 
