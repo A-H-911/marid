@@ -1,0 +1,32 @@
+# WAHA sidecar for @marid/whatsapp (PH-7, ADR-0010 primary — WAHA-NOWEB).
+#
+# The operator runs this on the private network; marid-whatsapp dials it OUTBOUND only
+# (WS events in / HTTP out — OQ-004). This is the repo's FIRST digest-pinned image: the
+# digest IS the trust anchor (RISK-014). It is the exact image the GATE-0 OpenAPI fixture
+# (packages/opencode/test/marid/fixtures/waha-openapi.json) was recorded against, so a
+# silent WAHA behaviour change fails TEST-WA (contract drift) rather than reaching a live
+# account. Re-pinning (a new tag/digest) is a deliberate act: bump here + refresh the
+# fixture together.
+#
+# ponytail: single sidecar, no orchestration. Add replicas/healthchecks only if the
+# operator ever runs more than one WhatsApp session.
+
+services:
+  waha:
+    # Pinned by digest — the tag is informational; Docker verifies it resolves to this digest.
+    image: devlikeapro/waha:noweb-2026.7.1@sha256:8717e9a689b723d0782aae9340dbf3d1234c9c6cd53c873382f921a5f466c119
+    restart: unless-stopped
+    # Bind to loopback: only marid-whatsapp (same host / private network) reaches it.
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      # NOWEB is the engine GATE-0 pinned (EXP-006). Core (free) tier — no Plus needed.
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      # API key: WAHA requires it on the X-Api-Key header (HTTP) and the x-api-key query
+      # param (WS). Supply via the environment — never commit it (INV-002). marid-whatsapp
+      # reads the same value from its own env and redacts it from every log line.
+      WAHA_API_KEY: ${WAHA_API_KEY:?set WAHA_API_KEY in the environment}
+    volumes:
+      # NOWEB auth state persists here so a restart does not force a re-pair. Keep this
+      # off VCS and 0600-equivalent (it is session material — INV-002).
+      - ./.waha-sessions:/app/.sessions

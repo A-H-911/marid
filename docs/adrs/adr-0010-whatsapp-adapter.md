@@ -1,8 +1,8 @@
 ---
 id: ADR-0010
 status: Approved
-version: 1.0.0
-updated: 2026-07-09
+version: 1.0.1
+updated: 2026-07-17
 supersedes: none
 superseded_by: none
 owner: operator (STK-001)
@@ -38,6 +38,15 @@ behind a small interface so the deterministic **fake-WA test** (ADR-0014 tier 2)
 any Baileys/OpenClaw code-port entirely** (Marid speaks HTTP/WS to WAHA, no Baileys in Marid's tree — the port
 question only arises for the Baileys-direct alternative). (2) **Streaming-sim:** presence(`composing`) + throttled
 edit-coalescing within WhatsApp's ~15-min edit window + rate limits (Baileys/WAHA can edit sent messages). (3)
+
+> **Implementation correction (2026-07-17, PH-7 build — design unchanged).** Prose facts in this amendment
+> reflect the Baileys reference and pre-shift WAHA pricing; the shipped WAHA-NOWEB path differs in name only:
+> **(a)** the presence verb is **`typing`** (the WAHA enum `offline|online|typing|recording|paused`), **not**
+> Baileys' `composing` — every "composing" here reads `typing` in the code (`waha.ts setPresence`). **(b)**
+> WAHA collapsed **Plus → Core (free) on 2026-06-21** (v2026.6.1), so "WAHA Plus (paid)" references are stale
+> — the ADR-0015 permission decision (`APPROVE <token>`, no lists/buttons) is **unaffected**: it rests on
+> client-**render reliability**, not price. **(c)** GATE-0 (EXP-006) confirmed the WAHA-NOWEB pick and the
+> STOP path did not fire → WAHA-only, Baileys-direct documented-not-built.
 **Auth-state persistence:** WAHA session store (or Baileys multi-file auth state) at 0600, out of logs/VCS
 (INV-002), with a reconnect watchdog; QR pairing at setup. (4) **Media:** send/receive within WhatsApp limits. (5)
 **Permission UX:** per **ADR-0015** — token-bound **text reply** (WhatsApp interactive buttons are dead), not an

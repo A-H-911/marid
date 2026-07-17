@@ -11,7 +11,45 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
-## 2026-07-17 — Tracker reconcile: ADR-0019 propagation + docs-package validator conformance — unmerged, at the operator gate
+## 2026-07-17 — PH-7 WhatsApp (WBS-7.6): docs + CI + trackers — MS-008 deterministic exit achieved, unmerged, at the operator gate
+- **Done (WBS-7.6, closing PH-7):** the WhatsApp adapter code (WBS-7.1..7.5) was already built, committed, and
+  live-green on `feat/ph7-whatsapp` @ `527fe493d2` (139 unit + 3 live TEST-WA tests, both packages typecheck).
+  This change lands the remaining bookkeeping: **(1) EXP reports** — [EXP-006](../experiments/exp-006-report.md)
+  (GATE-0 capability pin + wiring, PASS) + [EXP-011](../experiments/exp-011-report.md) (fake-WA deterministic
+  gate, PASS); EXP-012/013 **runbooks** written, **not run** (burner/native are ban-exposed, never a gate).
+  **(2) Docs** — `architecture.md` v1.3 (WhatsApp component + container nodes + WAHA sidecar deployment
+  unit/trust anchor + no-new-`P-*` note), `api-event-contract.md` v1.3 (**full FR-051 mapping** — webhook-sig
+  N/A by OQ-004, replay=dedup, ratelimit=gateway, retry=channel-client backoff, dead-letter=log+drop), Tarseem
+  `21-whatsapp-channel` diagram, `dependency-register` DEP-013 (WAHA digest-pinned, no npm dep → Accepted),
+  `test-strategy` TEST-WA → "the deterministic blocking PR gate", RISK-014 note (mitigated), a WAHA
+  `compose.yaml` (repo's first). **(3) CI** — `bun --cwd packages/marid-whatsapp test` in the `unit` job + a
+  3-OS `marid-whatsapp` job (cloned from `marid-telegram`, `MARID_WHATSAPP=1`, no secrets/container) + a
+  non-gating `marid-whatsapp-burner.yml`. **Conscious deviation from the plan's "no new retry wrapper":** the
+  job keeps marid-telegram's bounded 3× retry — the firehose cold-start flake it backstops is a **measured**
+  RISK-006 (deferred-work item 8) on the *same* SSE firehose this live test rides, so the plan's "unless a
+  flake is measured" clause is satisfied; deterministic coverage lives in the unit tier regardless. **(4) Trackers** — AC-018/022/023 → **Met** (live evidence);
+  work-breakdown WBS-7.1..7.6, milestones/roadmap MS-008, and `keystone-state.json` reconciled.
+- **Fixed (found in scope):** `script/strip-upstream-workflows.ts` `KEEP` set was **missing
+  `marid-telegram-userbot.yml`** — the pre-existing non-gating Telegram burner would have been **deleted on the
+  next upstream sync**. Added it plus the new `marid-whatsapp-burner.yml` (root-cause fix, one place).
+- **Fixed (three stale-doc facts, design unchanged):** ADR-0010's presence verb `composing`→**`typing`** (WAHA
+  enum; correction note); ADR-0010/0015's "**WAHA Plus (paid)**" premise — WAHA collapsed Plus→**Core (free)
+  on 2026-06-21**, so lists are free now, but ADR-0015's `APPROVE <token>` decision stands on **render
+  reliability, not price**; the **stale MS-008 row** ("ADR-0010 Proposed", "then PH-7-start live probe", omits
+  AC-022/023) reconciled to the operator-confirmed **deterministic-only** exit (ADR-0014).
+- **Decisions:** **WAHA-NOWEB only** — GATE-0/EXP-006 confirmed Core+NOWEB has every needed capability (WS
+  events, sendText, media, editMessage, presence), STOP did not fire → **Baileys-direct documented-not-built**
+  (DEC-015). WAHA image **digest-pinned** (`noweb-2026.7.1@sha256:8717e9a6…`, repo's first) = the RISK-014
+  trust anchor + GATE-0 fixture baseline. **No new `P-*`** (additive separate-process package).
+- **Deviations:** the "17 required checks" count was **NOT** flipped to 20 anywhere — that would assert an
+  enforcement the operator hasn't activated. The ruleset edit (add the 3 `marid-whatsapp (os)` contexts) + the
+  count update across ~20 files are **flagged as an operator action**, to land in lockstep with the ruleset.
+- **Blockers:** none technical. **Gate:** MS-008 deterministic exit is achieved (AC-018/022/023 Met,
+  EXP-006/011 PASS); **formal MET (date + shipping PR) is stamped on the operator merge** (INV-005).
+- **Next:** operator review → merge the WBS-7.6 PR into `develop` → stamp MS-008 MET; then (operator) the
+  ruleset 17→20 + count sweep. PH-7 is the last Marid milestone; MS-008 closes the plan.
+
+
 - **Done:** finished the tracking protocol that **PR #71** (`6b9e29ae5d`) left 3/5 complete — it updated the
   [acceptance audit](../validation/acceptance-audit.md) + `keystone-state.json` but skipped this log and the
   [status report](status-report.md), which still advertised the closed items as open backlog. Propagated

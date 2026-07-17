@@ -131,6 +131,13 @@ jobs:
       # parse. Dependency-free, cross-OS, injected fakes (no network).
       - name: Run marid-channel-client unit tests
         run: bun --cwd packages/marid-channel-client test
+      # marid (WBS-7.1..7.5): TEST-WA unit tier — config/allowlist/dedup/policy/redact,
+      # the APPROVE <token> approval parser (RISK-021 — exact-match, single-use/JID/TTL),
+      # streaming-sim, media, and the WAHA client (frame parse, HTTP body shapes, source-guard
+      # = no inbound port). Deterministic (injected clock + fake socket), no network. The live
+      # round trip runs in the dedicated 3-OS marid-whatsapp job below (AC-023).
+      - name: Run marid-whatsapp unit tests
+        run: bun --cwd packages/marid-whatsapp test
 
   smoke:
     name: smoke (${{ matrix.os }})
@@ -320,6 +327,65 @@ jobs:
         working-directory: packages/opencode
         env:
           MARID_TELEGRAM: "1"
+          OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
+          OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
+          TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+          TEMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}
+
+  marid-whatsapp:
+    name: marid-whatsapp (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: ./.github/actions/bun-install
+      - name: Install ripgrep (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ripgrep -y
+      - name: Prepare temp dir on workspace drive (Windows)
+        if: runner.os == 'Windows'
+        run: mkdir -p /d/opencode-tmp
+      # TEST-WA live tier (AC-023, ADR-0014 tier 2): the WhatsApp round trip against a real
+      # `marid serve` + fake LLM + a LOCAL FAKE WAHA (Bun.serve — HTTP for outbound, WS for
+      # inbound injection) whose outbound bodies are validated against the pinned GATE-0
+      # OpenAPI fixture. NO live WhatsApp, NO live model, NO real account, NO container
+      # (the fake IS the WAHA — a Linux WAHA image can't run on macOS/Windows runners, and
+      # ADR-0014 tier 2 is in-process by design). Gated by MARID_WHATSAPP=1 (describe.skip
+      # otherwise). NO secrets.
+      - name: Run WhatsApp gateway live suite
+        # Same bounded retry-wrapper as marid-telegram (operator-chosen, defence-in-depth):
+        # this live E2E rides the same SSE firehose over loopback, so it shares the cold-start
+        # first-subscribe flake (RISK-006). The wrapper is a backstop only — the firehose pump
+        # reconnects (@marid/channel-client, WBS-6.5) and deterministic AC-018/022/023 coverage
+        # lives in the marid-whatsapp unit tier (approval/permission/waha/gateway tests).
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::whatsapp live E2E — attempt ${attempt}/3"
+            if bun test test/marid/whatsapp.test.ts --timeout 300000; then
+              echo "::endgroup::"
+              echo "whatsapp live E2E passed on attempt ${attempt}/3"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "::warning::whatsapp live E2E failed attempt ${attempt}/3 (intermittent firehose stall — RISK-006)"
+          done
+          echo "::error::whatsapp live E2E failed after 3 attempts"
+          exit 1
+        working-directory: packages/opencode
+        env:
+          MARID_WHATSAPP: "1"
           OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER: ${{ runner.os == 'Windows' && 'true' || 'false' }}
           OPENCODE_TIMING_SCALE: ${{ runner.os == 'Windows' && '4' || '2' }}
           TMP: ${{ runner.os == 'Windows' && 'D:\opencode-tmp' || runner.temp }}

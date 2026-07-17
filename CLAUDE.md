@@ -69,10 +69,13 @@ Six dependency-ordered phases, each exiting at a measurable milestone:
 - **Ending a phase:** operator review checkpoint. Review PRs against `docs/handoff/review-prompts.md`
   (esp. patch-surface discipline — flag any upstream edit not registered as a `P-*`).
 - **Current status:** see `docs/progress/status-report.md` (the live snapshot) + `docs/planning/roadmap.md`.
-  (As of this writing: **PH-0..6 done** (MS-007 MET, PR #48 `4409d92f`); **PH-8 Isolation & deep rebrand in
-  progress** — WBS-8.0..8.5 merged and AC-025..031 all Met (data isolation, agent identity, TUI + web rebrand),
-  **WBS-8.6 docs reconcile at the operator gate, WBS-8.7 v0.3.0 release remains**. **PH-7 WhatsApp** is
-  operator-gated, not started.)
+  (As of this writing: **PH-0..6 done** (MS-007 MET, PR #48 `4409d92f`); **PH-8 Isolation & deep rebrand DONE**
+  (MS-009 MET, 2026-07-16 — public v0.3.0; AC-025..031 all Met). **PH-7 WhatsApp — the last milestone (MS-008) —
+  code-done and at the operator gate:** the adapter (WBS-7.1..7.5) is built + live-green on `feat/ph7-whatsapp`
+  @ `527fe493d2`, WBS-7.6 (docs + CI + trackers) done; AC-018/022/023 Met, EXP-006/011 PASS; deterministic
+  MS-008 exit achieved, formal MET stamps on the operator merge (INV-005). **Operator action still needed to
+  close it:** merge the WBS-7.6 PR, then ruleset `protect-integration-branches` **17→20** (add the 3
+  `marid-whatsapp (os)` contexts) + the "17 checks" count sweep — those must land together.)
 
 ## Tracking protocol (MANDATORY — do not let the trackers drift)
 

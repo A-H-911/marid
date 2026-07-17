@@ -1,7 +1,7 @@
 ---
-status: Approved (gate 5, 2026-07-03; amended 2026-07-12 — PH-6 gateway + mirroring realized, additive; @marid/gateway rename + gateway/channel-gateway disambiguation)
-version: v1.2
-updated: 2026-07-14
+status: Approved (gate 5, 2026-07-03; amended 2026-07-12 — PH-6 gateway + mirroring realized, additive; @marid/gateway rename + gateway/channel-gateway disambiguation; amended 2026-07-17 — PH-7 WhatsApp channel + WAHA sidecar, additive)
+version: v1.3
+updated: 2026-07-17
 owner: operator (STK-001)
 ---
 
@@ -42,11 +42,15 @@ graph TB
         TUI -.->|"attach · client token"| S1
         WEB["Web UI (packages/app)"] -->|"HTTP+SSE · client token"| S1
         TG["marid-telegram<br/>channel gateway (separate process · a client)"] -->|"HTTP+SSE · channel: token"| S1
+        WA["marid-whatsapp<br/>channel gateway (separate process · a client)"] -->|"HTTP+SSE · channel: token"| S1
+        WAHA["WAHA sidecar<br/>(NOWEB engine · pinned by image digest)"]
         IM -.->|spawn/stop/status| S1
         IM -.-> S2
     end
     APPS["SDK / API clients"] -->|"bearer token"| S1
     TG <-->|long polling, outbound only| TGAPI["Telegram Bot API"]
+    WA <-->|"WS events in / HTTP out · outbound only"| WAHA
+    WAHA <-->|unofficial client| WAAPI["WhatsApp"]
     S1 -->|provider APIs| LLM["LLM providers"]
 ```
 
@@ -59,6 +63,7 @@ graph TB
 | **marid-gateway** (new pkg; marid-auth is its auth module, ADR-0011) | Middleware via server extension seam | FR-031 bearer-token auth (per-client tokens with scopes), FR-032 rate limiting, FR-033 audit log, FR-030 request-ID correlation | Shaheen `Server.extend` pattern; single enumerated seam |
 | **marid-instance** (new pkg, CLI) | Instance manager | FR-053 (IDs, launchers, port allocation, per-instance XDG/OPENCODE env, PID files, start/stop/status/logs, locks) | claudectl pattern (R-11) + R-05 conflict inventory |
 | **marid-telegram** (new pkg, process) | Channel gateway (a client of `marid-gateway`) | FR-045..052: long-polling ingress, `update_id` dedup, operator allowlist, HTML formatting, edit-coalesced streaming (≥2 s cadence), permission prompts as inline keyboards, media within Bot-API caps | R-09; slack-prototype loop; Shaheen gateway pattern |
+| **marid-whatsapp** (new pkg, process) | Channel gateway (a client of `marid-gateway`) — **reuses `@marid/channel-client`** | FR-045..052: WAHA-NOWEB ingress over WS events (**outbound-only**, no inbound port — OQ-004), `id` dedup, operator allowlist, edit-coalesced streaming (`presence("typing")` + throttled `editText`), media send/receive, permission prompts as **`APPROVE <token>`** text (ADR-0015, no interactive buttons) | ADR-0010/0014/0015; R-12 (WAHA HTTP-out/WS-in); GATE-0 capability pin (EXP-006) |
 | Channel capability policy | Config (instance-level) + gateway enforcement | FR-052, INV-001: channel maps to a dedicated restricted agent (tool/permission ruleset), scoped API token, model+cost caps at the gateway | R-04 permission rulesets; C-7 |
 | TUI / Web UI (packages/app) | Upstream, config-rebranded | FR-003, CON-005 | R-06: app rides the same API |
 | Config layer | Upstream + Marid defaults | FR-054/055; instance layer supplied by marid-instance via env (`OPENCODE_CONFIG`, XDG overrides); secret redaction rules | R-05 precedence chain |
@@ -130,6 +135,9 @@ Legacy non-`-v3` favicons left in place (still referenced by the excluded `packa
 (operator visual sign-off = merge gate).
 
 Everything else is additive. The upstream-delta report enumerates P-* plus new packages at every sync.
+**PH-7 (WhatsApp channel + WAHA sidecar) added no `P-*`:** `@marid/whatsapp` is a new separate-process
+package speaking the existing HTTP+SSE API + the reused `@marid/channel-client`; it reaches WhatsApp only
+through the operator-run WAHA sidecar (no upstream edit, no new package-internal listener).
 **PH-6 (gateway + mirroring) added no `P-*`:** the four `/marid/*` routes and the `owns ∪ bound` SSE filter
 are served in the marid-auth wrapper (additive, zero upstream edit); the Principle-2 server-extension seam
 was not needed (see *Marid Gateway & cross-surface mirroring* below). **marid-auth ingress altitude (RESOLVED 2026-07-05, PR #15):** the outer-wrapper seam sees HTTP only, so `client`-scope enforcement was originally per-session *route* ownership. The follow-up landed as option (b): `@marid/auth`'s `event-filter.ts` now body-filters at the wrapper for any non-admin token — dropping non-owned SSE frames from `GET /event` and non-owned entries from `GET /session` / `GET /permission` (all additive, zero upstream edit; invariant pinned by a contract test). Residual: `POST /permission/:requestID/reply` is keyed by an opaque `per_` id the wrapper cannot map to a session — documented in `decisions/open-decision-register.md` as a future in-pipeline follow-up (same seam boundary as deferred FR-030 trace correlation).
@@ -187,6 +195,36 @@ empty toolset; the sync route keeps the request alive so the full toolset resolv
 channel agent's `permission` ruleset, not a channel-side strip (`../execution/telegram-channel-tools.md`).
 The full route/event contract is in `api-event-contract.md` (v1.2).
 
+## WhatsApp channel (PH-7, realized) — WAHA-NOWEB, outbound-only
+
+PH-7 adds **`@marid/whatsapp`** as a second channel gateway on the same ADR-0012 registry — **additively,
+with zero new `P-*`**. WhatsApp becomes "just another channel": `@marid/gateway` still enforces INV-001
+server-side, and the adapter holds only a `channel:<name>` bearer token.
+
+- **WAHA-NOWEB, HTTP-out / WS-in (R-12 §D).** The adapter reaches WhatsApp only through a **WAHA** sidecar
+  (NOWEB engine, free Core tier). WAHA delivers **events over a WebSocket** but **sends over HTTP REST**, so
+  the transport is asymmetric — and both directions are **outbound connections from Marid**:
+  `WA -->|HTTP+SSE · channel: token| S1` and `WA <-->|WS events in / HTTP out, outbound only| WAHA`. WAHA's
+  other event mode is a webhook, which needs a public inbound endpoint and is therefore excluded by OQ-004 —
+  **WS event mode is the only OQ-004-compatible WAHA mode.** `waha.ts` opens no listening socket (a
+  source-guard test pins it; INV-001 asserted at real-request level, RISK-025).
+- **Zero WhatsApp npm dependency (RISK-014).** Bun ships `fetch` + `WebSocket`, so the adapter pulls no
+  WhatsApp client library — a lotusbail-class compromise would live in the WAHA container, never in Marid's
+  `node_modules`. The sole supply-chain surface is the WAHA image, pinned by **digest** (the repo's first;
+  see the deployment view + [DEP-013](../requirements/dependency-register.md)). Baileys-direct is the
+  **documented, unbuilt** fallback (DEC-015) — GATE-0 not firing means it is never needed.
+- **Reuses `@marid/channel-client` unchanged** — firehose subscribe / reconnect / re-fetch / self-binding
+  poll — so mirroring (view-via-binding, act-via-ownership) is **inherited** from ADR-0012, not re-proven.
+- **Permission UX = `APPROVE <token>` text** (ADR-0015): a strict exact-match parser (single-use, JID-bound,
+  TTL), server-side scope re-check — no interactive buttons/lists, chosen for render reliability, not price
+  (WAHA collapsed Plus→Core on 2026-06-21; the choice rests on client-render reliability). Streaming is
+  simulated with `presence("typing")` (the WAHA enum verb — **not** Baileys' "composing") + throttled
+  `editText` coalescing. Media send routes by mime (`sendImage` for images, `sendFile` otherwise, base64
+  `BinaryFile`); `editText`'s body is `{text}`-only (session/chatId/messageId are PATH params).
+
+The full WhatsApp route/event contract is in `api-event-contract.md`; the deterministic fake-WA PR gate is
+[EXP-011](../experiments/exp-011-report.md) (TEST-WA), the capability pin [EXP-006](../experiments/exp-006-report.md).
+
 ## Deployment & isolation view
 
 Each instance = one directory tree (config, DB, cache, logs, secrets, port/PID files) + one launcher; the
@@ -196,9 +234,22 @@ bare `process.exit()` observed in R-05), and status/health checks. Known shared-
 R-05 conflict inventory (auth.json RMW, LSP bin cache, global log) are eliminated by directory
 namespacing, not by in-place locking of shared files.
 
+**WAHA sidecar (PH-7 deployment unit + trust anchor).** The WhatsApp channel adds one deployment unit the
+operator runs on the private network: a **WAHA** container, pinned by **digest** —
+`devlikeapro/waha:noweb-2026.7.1@sha256:8717e9a689b723d0782aae9340dbf3d1234c9c6cd53c873382f921a5f466c119`
+(the repo's first digest pin). The digest **is** the trust anchor: it is what the GATE-0 OpenAPI fixture
+(`packages/opencode/test/marid/fixtures/waha-openapi.json`) was recorded against, so a silent WAHA behaviour
+change fails TEST-WA (contract drift) rather than reaching a live account. `marid-whatsapp` dials the sidecar
+**outbound only** (WS in / HTTP out); the sidecar is the only component that touches WhatsApp. A compose file
+pinning the same digest ships with the adapter — `packages/marid-whatsapp/waha.compose.yaml` (the repo's
+first compose).
+
 ## Trust boundaries (summary — full threat model at gate 8)
 
-1. **Telegram ⇄ gateway**: all inbound content untrusted (indirect prompt injection); allowlist + policy.
+1. **Telegram / WhatsApp ⇄ gateway**: all inbound content untrusted (indirect prompt injection); allowlist
+   + policy. For WhatsApp the `APPROVE <token>` parser runs **before** any NLP-style handling (strict
+   exact-match is the RISK-021 injection defense); the **WAHA sidecar** is trusted only to the extent its
+   pinned image **digest** is — a re-pin is a deliberate act, and contract drift fails TEST-WA.
 2. **Gateway ⇄ server**: scoped bearer token; gateway can only what its token allows.
 3. **Clients ⇄ server**: private network + per-client tokens; TLS optional on localhost, required beyond it.
 4. **Server ⇄ tools/plugins/MCP**: least-privilege rulesets; in-process plugins remain the weakest
