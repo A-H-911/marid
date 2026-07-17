@@ -1,11 +1,18 @@
 ---
-status: Proposed
+status: Superseded
 version: v0.1
-updated: 2026-07-03
+updated: 2026-07-17
 owner: operator (STK-001)
 ---
 
 # Deviation: branch protection not enforceable on the current GitHub plan
+
+> **SUPERSEDED 2026-07-03 by [DEC-010](open-decision-register.md) (Approved) — resolved; kept as history.**
+> The operator chose the third option below: **make the repository public**. Branch protection is live on
+> `main` + `develop` (17 required status checks), closing WBS-0.3's protection DoD, and the "private
+> distribution" premise this document reasons from was itself amended — "private" now means single-operator
+> *usage*, not a closed repo. The blocking question below is answered; nothing here is actionable.
+> Deferred-work item 6 closed **Done** 2026-07-17.
 
 Filed per `docs/handoff/follow-up-prompts.md` § Deviation — reality contradicts an approved artifact.
 Surfaced during WBS-0.3 (PH-0), immediately after WBS-0.1 completed. **No workaround was applied; stopped
@@ -30,6 +37,10 @@ are gated behind a paid plan:
 
 Making the repo public is a non-starter (charter: private distribution; CON-004/OQ-004). So enforcement
 requires a plan change.
+
+> **Overtaken by DEC-010 (Approved, 2026-07-03):** this premise did not survive. The repo **was** made
+> public — the charter's "private" was clarified to mean single-operator *usage* on a private network, not
+> a closed repository, so the "non-starter" reasoning above no longer holds.
 
 **Scope of the gap:** enforcement only. GitHub Actions still runs on PRs on Free private repos (within the
 free-minute allowance), so CI can be built (WBS-0.3 CI skeleton) regardless. What cannot be *enforced*
@@ -66,4 +77,8 @@ DEC-007), then: if Option 1/2, apply the ruleset (PR rule w/ 0 approvals for sol
 `deletion`) on `main`/`develop` and, after CI lands, add required status checks — closing WBS-0.3's
 protection DoD.
 
-**STOP — awaiting operator decision on the plan/enforcement option before any further protection action.**
+~~**STOP — awaiting operator decision on the plan/enforcement option before any further protection action.**~~
+
+> **Answered 2026-07-03 (DEC-010, Approved):** the operator chose **make the repository public**. Rulesets
+> were then applied to `main` + `develop` and grew to the current **17 required status checks**; WBS-0.3's
+> protection DoD is closed. No further action is pending from this document.

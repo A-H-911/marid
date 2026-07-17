@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-15
+updated: 2026-07-17
 owner: operator (STK-001)
 generation: derived
 ---
@@ -15,12 +15,12 @@ generation: derived
 
 | | |
 |---|---|
-| Reporting date | 2026-07-15 |
+| Reporting date | 2026-07-17 |
 | Active work | **PH-8 COMPLETE — public [v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0) released 2026-07-16; MS-009 MET.** Total DATA isolation + deep rebrand shipped (all 6 reported v0.2.0 issues → Met AC). The final docs reconcile (WBS-8.6, PR #64 `f022fbf005`) brought the docs package into line with what shipped: **usage.md** gains a "Data isolation & coexistence" section (per-OS data/state/config/cache/managed dirs — the XDG layout on every OS, not `~/Library`/`%AppData%`; the `marid.json` config rule + project-`opencode.json` fallback; the five-var `OPENCODE_*` env-pierce table; the one-time v0.2.0 migration; no auto-update); **README** gets a data-isolation Security-model bullet; **branding.md** flips the ADR-0018 note Proposed→realized; **architecture.md** flips P-6/P-7 planned→realized with real sites (`packages/core/src/global.ts:17`, `config.ts maridConfigNames`) + reconcile recipes; **CLAUDE.md**/**CONTRIBUTING.md** corrected; **NFR-010** Draft→Met. Diagrams 01/05/13 reviewed and left as-is (architecture-level, already Marid-accurate). **TUI + Telegram screenshots deferred** to the operator (headless capture can't be faithful). **All prior PH-8 phases merged:** WBS-8.1 (#54 sync) · 8.2 (#55/#56 isolation+config+pierce) · Phase-3 (#57 agent identity) · 4a/4b (#58/#59 TUI) · 5a (#60) · web (#63 `19ad4279f3`, 5b assets + auth-gate P-9 + lockup) · **TUI logo (#62 `7e4157b94c`, MERGED)** · **8.6 docs (#64 `f022fbf005`, MERGED)** — **AC-025..031 all Met**. **v0.3.0 shipped** (WBS-8.7): `develop→main` sync #66 merge-commit `378ba650` → `v0.3.0` tag → 21 signed assets + 3-OS install-smoke green. **MS-009 MET; PH-8 complete.** |
 | Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
 | Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
-| Next milestone | **MS-009 MET (2026-07-16)** — PH-8 complete; public v0.3.0 released (AC-025..031 Met, all 6 reported v0.2.0 issues → Met AC). **Next open work: MS-008 / PH-7 WhatsApp** — not-started, operator-gated, PH-8-independent (ADR-0010 / DEC-015/016). Backlog: egress secret-redactor (ADR-0007/AC-016), AC-007 formal supersede, stats mechanism (deferred #10), upstream sync cadence. |
+| Next milestone | **MS-009 MET (2026-07-16)** — PH-8 complete; public v0.3.0 released (AC-025..031 Met, all 6 reported v0.2.0 issues → Met AC). **Next open work: MS-008 / PH-7 WhatsApp** — not-started, operator-gated, PH-8-independent (ADR-0010 / DEC-015/016). Backlog: stats mechanism (deferred #10), upstream sync cadence, the `process.test.ts` emission-order CI flake (deferred #11). *(Two former backlog items are closed, [ADR-0019](../adrs/adr-0019-channel-secret-containment-final.md) 2026-07-16: the egress secret-redactor is **dropped from scope**, not deferred; AC-007's formal supersede is **done**.)* |
 
 ## Phase progress
 
@@ -37,8 +37,12 @@ generation: derived
 
 ## Acceptance snapshot
 
-MVP: **14 / 16 Met**, **1 Partial** (AC-016 — MVP redaction slice holds, full secret-value redactor deferred,
-ADR-0007), **1 Not-met** (AC-007 — premise superseded). AC-014 Met via the public `v0.1.0` release (KPI-006);
+MVP: **14 / 16 Met**, **2 Not-met** — both **closed dispositions, not open work** ([ADR-0019](../adrs/adr-0019-channel-secret-containment-final.md),
+2026-07-16): **AC-016** accepted-with-deviation (the secret-value redactor is **dropped from scope and will
+not be built**; B2/B4 authorization-boundary containment is the control; RISK-007 accepted+closed) and
+**AC-007** superseded (premise invalid — the v1 firehose is live-only; the recovery criterion is **AC-008**,
+Met). Both read `Not-met` only because the validator's verdict set admits no *Superseded* / *Accepted*; each
+row's Notes lead with the real disposition. AC-014 Met via the public `v0.1.0` release (KPI-006);
 AC-015 Met via the one real sync cycle (PR #31, KPI-004). AC-010/011 Met via
 the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `parseAskEvent` + `permission.test`
 + marid-auth `channel-binding`. Detail in the [acceptance audit](../validation/acceptance-audit.md).
@@ -116,10 +120,12 @@ PH-7 (WhatsApp) operator-gated, not started.
 ## Blockers & risks
 No active blockers. WBS-5.5 resolved the two devil's-advocate flags: FR-064 re-marked `partial` (§18
 dependency/secret/license scans + SBOM unbuilt — deferred, ADR-0007), and AC-014 text corrected to
-public/anonymous (DEC-010). Disclosed residuals carried into the release: AC-016 Partial (egress
-secret-redactor deferred, RISK-007 / ADR-0007 containment), AC-007 Not-met (premise superseded — re-fetch
-recovery is the delivered behavior), Telegram gateway **beta** (UX defects → post-MVP fork, ADR-0008 /
-deferred #9). Watch: upstream v1→v2 migration (RISK-001) on future syncs.
+public/anonymous (DEC-010). Residuals carried into the release, **all since closed**: AC-016 and AC-007 were
+closed 2026-07-16 by [ADR-0019](../adrs/adr-0019-channel-secret-containment-final.md) — the egress
+secret-redactor is **dropped from scope** (not deferred), leaving B2/B4 authorization-boundary containment as
+the control and **RISK-007 accepted + closed**; AC-007 is **superseded**, its recovery criterion being AC-008
+(Met). The Telegram gateway **beta** caveat closed at PH-6/MS-007 — the UX defects were fixed **in place**
+(ADR-0009 superseded the ADR-0008 fork plan; deferred #9 Done). Watch: upstream v1→v2 migration (RISK-001) on future syncs.
 
 ## Decisions since last report
 **PH-8 (2026-07-13, plan §2):** total **DATA** isolation via a build-time app-name, **keep `OPENCODE_*` env** +
@@ -132,11 +138,14 @@ logo = **red-orange flame + shadowed "marid" wordmark** (2026-07-08); `0.x` rele
 upstream `1.17.15`; release↔upstream mapping = baseline SHA per sync).
 
 ## Upcoming
-**PH-8 (Isolation & deep rebrand) — at the operator gate.** On ADR-0018 approval + merge of this docs PR, the
-phases run in order (each branch → PR → CI green → operator merge): **WBS-8.1** upstream sync first
-(`upstream/dev cf7503687a`, 167 commits / 458 files) → **8.2** total DATA isolation (build-time app-name P-6 +
-config P-7 + migration) → **8.3** agent identity (P-8) → **8.4** TUI rebrand (P-2) → **8.5** web UI (separate PR)
-→ **8.6** docs/diagrams/screenshots → **8.7** release **v0.3.0**. MS-009 closes when AC-025..031 are Met and all 6
-reported v0.2.0 issues map to a passing check. **Still operator-gated, PH-8-independent:** **PH-7 WhatsApp**
-(ADR-0010 / DEC-015/016). Backlog: egress secret-redactor (ADR-0007 / AC-016), AC-007 formal supersede, stats
-mechanism (deferred #10), upstream sync cadence.
+**PH-8 (Isolation & deep rebrand) — DONE.** It ran in order, each branch → PR → CI green → operator merge:
+**WBS-8.1** upstream sync first (#54) → **8.2** total DATA isolation (build-time app-name P-6 + config P-7 +
+migration; #55/#56) → **8.3** agent identity (P-8; #57) → **8.4** TUI rebrand (P-2; #58/#59, logo #62) →
+**8.5** web UI (#60/#63) → **8.6** docs/diagrams (#64) → **8.7** release **v0.3.0** (#66 `378ba650` → tag).
+MS-009 closed 2026-07-16: AC-025..031 all Met and all 6 reported v0.2.0 issues map to a passing check.
+
+**The only open work is PH-7 WhatsApp** (MS-008) — not-started, **operator-gated**, PH-8-independent
+(ADR-0010 / DEC-015/016). Backlog: stats mechanism (deferred #10), upstream sync cadence (monthly; last sync
+2026-07-13, so next ≈2026-08-13), and the `process.test.ts` emission-order CI flake (deferred #11 →
+P-CI-4 watch-list). *(Closed since the last report: the egress secret-redactor — **dropped from scope**, not
+deferred — and AC-007's formal supersede, both via ADR-0019 on 2026-07-16.)*

@@ -1,7 +1,7 @@
 ---
 status: Approved (gate 9, 2026-07-03)
 version: v1.1
-updated: 2026-07-13
+updated: 2026-07-17
 owner: operator (STK-001)
 ---
 
@@ -196,6 +196,20 @@ could not protect them (first hit: core's flock test). Fixed by adding `OPENCODE
 (`wait(ready, 5_000)`) and crash-recovery `staleMs: 500`; acp helpers' handshake waits. Per the doctrine
 below, route each through the scale only when it actually flakes — pre-emptive widening accumulates
 upstream-edit surface for hypothetical failures.
+
+**Watch-list — HAS FLAKED (observed once, 2026-07-16; fix on recurrence):**
+`packages/core/test/process/process.test.ts` "captures stdout and stderr in emission order" — ubuntu.
+The child `-e` script writes `out 1` now, `err 1` at 10ms, `out 2` at 20ms; the test asserts the
+`combineOutput` bytes are exactly `"out 1\nerr 1\nout 2\n"`. On a starved runner the parent's stderr reader
+is scheduled late and the observed order flips to `"out 1\nout 2\nerr 1\n"`. **Proof it is a race, not a
+regression:** run `29528142836` (push, `develop@6b9e29ae5d`) FAILED at 19:28 and the **same SHA passed on
+rerun** at 00:01, with a docs-only diff in play. **This one does not route through the scale** — `it.effect`
+is called with no `opts`, so there is no per-test budget for `scaleTestOpts` to multiply; the 10/20ms
+constants live inside the child script string. The sanctioned fix is therefore a **P-CI-3-style in-script
+widening** (`10`/`20` → `100`/`200` + a `marid:` comment), structurally identical to the `shell.test.ts`
+`sleep 0.1`→`1` row already in P-CI-3 above — it becomes a P-CI-3 entry once applied. Tracked as
+[deferred-work](../execution/deferred-work-register.md) item 11; left unfixed per the doctrine below
+(it has flaked once; widen when it recurs).
 
 All read-sites carry `marid:` comments. On sync, re-apply on conflict; the `ci.yml` env survives
 untouched. Any **new** timing flake should be fixed by routing its budget through this scale (or, if it
