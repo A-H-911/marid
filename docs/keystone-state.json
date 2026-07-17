@@ -1207,7 +1207,7 @@
       {
         "id": "ADR-0007",
         "title": "Channel secret safety is authorization-boundary containment, not egress redaction (MVP)",
-        "status": "Approved",
+        "status": "Superseded",
         "date": "2026-07-07",
         "context": "PH-4 threat-model audit found the B7 'redaction filters on channel egress' control unimplemented: only the Telegram bot-token literal is masked (gateway logs); channel egress, general logs/errors, and marid export (raw by default) have no configured-secret-value redactor; AC-016's cited evidence tests 0600+field-shape, not redaction. Provider keys in auth.json sit outside the restricted channel agent's workspace roots, so secret-in-egress is effectively contained by the B2/B4 authorization boundary.",
         "decision": "Adopt authorization-boundary containment as the accepted MVP posture and defer a configured-secret-value redactor (logs/errors/export/channel-egress) + secret registry to PH-5/WBS-5.1. Interim (now): correct threat model/acceptance-audit to fact (B7 not-implemented; AC-016 Partial), pin explicit loopback bind (B3 drift guard), correct RISK-007/RISK-004. Open sub-decision (operator to confirm): marid export raw-default fix - (a) global default-flip [P-4, upstream edit], (b) provenance-aware sanitize, (c) interim doc guardrail + defer to PH-5 [chosen pending confirmation]. export is a local CLI command a channel token cannot reach.",
@@ -1308,6 +1308,15 @@
         "date": "2026-07-13",
         "context": "Public marid v0.2.0, run plain (not via marid instance) beside a co-installed OpenCode, leaks the OpenCode identity and shares machine-global state (auth.json provider nvidia-custom, model.json, sessions DB, config) - six reported issues (update popup; model/token surprise = shared dir, NOT a bundled secret; TUI OpenCode surfaces; agent self-identity; web UI; total dir/auth/session/config/DB sharing). This is the on-machine conflict branding.md's Rebrand boundary said it would revisit only if it emerged.",
         "decision": "Total DATA isolation via a build-time __MARID_APP app-name define (isolates data/state/config dirs + Flock at once, P-6); KEEP OPENCODE_* env unchanged (DEC-009 reuse) + detect-and-disclose data-layer pierce (boot WARN + usage table + negative tests, DEC-022); config marid.json primary with project-level opencode.json fallback and no global opencode fallback (DEC-023, P-7); .opencode/ project dirs kept upstream-named (DEC-024); one-time-copy migration from populated v0.2.0 (DEC-025); no DB rename - opencode.db stays inside the isolated marid dir (DEC-027, Approved); full agent-identity transform wrapping provider() output at the single choke point + CI guard (DEC-026, P-8 conditional); update popup off via P-3 autoupdate:false + env; deep TUI + web rebrand with two-tone wordmark behind a render gate (P-2 expansion). Approved at the PH-8 Phase-0 operator gate (INV-005, 2026-07-13); PH-8 code phases (WBS-8.1+) authorized. Realizes DEC-022..027; opens MS-009 + AC-025..031 + WBS-8.0..8.7."
+      },
+      {
+        "id": "ADR-0019",
+        "title": "Channel secret safety is containment, final: the egress redactor is dropped from scope",
+        "status": "Approved",
+        "date": "2026-07-16",
+        "context": "ADR-0007 (Approved 2026-07-07) set channel secret safety to authorization-boundary containment, not egress redaction, and deferred a configured-secret-value redactor to PH-5. PH-5 shipped and MS-006 was accepted at gate 14 without it; PH-8 then shipped v0.3.0. The redactor was tracked to a phase that closed without it - never rejected, never built, it outlived its owner. AC-016 sat at Partial across two releases and RISK-007 still promised a PH-5 control with no phase to land in. The same crack also orphaned P-4 (the marid export default-flip).",
+        "decision": "Adopt ADR-0007's containment posture as FINAL and DROP the configured-secret-value redactor from scope entirely - no longer deferred, no longer tracked, not a deliverable of any phase. Rationale: Marid is a single-operator private deployment, so the party a redactor would protect the operator from is the operator; the B4/B2 authorization boundary is the control and the threat model itself endorses containment over detection. AC-016 closes as Accepted-with-deviation (NOT Met - the criterion asserts redaction, which is not delivered). RISK-007 accepted + closed. The marid export sub-decision (c) is carried forward unchanged and P-4 stays reserved/not-activated, re-homed from the closed PH-5. INV-002 is not weakened: the redactor was never its enforcement - secrets are kept out of logs/history at the source (env/hashed stores, no bodies in audit, boundary-isolated auth.json).",
+        "consequences": "The acceptance surface stops promising a control Marid does not have: AC-016 closes honestly instead of lingering at Partial forever, RISK-007 closes as an accepted residual. ACCEPTED COST, stated so it is not later mistaken for an oversight: channel egress (stream.ts), general logs/errors, and raw marid export carry no secret-value redaction and are tracked NOWHERE; the sole control is the authorization boundary. REVISIT TRIGGER: if the deployment assumption ever changes - more than one operator, an untrusted operator, or a public/multi-tenant surface - ADR-0019 must be reopened first, because its entire rationale rests on that assumption. Rejected: building the redactor (defence-in-depth against a threat containment covers); re-deferring to a future phase (the exact failure mode that produced this ADR); leaving AC-016 Partial (a false tracker is a defect); marking AC-016 Met (would be a lie - redaction is not delivered)."
       }
     ],
     "risks": [
@@ -1370,7 +1379,7 @@
         "description": "Secrets leak into session history or logs and get relayed to channels",
         "impact": "high",
         "likelihood": "low",
-        "mitigation": "CORRECTED by PH-4 audit (2026-07-07): the redaction layer is NOT implemented (only the Telegram bot-token literal is masked in gateway logs; egress/log/export secret-value redaction deferred to PH-5 - ADR-0007, AC-016 Partial). Active controls: audit separation (token name, no bodies); secrets only in env/hashed stores; containment - the restricted channel agent cannot read auth.json (outside workspace roots) to relay provider keys. Residual: in-workspace secrets in a transcript still egress un-redacted. Re-score I/L at operator review.",
+        "mitigation": "ACCEPTED + CLOSED 2026-07-16 (ADR-0019, operator gate): the configured-secret-value redactor is DROPPED from scope (ADR-0007's PH-5 deferral superseded; PH-5 closed without it). Accepted control = B4/B2 authorization-boundary containment - the restricted channel agent cannot read auth.json (outside its workspace roots) to relay provider keys - plus audit separation (token name, no bodies), secrets only in env/hashed stores, and the Telegram bot-token literal masked in gateway logs. ACCEPTED RESIDUAL: an in-workspace secret in a transcript still egresses un-redacted via channel egress (stream.ts), general logs/errors, or raw marid export. Accepted because Marid is a single-operator private deployment. REVISIT ADR-0019 FIRST if that assumption changes (multi-operator, untrusted operator, or public/multi-tenant exposure). AC-016 closed as Accepted-with-deviation (NOT Met).",
         "trigger": "Redaction test failure; audit found redaction absent 2026-07-07",
         "scope": "MVP"
       },
@@ -2781,7 +2790,7 @@
       {
         "id": "AC-007",
         "statement": "Given an SSE client that disconnects mid-run, when it reconnects, then it receives every missed event for that session exactly once (dedup by aggregate and sequence)",
-        "status": "Approved"
+        "status": "Superseded"
       },
       {
         "id": "AC-008",
@@ -2826,7 +2835,7 @@
       {
         "id": "AC-016",
         "statement": "Given any log, error output, or channel message, when a configured secret value would appear, then it is redacted",
-        "status": "Approved"
+        "status": "Accepted"
       },
       {
         "id": "AC-017",
@@ -4577,6 +4586,28 @@
         "v0.3.0 tag on 378ba650 -> release published: 21 signed assets + 3-OS install-smoke green",
         "MS-009 MET; PH-8 done; WBS-8.7 done; keystone PH-8 status->done"
       ]
+    },
+    {
+      "date": "2026-07-16",
+      "author": "execution-agent",
+      "summary": "Post-v0.3.0 housekeeping (no scope change). develop->main sync PR #70 merged as merge-commit c4dfc06981, carrying the 3 post-release docs commits to main: #67 (MS-009 close), #68 (README brand assets refreshed to the shipped v0.3.0 flame identity - logo-v3 lockup + real tui-v3/web-v3 captures), #69 (README logo centering). 14 files, docs/PNG only, zero code; 26/26 required checks green (windows unit 26m). main is now 0 behind develop in content, so main's docs match the shipped release. NOT a release: v0.3.0 remains tagged at 378ba650 and was not re-cut; no milestone/AC/WBS flips because a sync PR closes no WBS item. Separately fixed a local-workspace-only hazard (no repo change): git's refs/tags namespace is flat and not per-remote, so fetching the fetch-only upstream remote (which publishes its own v0.2.0/v0.3.0) had overwritten Marid's identically-named tags locally - local v0.3.0 resolved to upstream 53bb6b4c, v0.2.0 to upstream f8847664, making any local tag-range diff or checkout silently walk OpenCode history. Published releases were never affected (all tags are cut via gh api directly on origin). Guarded with remote.upstream.tagOpt=--no-tags and refetched from origin; v0.1.0 was never shadowed (annotated tag - the apparent mismatch was a tag-object vs peeled-commit comparison artifact).",
+      "items_completed": [
+        "develop->main sync PR #70 merged (merge-commit c4dfc06981); main content == develop",
+        "README brand refresh (#68/#69) + MS-009 close (#67) now present on main",
+        "Local upstream-tag shadowing of v0.2.0/v0.3.0 corrected and guarded (remote.upstream.tagOpt=--no-tags); releases unaffected"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "author": "execution-agent",
+      "summary": "Post-v0.3.0 acceptance sweep: closed the two long-open acceptance items. Bookkeeping only - no code, no behavior change. (1) AC-007 SUPERSEDED: its premise was invalid - contract v1.1 (PH-3) corrected the ?after=<seq> per-session replay claim because the v1 event stream is a live-only firehose that keeps no history to replay. Recovery is authoritative-store re-fetch, whose criterion is AC-008 (Met). No new AC- was minted - a deviation from the deferred-work register's proposed fix, recorded there - because AC-008 already IS the re-fetch-recovery criterion and a new one would duplicate it. AC-007 kept as history; deferred-work item 1 Resolved. (2) AC-016 CLOSED as Accepted-with-deviation (NOT Met) via new ADR-0019 (operator-approved 2026-07-16), which supersedes ADR-0007 whole: it carries ADR-0007's containment posture forward unchanged and drops the deferred configured-secret-value redactor from scope entirely. RISK-007 accepted + closed; security-threat-model B7 + residual-risk entry corrected from 'not yet implemented' to 'will not be built' (v1.2). Accepted cost recorded in the ADR: channel egress (stream.ts), general logs/errors and raw marid export carry no secret-value redaction and are now tracked nowhere; the sole control is the B4/B2 authorization boundary. Revisit trigger: reopen ADR-0019 first if Marid ever stops being a single-operator private deployment. INV-002 is unaffected - the redactor was never its enforcement. ROOT CAUSE of both items: the redactor and P-4 (the marid export default-flip) were parked in PH-5, which then hit its exit gate on its own criteria (KPI-004/005/006) and closed - a phase gate checks what the phase promised, not what was merely parked in it. P-4 re-homed to reserved/not-activated.",
+      "items_completed": [
+        "AC-007 -> Superseded (recovery criterion is AC-008, Met); deferred-work item 1 Resolved",
+        "ADR-0019 authored + operator-approved; ADR-0007 -> Superseded (superseded_by ADR-0019)",
+        "AC-016 -> Accepted-with-deviation (redactor dropped from scope, tracked nowhere)",
+        "RISK-007 -> accepted + closed; security-threat-model B7 + residuals corrected (v1.2)",
+        "P-4 (marid export default-flip) re-homed from the closed PH-5 to reserved/not-activated"
+      ]
     }
   ],
   "change_log": [
@@ -4846,6 +4877,18 @@
       "actor": "execution-agent",
       "action": "PH-8 Phase 7 (WBS-8.7): public v0.3.0 released - MS-009 MET, PH-8 complete. RC dry-run proved the 7-target build; develop->main sync PR #66 merge-commit 378ba650; v0.3.0 tag on 378ba650 via gh api refs fired marid-release.yml -> 21 signed assets + 3-OS install-smoke green, release published (Latest). Flipped MS-009->MET, PH-8->done, WBS-8.7->done, keystone PH-8 status->done, acceptance-audit AC-029/030 finalized. All 6 issues -> Met AC. Next: PH-7 WhatsApp (operator-gated).",
       "target": "git tag v0.3.0 (378ba650) + GH release; docs/planning/{roadmap,work-breakdown,milestones}.md, docs/progress/{progress-log,status-report}.md, docs/validation/acceptance-audit.md, docs/keystone-state.json"
+    },
+    {
+      "timestamp": "2026-07-16T17:54:49Z",
+      "actor": "execution-agent",
+      "action": "develop->main sync PR #70 merged (merge-commit c4dfc06981, operator-instructed, merge-commit not squash per the #52/#66 precedent). Carries #67 (MS-009 close) + #68 (README brand assets -> shipped v0.3.0 flame identity) + #69 (logo centering) onto main; 14 files, docs/PNG only, zero code; 26/26 required checks green. Not a release - v0.3.0 stays tagged at 378ba650, not re-cut; marid-release.yml fires only on a v* tag push so the merge is inert. No status flips: a sync PR closes no WBS item and the commits it carries were tracked when they landed on develop. Recorded for traceability only. Also (local workspace, not a repo change) corrected upstream tag shadowing of v0.2.0/v0.3.0 and guarded it with remote.upstream.tagOpt=--no-tags.",
+      "target": "refs/heads/main (c4dfc06981); docs/keystone-state.json"
+    },
+    {
+      "timestamp": "2026-07-16T19:30:00Z",
+      "actor": "execution-agent",
+      "action": "Acceptance sweep (docs-only). AC-007 -> Superseded: premise invalid per contract v1.1 (the v1 stream is a live-only firehose; no history to replay); recovery criterion is AC-008 (Met); no new AC- minted since AC-008 already is that criterion - deviation recorded in the deferred-work register, item 1 -> Resolved. ADR-0019 added and operator-approved: supersedes ADR-0007 whole, keeps authorization-boundary containment as the final control, and DROPS the configured-secret-value redactor from scope (it had been deferred to PH-5, which closed without it). AC-016 -> Accepted-with-deviation (NOT Met - the criterion asserts redaction, which is not delivered); RISK-007 -> accepted + closed; ADR-0007 -> Superseded; security-threat-model B7 + residuals -> 'will not be built' (v1.2). Accepted cost recorded: egress/logs/export carry no secret-value redaction and are tracked nowhere; reopen ADR-0019 first if Marid stops being single-operator. INV-002 unaffected - the redactor was never its enforcement. P-4 re-homed from the closed PH-5 to reserved/not-activated.",
+      "target": "docs/adrs/adr-0019-channel-secret-containment-final.md (new), docs/adrs/adr-0007-channel-secret-containment.md, docs/validation/{acceptance-criteria,acceptance-audit}.md, docs/risks/risk-register.md, docs/execution/deferred-work-register.md, docs/architecture/security-threat-model.md, docs/keystone-state.json"
     }
   ]
 }

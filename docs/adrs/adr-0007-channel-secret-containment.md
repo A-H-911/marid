@@ -1,16 +1,22 @@
 ---
 id: ADR-0007
-status: Approved
-version: v1.0
-updated: 2026-07-07
+status: Superseded
+version: v1.1
+updated: 2026-07-16
 supersedes: none
-superseded_by: none
+superseded_by: ADR-0019
 owner: operator (STK-001)
 ---
 
 # ADR-0007 — Channel secret safety is authorization-boundary containment, not egress redaction (MVP)
 
-**Status:** Approved (2026-07-07, operator) · the **core decision** (containment-first MVP posture +
+**Status:** **SUPERSEDED by [ADR-0019](adr-0019-channel-secret-containment-final.md) (2026-07-16, operator
+gate).** ADR-0019 carries this ADR's **containment posture forward unchanged** — that decision was never
+reversed — and closes its one open clause: the redactor this ADR deferred to **PH-5** is **dropped from
+scope** (PH-5 closed without it, so the deferral had outlived its owner). The `marid export` sub-decision
+(c) and the reserved-but-not-activated **P-4** are likewise carried forward by ADR-0019. Read ADR-0019 for
+the live decision; this ADR is retained as history. — *original status line follows:* Approved (2026-07-07,
+operator) · the **core decision** (containment-first MVP posture +
 redactor deferred to PH-5) is accepted; the **`marid export` sub-decision is resolved to (c)** (operator,
 2026-07-07): document the guardrail and defer the default-flip (P-4) to PH-5 · corrects the B7 claim in
 [security-threat-model.md](../architecture/security-threat-model.md) · relates to AC-016, RISK-007,
