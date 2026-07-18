@@ -1,8 +1,8 @@
 ---
 id: ADR-0015
 status: Approved
-version: 1.0.0
-updated: 2026-07-10
+version: 1.0.1
+updated: 2026-07-17
 supersedes: none
 superseded_by: none
 owner: operator (STK-001)
@@ -13,6 +13,12 @@ owner: operator (STK-001)
 **Status:** **Approved (2026-07-10 operator PH-7 gate)** · relates to FR-028/049/052, INV-001, INV-004, RISK-003/021, DEC-021, ADR-0010,
 ADR-0012 (cross-surface permission), ADR-0005, [C-14](../architecture/technology-comparison.md),
 [R-12](../research/findings/whatsapp-options.md).
+
+> **Fact correction (2026-07-17, design unchanged).** The "**list messages** exist only on WAHA Plus (paid)"
+> premise below is **stale**: WAHA collapsed **Plus → Core (free) on 2026-06-21** (v2026.6.1), so lists are no
+> longer a paid feature. This **does not change the decision** — the reason lists/buttons are rejected is
+> **client-render reliability** (a security-critical gate must not hinge on a UI element that can silently
+> fail to render on the approver's client), **not** price. The shipped adapter uses `APPROVE <token>` text.
 
 **Context.** On Telegram, a channel permission prompt is an **inline keyboard** (tap Approve/Deny). On **unofficial
 WhatsApp this is not available**: interactive **buttons are deprecated/broken** on the Web-MD protocol (Meta pushed

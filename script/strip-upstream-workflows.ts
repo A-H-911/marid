@@ -22,7 +22,14 @@ import path from "path"
 const WORKFLOWS_DIR = path.join(".github", "workflows")
 
 // Marid-owned workflows to preserve. Everything else under .github/workflows is upstream.
-const KEEP = new Set(["ci.yml", "marid-pr-title.yml", "marid-release.yml", "marid-sync-upstream.yml"])
+const KEEP = new Set([
+  "ci.yml",
+  "marid-pr-title.yml",
+  "marid-release.yml",
+  "marid-sync-upstream.yml",
+  "marid-telegram-userbot.yml", // non-gating Telegram burner E2E (ADR-0013 tier 2) — was missing, would be stripped on sync
+  "marid-whatsapp-burner.yml", // non-gating WhatsApp burner probe (ADR-0014 tier 3, EXP-012)
+])
 
 const removed = readdirSync(WORKFLOWS_DIR, { withFileTypes: true })
   .filter((entry) => entry.isFile() && (entry.name.endsWith(".yml") || entry.name.endsWith(".yaml")))

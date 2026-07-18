@@ -1736,7 +1736,7 @@
         "title": "WhatsApp adapter integration spike (fake-WA)",
         "method": "Stand up the C-9 front-runner (WAHA-NOWEB over WebSocket, or hardened Baileys-direct) as @marid/whatsapp against a local fake WhatsApp server (mirrors TEST-TG) + a real marid serve with a channel: token. Reproducible, zero ban risk. Real-number live round-trip is a separate PH-7-start probe.",
         "pass_criteria": "End-to-end round-trip works; INV-001 held via the channel token; connection is outbound-only (no inbound webhook/port, OQ-004); media send/receive + throttled streaming-sim shape correct; deps pinned + provenance-checked (RISK-014).",
-        "status": "Planned",
+        "status": "Complete (PASS 2026-07-17; GATE-0 capability pin + wiring; WAHA-NOWEB only, no WhatsApp npm dep, image digest-pinned; report exp-006-report.md)",
         "links": {
           "tests_hypothesis": [
             "HYP-006"
@@ -1780,7 +1780,7 @@
         "title": "WhatsApp fake-WA-boundary gate spike",
         "method": "Build a small fake at the WAHA WebSocket boundary; wire @marid/whatsapp (behind its narrow interface) to it; inject synthetic inbound events; capture outbound sendText/media; exercise attach/mirror (ADR-0012) + the token-bound text-permission parse (ADR-0015). Runs at PH-7 start.",
         "pass_criteria": "Deterministic + hermetic (no accounts, no ban): round-trip + media + streaming-sim shape + attach/mirror + strict APPROVE<token>/DENY<token> parse (wrong-token/wrong-JID/expired rejected) all green.",
-        "status": "Planned",
+        "status": "Complete (PASS 2026-07-17; fake-WA at the WAHA WS+HTTP boundary vs the pinned GATE-0 fixture, 3 live TEST-WA green; the deterministic blocking PR gate; report exp-011-report.md)",
         "links": { "tests_hypothesis": ["HYP-011"] }
       },
       {
@@ -3106,8 +3106,8 @@
       {
         "id": "PH-7",
         "name": "WhatsApp adapter",
-        "goal": "New @marid/whatsapp unofficial-client channel (separate process, channel: token)",
-        "status": "not-started",
+        "goal": "New @marid/whatsapp unofficial-client channel (separate process, channel: token) - WAHA-NOWEB, outbound-only",
+        "status": "code-done; WBS-7.6 at operator gate (deterministic MS-008 exit achieved; formal MET on merge, INV-005)",
         "depends_on": [
           "PH-5"
         ],
@@ -3116,13 +3116,16 @@
           "WBS-7.2",
           "WBS-7.3",
           "WBS-7.4",
-          "WBS-7.5"
+          "WBS-7.5",
+          "WBS-7.6"
         ],
         "exit_criteria": [
-          "AC-018 green; EXP-006 PASS (fake-WA) then PH-7-start live probe (MS-008). Post-MVP; ADR-0010 + DEC-015/016 Proposed, operator-gated."
+          "AC-018/022/023 green (deterministic; EXP-006/011 PASS vs fake-WA) - MS-008. Burner EXP-012 is manual, NEVER a gate (ADR-0014). Live-green on feat/ph7-whatsapp @ 527fe493d2; ADR-0010/0014/0015 Approved, DEC-015/016 Approved. Formal exit stamps MET (date + shipping PR) on the operator merge of the WBS-7.6 PR (INV-005)."
         ],
         "acceptance_refs": [
-          "AC-018"
+          "AC-018",
+          "AC-022",
+          "AC-023"
         ],
         "risks": [
           "RISK-013",
@@ -4623,6 +4626,20 @@
         "deferred-work: items 1/6/9 -> Done (6 was ~8 days stale); item 11 added (process.test.ts flake); 10 stays Open",
         "deviation-branch-protection.md -> Superseded (DEC-010); its 'STOP - awaiting operator decision' answered"
       ]
+    },
+    {
+      "date": "2026-07-17",
+      "author": "execution-agent",
+      "summary": "PH-7 WhatsApp WBS-7.6 (docs + CI + trackers) - closes the last Marid milestone MS-008, unmerged, at the operator gate. The adapter (WBS-7.1..7.5) was already built + committed + live-green on feat/ph7-whatsapp @ 527fe493d2 (139 unit + 3 live TEST-WA, both packages typecheck). This change is bookkeeping + CI only, NO product code. (1) EXP reports: exp-006-report.md (GATE-0 capability pin + wiring, PASS) + exp-011-report.md (fake-WA deterministic gate, PASS); exp-012/013 RUNBOOKS written NOT run (burner/native are ban-exposed, never a gate). EXP-006/011 register status Planned -> Complete. (2) Docs: architecture v1.3 (WhatsApp component + container nodes + WAHA sidecar deployment unit/trust anchor + no-new-P-* note), api-event-contract v1.3 (full FR-051 mapping - webhook-sig N/A by OQ-004, replay=dedup, ratelimit=gateway 10/s burst 30, retry=channel-client backoff, dead-letter=log+drop verified in gateway.ts), Tarseem 21-whatsapp-channel diagram (svg+png), dependency-register DEP-013 (WAHA image digest-pinned, no npm dep, Baileys reference-only -> Accepted), test-strategy TEST-WA -> the deterministic blocking PR gate + a WhatsApp real-client tier line, RISK-014 note (WAHA-only realized, mitigated), a WAHA compose.yaml (repo's first, digest-pinned). (3) CI: bun --cwd packages/marid-whatsapp test in the unit job + a 3-OS marid-whatsapp job cloned from marid-telegram (MARID_WHATSAPP=1, OPENCODE_TIMING_SCALE, Windows TMP/TEMP on D:, no secrets, no container) + a non-gating marid-whatsapp-burner.yml. Root-cause fix in scope: strip-upstream-workflows.ts KEEP was missing marid-telegram-userbot.yml (would be deleted on the next upstream sync) - added it + the new burner. (4) Trackers: AC-018/022/023 -> Met (live evidence); work-breakdown WBS-7.1..7.6 flipped; milestones/roadmap MS-008 reconciled to the deterministic-only exit; phases PH-7 status + work_items(+7.6) + exit_criteria + acceptance_refs(+AC-022/023). Three stale-doc facts fixed (design unchanged): ADR-0010 presence composing->typing; ADR-0010/0015 'WAHA Plus (paid)' -> Plus collapsed to Core (free) 2026-06-21 (ADR-0015 rests on render reliability not price); the stale MS-008 row. Decision: WAHA-NOWEB only (GATE-0/EXP-006 PASS, STOP did not fire) -> Baileys-direct documented-not-built (DEC-015); no new P-*. DEVIATION: the '17 required checks' count was NOT flipped to 20 anywhere - that would assert an enforcement the operator hasn't activated; the ruleset 17->20 (add 3 marid-whatsapp (os) contexts) + the count sweep across ~20 files are FLAGGED as an operator action to land in lockstep with the ruleset edit. MS-008 deterministic exit achieved; formal MET (date + shipping PR) stamps on the operator merge (INV-005). validate_package.py docs/ = RESULT: OK.",
+      "items_completed": [
+        "EXP-006/011 reports (PASS) written; EXP-012/013 runbooks written-not-run; register Planned -> Complete",
+        "architecture v1.3 + api-event-contract v1.3 (FR-051 fully mapped) + Tarseem 21-whatsapp-channel diagram",
+        "DEP-013 -> Accepted (WAHA digest-pinned, no npm dep); TEST-WA -> blocking gate; RISK-014 mitigated; WAHA compose.yaml",
+        "CI: marid-whatsapp unit step + 3-OS gate + non-gating burner; strip-upstream KEEP fixed (userbot was missing)",
+        "AC-018/022/023 -> Met (live-green @ 527fe493d2); WBS-7.1..7.6 done; MS-008 deterministic exit (formal MET on merge)",
+        "3 stale-doc facts fixed (presence typing; WAHA Plus->Core free; MS-008 row); no new P-*",
+        "OPERATOR ACTION flagged: ruleset 17->20 + the '17 checks' count sweep must land with the ruleset edit"
+      ]
     }
   ],
   "change_log": [
@@ -4910,6 +4927,12 @@
       "actor": "execution-agent",
       "action": "Tracker reconcile (docs-only, no code, no WBS closed, not a release). Completed the tracking protocol PR #71 left 3/5 done - progress-log and status-report had zero mentions of ADR-0019 and still listed the closed redactor + AC-007 supersede as open backlog. Also fixed a pre-existing validation failure that no doc change caused: keystone 0.1.0 has no G-PROGRESS gate (so every historical 'validate = OK' was true only against 0.1.0) while the installed 1.0.0 added it and failed with 32 findings, because the audit's AC- cells had been converted to markdown links by ad10384679 to silence 0.1.0's G-IDS duplicate-detection; 1.0.0 fixed that root cause via its audit_view carve-out, so the links became obsolete and harmful. Reverted to the bare ids the package was generated with (276c10c0fc) -> 32 to 0 findings, G-IDS still PASS, RESULT: OK; verified on a throwaway copy before touching the package. Verdicts for AC-007/AC-016 conformed to the gate's ALLOWED_VERDICTS (Not-met, dispositions leading the Notes) at operator direction, re-confirmed after the root-cause alternative (widening ALLOWED_VERDICTS in the operator-owned keystone repo, where Superseded/Accepted are already valid DOCUMENT_STATUSES) was surfaced and declined; ADR-0019's substance is unchanged and now carries a note. Recorded a keystone >= 1.0.0 floor at all 4 mandate sites: the two validator versions are mutually exclusive and validate is a local gate CI never runs. Deferred-work items 1/6/9 -> Done (6 stale ~8 days behind MS-006/DEC-010), new item 11 for the process.test.ts ubuntu emission-order flake (tracked, not fixed; P-CI-4 watch-list, since P-CI-3 enumerates edits that exist and we made none).",
       "target": "docs/validation/acceptance-audit.md, docs/progress/{progress-log,status-report}.md, docs/execution/deferred-work-register.md, docs/decisions/deviation-branch-protection.md, docs/architecture/upstream-sync-strategy.md, docs/adrs/adr-0019-channel-secret-containment-final.md, docs/governance/{governance,contributing}.md, CLAUDE.md, CONTRIBUTING.md, docs/keystone-state.json"
+    },
+    {
+      "timestamp": "2026-07-17T20:00:00Z",
+      "actor": "execution-agent",
+      "action": "PH-7 WhatsApp WBS-7.6 (docs + CI + trackers) - the last Marid milestone MS-008, unmerged, at the operator gate. Adapter code (WBS-7.1..7.5) already built + live-green on feat/ph7-whatsapp @ 527fe493d2 (139 unit + 3 live TEST-WA); this change is bookkeeping + CI only, NO product code, no upstream edit, no merge. EXP-006/011 reports (PASS) + EXP-012/013 runbooks (not run); EXP-006/011 register -> Complete. architecture v1.3 + api-event-contract v1.3 (full FR-051 mapping) + Tarseem 21-whatsapp-channel + DEP-013 (Accepted, WAHA digest-pinned no npm dep) + TEST-WA (blocking gate) + RISK-014 (mitigated) + WAHA compose.yaml (repo's first). CI: marid-whatsapp unit step + 3-OS gate + non-gating burner; strip-upstream-workflows KEEP fixed (marid-telegram-userbot.yml was missing -> would be stripped on sync). AC-018/022/023 -> Met; WBS-7.1..7.6 done; MS-008 reconciled to the deterministic-only exit (formal MET on the operator merge, INV-005); PH-7 phase status/work_items/exit_criteria/acceptance_refs updated. 3 stale-doc facts fixed (presence typing; WAHA Plus->Core free 2026-06-21; MS-008 row). WAHA-NOWEB only (GATE-0 PASS, Baileys documented-not-built, DEC-015); no new P-*. The '17 checks' 17->20 count was deliberately NOT flipped (would assert un-activated enforcement) - flagged as an operator action to land with the ruleset edit. validate_package.py docs/ = RESULT: OK.",
+      "target": "docs/experiments/{exp-006-report,exp-011-report,exp-012-runbook,exp-013-runbook}.md, docs/architecture/{architecture,api-event-contract}.md, docs/architecture/diagrams/Marid/{specs/21-whatsapp-channel.json,21-whatsapp-channel.svg,21-whatsapp-channel.png,README.md}, docs/requirements/dependency-register.md, docs/validation/{test-strategy,acceptance-audit}.md, docs/risks/risk-register.md, docs/adrs/{adr-0010-whatsapp-adapter,adr-0015-whatsapp-permission-ux}.md, docs/execution/deferred-work-register.md, docs/planning/{roadmap,work-breakdown,milestones}.md, docs/progress/{progress-log,status-report}.md, docs/keystone-state.json, packages/marid-whatsapp/waha.compose.yaml, .github/workflows/{ci.yml,marid-whatsapp-burner.yml}, script/strip-upstream-workflows.ts"
     }
   ]
 }

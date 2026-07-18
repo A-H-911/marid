@@ -44,6 +44,7 @@ import { Heap } from "./cli/heap"
 import { MaridServeCommand, MaridTokenCommand } from "./cli/cmd/marid"
 import { MaridInstanceCommand } from "./cli/cmd/marid-instance"
 import { MaridTelegramCommand } from "./cli/cmd/marid-telegram"
+import { MaridWhatsappCommand } from "./cli/cmd/marid-whatsapp"
 
 const args = hideBin(process.argv)
 
@@ -111,6 +112,7 @@ const cli = yargs(args)
   .command(MaridTokenCommand) // marid-only: bearer token management
   .command(MaridInstanceCommand) // marid-only: isolated multi-instance lifecycle
   .command(MaridTelegramCommand) // marid-only: Telegram channel gateway (PH-4)
+  .command(MaridWhatsappCommand) // marid-only: WhatsApp channel gateway (PH-7)
   .command(WebCommand)
   .command(ModelsCommand)
   .command(StatsCommand)
