@@ -20,7 +20,7 @@ generation: derived
 | Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
 | Last milestone met | **MS-008 (2026-07-18)** — PH-7 WhatsApp: `@marid/whatsapp` WAHA-NOWEB channel + deterministic fake-WA gate (PR #75, squash `3326a5f6b5`, all 23 CI green). The final Marid milestone. |
-| Next milestone | **NONE — all milestones met. MS-008 (PH-7 WhatsApp) MET 2026-07-18** (PR #75 squash `3326a5f6b5`, all 23 CI green); it was the last one — **MS-001..009 all MET, the plan is complete.** Backlog (non-milestone): stats mechanism (deferred #10), upstream sync cadence, the `process.test.ts` emission-order CI flake (deferred #11), the WhatsApp dead-letter log+drop ceiling (deferred #12). **Operator follow-up:** ruleset 17→20 + the "17 checks" count sweep (must land together) to make `marid-whatsapp` a required check. |
+| Next milestone | **NONE — all milestones met. MS-008 (PH-7 WhatsApp) MET 2026-07-18** (PR #75 squash `3326a5f6b5`, all 23 CI green); it was the last one — **MS-001..009 all MET, the plan is complete.** Backlog (non-milestone): stats mechanism (deferred #10), upstream sync cadence, the `process.test.ts` emission-order CI flake (deferred #11), the WhatsApp dead-letter log+drop ceiling (deferred #12). **Ruleset done:** branch protection is now **20 required checks** (`marid-whatsapp (os)` added 2026-07-18) and the "17→20" doc count is reconciled — nothing outstanding. |
 
 ## Phase progress
 
@@ -68,8 +68,8 @@ green) — the fake-WA deterministic gate driving a real `marid serve`; round-tr
 **None — the plan is complete.** PH-7 WhatsApp merged (PR #75 squash `3326a5f6b5`, 2026-07-18, all 23 CI
 green): `@marid/whatsapp` WAHA-NOWEB channel + the deterministic fake-WA gate (WBS-7.1..7.6); AC-018/022/023
 Met, EXP-006/011 PASS; the new 3-OS `marid-whatsapp` job green on all OSes first run; no new `P-*`. **MS-008
-MET — the last Marid milestone; MS-001..009 all MET.** One operator follow-up remains (not a milestone gate):
-ruleset 17→20 + the "17 checks" count sweep, to make `marid-whatsapp` a *required* check.
+MET — the last Marid milestone; MS-001..009 all MET.** Branch protection is now **20 required checks**
+(`marid-whatsapp (os)` added to the ruleset 2026-07-18; the "17→20" doc count reconciled) — nothing outstanding.
 
 *Prior (PH-8 complete, MS-009 MET, 2026-07-16):* public [v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0)
 released: RC dry-run (`v0.3.0-rc.1`) pre-proved the build, then `develop → main` sync #66 merge-commit `378ba650`
@@ -157,10 +157,10 @@ MS-009 closed 2026-07-16: AC-025..031 all Met and all 6 reported v0.2.0 issues m
 
 **PH-7 WhatsApp (MS-008) — the last Marid milestone — is DONE (MET 2026-07-18, PR #75 squash `3326a5f6b5`,
 all 23 CI green).** `@marid/whatsapp` WAHA-NOWEB channel + the deterministic fake-WA gate merged to `develop`;
-AC-018/022/023 Met, EXP-006/011 PASS. **PH-0..8 all done; MS-001..009 all MET — the plan is complete.** One
-operator follow-up remains (not a milestone gate): ruleset `protect-integration-branches` **17→20** (add the 3
-`marid-whatsapp (ubuntu/macos/windows-latest)` contexts) + the "17 checks" count sweep across ~20 files —
-**must land together** with the ruleset edit, else the docs assert an enforcement that isn't live. Backlog:
+AC-018/022/023 Met, EXP-006/011 PASS. **PH-0..8 all done; MS-001..009 all MET — the plan is complete.** The
+`marid-whatsapp` required-check follow-up is **done (2026-07-18):** the ruleset `protect-integration-branches`
+is now **20 required checks** (added `marid-whatsapp (ubuntu/macos/windows-latest)`) and the "17→20" doc count
+is reconciled (CLAUDE.md enum, CONTRIBUTING, the contributor-workflow diagram) — nothing outstanding. Backlog:
 stats mechanism (deferred #10), upstream sync cadence (monthly; last sync 2026-07-13, next ≈2026-08-13), the
 `process.test.ts` emission-order CI flake (deferred #11 → P-CI-4 watch-list), the WhatsApp dead-letter
 log+drop ceiling (deferred #12).

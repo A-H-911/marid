@@ -11,6 +11,21 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-18 — `marid-whatsapp` made a required check — ruleset 17→20 + doc count reconciled (the last follow-up)
+- **Done:** the only item that survived MS-008 (a non-milestone operator follow-up) is closed. The branch
+  ruleset **`protect-integration-branches` (id 18475421)** was updated via the GitHub rulesets API
+  (`gh api -X PUT`) from **17 → 20 required status checks** — adding
+  `marid-whatsapp (ubuntu-latest | macos-latest | windows-latest)` alongside the existing
+  `marid-isolation`/`marid-sync`/`marid-telegram` sets. Verified live: the ruleset now lists 20 contexts
+  incl. all 3 marid-whatsapp. The context strings exactly match the CI job names that passed on PRs #75/#76.
+- **Doc count sweep (landed with the ruleset edit, as required):** the **live** "17 required checks"
+  statements → **20** — `CLAUDE.md` branch-protection enumeration (appended `marid-whatsapp`), `CONTRIBUTING.md`
+  (×2), the Tarseem `18-contributor-workflow` spec (**re-rendered** svg+png), and `diagrams/README.md`.
+  Historical/past-tense records (RC "17 checks green" at v0.1.0, prior change_log entries, the WBS-7.6
+  "deferred the sweep" notes) are **left as-is** — they describe real past states.
+- **Milestone:** unchanged — **MS-008 stays MET; the plan is complete.** This closes the last open follow-up.
+- **Blockers / Next:** none. The Marid roadmap (PH-0..8) is fully delivered and all enforcement is live.
+
 ## 2026-07-18 — PH-7 WhatsApp MERGED → MS-008 MET — the last Marid milestone; the plan is complete
 - **Done:** operator-authorized squash-merge of **PR #75** (`3326a5f6b5`) into `develop` — `@marid/whatsapp`
   WAHA-NOWEB channel (WBS-7.1..7.6). **All 23 CI checks green**, including the new 3-OS `marid-whatsapp` job
