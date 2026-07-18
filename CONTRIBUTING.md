@@ -30,7 +30,7 @@ The loop for any non-trivial change:
 5. **Validate the docs package:** `python <keystone-skill>/scripts/validate_package.py docs/` must print
    `RESULT: OK`. Requires **Keystone ≥ 1.0.0** — 0.1.0 lacks the `G-PROGRESS` gate entirely and reports 31
    false duplicate-definition findings against the acceptance audit's bare `AC-` ids.
-6. **Open a PR into `develop`** (squash). All **17 required checks** must be green.
+6. **Open a PR into `develop`** (squash). All **20 required checks** must be green.
 7. **The operator merges** — never self-merge or merge unprompted (**INV-005**).
 
 Authoritative references — **read these, this guide only points to them**:
@@ -86,7 +86,7 @@ configs and the JavaScript Debug Terminal can map breakpoints incorrectly — pr
 
 - **Target `develop`, squash-merge.** `develop → main` happens via a release/sync PR (merge-commit). `main`
   is the protected release branch. (Full flow: CLAUDE.md "Git & CI flow".)
-- **17 required checks** must be green before merge; you **cannot self-merge** — the operator merges on
+- **20 required checks** must be green before merge; you **cannot self-merge** — the operator merges on
   explicit instruction (INV-005).
 - Keep PRs **small and focused**; explain the change and **how you verified it** (what you tested, how a
   reviewer reproduces it). Include screenshots for UI changes.

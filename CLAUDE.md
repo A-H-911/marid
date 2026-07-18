@@ -69,13 +69,11 @@ Six dependency-ordered phases, each exiting at a measurable milestone:
 - **Ending a phase:** operator review checkpoint. Review PRs against `docs/handoff/review-prompts.md`
   (esp. patch-surface discipline — flag any upstream edit not registered as a `P-*`).
 - **Current status:** see `docs/progress/status-report.md` (the live snapshot) + `docs/planning/roadmap.md`.
-  (As of this writing: **PH-0..6 done** (MS-007 MET, PR #48 `4409d92f`); **PH-8 Isolation & deep rebrand DONE**
-  (MS-009 MET, 2026-07-16 — public v0.3.0; AC-025..031 all Met). **PH-7 WhatsApp — the last milestone (MS-008) —
-  code-done and at the operator gate:** the adapter (WBS-7.1..7.5) is built + live-green on `feat/ph7-whatsapp`
-  @ `527fe493d2`, WBS-7.6 (docs + CI + trackers) done; AC-018/022/023 Met, EXP-006/011 PASS; deterministic
-  MS-008 exit achieved, formal MET stamps on the operator merge (INV-005). **Operator action still needed to
-  close it:** merge the WBS-7.6 PR, then ruleset `protect-integration-branches` **17→20** (add the 3
-  `marid-whatsapp (os)` contexts) + the "17 checks" count sweep — those must land together.)
+  (As of this writing: **the Marid plan is COMPLETE — PH-0..8 all done; MS-001..009 all MET.** PH-8 (MS-009
+  MET 2026-07-16, public v0.3.0). **PH-7 WhatsApp — the last milestone — DONE (MS-008 MET 2026-07-18, PR #75
+  squash `3326a5f6b5`, all 23 CI green; MET stamp #76 `83423490b4`).** `@marid/whatsapp` WAHA-NOWEB channel;
+  AC-018/022/023 Met, EXP-006/011 PASS; no new `P-*`. Branch protection is now **20 required checks** —
+  `marid-whatsapp (ubuntu/macos/windows-latest)` added to the ruleset and the "17→20" doc count reconciled.)
 
 ## Tracking protocol (MANDATORY — do not let the trackers drift)
 
@@ -141,10 +139,10 @@ last-resort upstream-file edit**. Current surface:
   release branch. Local `main` may lag; use `develop` / `origin/develop` for diffs and PR bases.
 - Feature branch → **PR into `develop`, squash-merge**. `develop → main` via a **sync PR, merge-commit**
   (this leaves benign merge nodes on `main` that `develop` lacks — the "ahead/behind 2" is normal).
-- **Branch protection** (main + develop): 17 required checks — `lint`, `typecheck`, `unit` (ubuntu +
+- **Branch protection** (main + develop): 20 required checks — `lint`, `typecheck`, `unit` (ubuntu +
   windows), `smoke` (ubuntu/macos/windows), `pr-title`, `marid-isolation` (ubuntu/macos/windows, added
   PH-2), `marid-sync` (ubuntu/macos/windows, added PH-3), `marid-telegram` (ubuntu/macos/windows, added
-  PH-4). You cannot self-merge.
+  PH-4), `marid-whatsapp` (ubuntu/macos/windows, added PH-7). You cannot self-merge.
 - CI is `.github/workflows/ci.yml` (**Marid-owned**; upstream workflows are stripped by
   `script/strip-upstream-workflows.ts` with a KEEP allowlist). Marid's `marid-pr-title.yml` replaces
   upstream's PR-standards check.

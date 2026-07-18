@@ -86,7 +86,7 @@
       "id": "ci",
       "lane": "gh",
       "label": {
-        "text": "17 required checks"
+        "text": "20 required checks"
       }
     },
     {
