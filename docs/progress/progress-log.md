@@ -11,6 +11,19 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-18 — deferred-work register + status-report drift reconcile (post-completion hygiene, docs-only)
+- **Done:** reconciled stale tracker rows found after the plan closed. **Deferred-work register:** items **#3
+  (branding P-2), #4 (config P-3), #8 (Telegram firehose reconnect)** were marked `Open` but had been
+  delivered — flipped to **Done** with evidence: #3 shipped PH-5 WBS-5.4 + PH-8 WBS-8.4/8.5 (user-agent
+  intentionally kept upstream, NFR-001 — a decision, not a gap); #4 P-3 `lsp:false` applied WBS-5.4; #8 folded
+  by **WBS-6.5 (PR #47 `837fb70c`)** — reconnect + re-fetch now live in `@marid/channel-client` (the WBS row
+  literally says "folds deferred #8"). **Item #5** (deferred Full-scope FRs) dropped **FR-047** — it is **Met**
+  via PH-7 (ADR-0010, AC-018); FR-037/044/058 remain deferred, so #5 stays `Open`. **Status-report:** removed
+  the stale "ruleset 17→20 follow-up" parenthetical in the Active-work cell (that follow-up merged in #77).
+- **Still genuinely `Open`** (none gate): #2 permission-reply ownership gate · #7 FR-030 trace correlation ·
+  #10 stats mechanism · #11 `process.test.ts` flake (P-CI-4 watch-list) · #12 WhatsApp dead-letter ceiling.
+- **No milestone/AC/WBS change** — bookkeeping only. `validate_package.py docs/` = RESULT: OK. Plan stays complete.
+
 ## 2026-07-18 — `marid-whatsapp` made a required check — ruleset 17→20 + doc count reconciled (the last follow-up)
 - **Done:** the only item that survived MS-008 (a non-milestone operator follow-up) is closed. The branch
   ruleset **`protect-integration-branches` (id 18475421)** was updated via the GitHub rulesets API

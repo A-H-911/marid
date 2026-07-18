@@ -4958,6 +4958,12 @@
       "actor": "execution-agent",
       "action": "marid-whatsapp made a REQUIRED check - closes the last (non-milestone) follow-up after MS-008. Updated the branch ruleset protect-integration-branches (id 18475421) via the GitHub rulesets API (gh api -X PUT) from 17 -> 20 required status checks, adding marid-whatsapp (ubuntu-latest|macos-latest|windows-latest) alongside marid-isolation/marid-sync/marid-telegram; verified live (20 contexts incl. all 3 marid-whatsapp; strings match the CI job names that passed on #75/#76). Doc count sweep landed together (the '17->20' must-land-together rule): live '17 required checks' statements -> 20 in CLAUDE.md (enum + appended marid-whatsapp), CONTRIBUTING.md (x2), the Tarseem 18-contributor-workflow spec (re-rendered svg+png), diagrams/README.md; historical/past-tense records (RC '17 checks green' at v0.1.0, prior change_log, the WBS-7.6 deferred-sweep notes) left as-is. MS-008 unchanged (stays MET); the Marid plan (PH-0..8) is complete and all enforcement is live. validate_package.py docs/ = RESULT: OK.",
       "target": "GitHub ruleset protect-integration-branches (18475421), CLAUDE.md, CONTRIBUTING.md, docs/architecture/diagrams/Marid/{specs/18-contributor-workflow.json,18-contributor-workflow.svg,18-contributor-workflow.png}, docs/architecture/diagrams/README.md, docs/progress/{status-report,progress-log}.md, docs/keystone-state.json"
+    },
+    {
+      "timestamp": "2026-07-18T06:00:00Z",
+      "actor": "execution-agent",
+      "action": "Post-completion tracker-drift reconcile (docs-only, no milestone/AC/WBS change; plan stays complete). Deferred-work register: items #3 (branding P-2), #4 (config P-3), #8 (Telegram firehose reconnect) were marked Open but delivered -> flipped to Done with evidence (#3 shipped PH-5 WBS-5.4 + PH-8 WBS-8.4/8.5, user-agent intentionally kept upstream per NFR-001; #4 P-3 lsp:false applied WBS-5.4; #8 folded by WBS-6.5/PR #47 837fb70c - reconnect+re-fetch live in @marid/channel-client, the WBS row literally says 'folds deferred #8'). Item #5 dropped FR-047 (Met via PH-7/ADR-0010/AC-018); FR-037/044/058 remain deferred so #5 stays Open. Status-report Active-work cell: removed the stale 'ruleset 17->20 follow-up' parenthetical (merged in #77). Still genuinely Open (none gate): #2, #7, #10, #11, #12. validate_package.py docs/ = RESULT: OK.",
+      "target": "docs/execution/deferred-work-register.md, docs/progress/{status-report,progress-log}.md, docs/keystone-state.json"
     }
   ]
 }
