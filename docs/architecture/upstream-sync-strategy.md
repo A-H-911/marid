@@ -1,7 +1,7 @@
 ---
 status: Approved (gate 9, 2026-07-03)
-version: v1.1
-updated: 2026-07-17
+version: v1.2
+updated: 2026-07-19
 owner: operator (STK-001)
 ---
 
@@ -147,6 +147,13 @@ just-too-tight and were widened:
   (ubuntu race, not a timeout): metadata fires per stdout chunk, so a starved CI reader coalesced both
   echoes into one read → `updates.length === 1`. A 1s gap makes coalescing require ~1s of reader
   starvation. Product streaming code is correct; only the test's timing assumption was too tight.
+- `packages/opencode/test/session/compaction.test.ts` — the two "aborted … retry backoff" interrupt bounds
+  (a `Fiber.await` timeout + a `Date.now()` wall-clock assert) `250ms → 1_000ms * TIMING_SCALE`
+  (P-CI-4-scaled, Windows→4s). Interrupting a fiber asleep in a **10s** retry backoff must cancel the sleep,
+  not wait it out; a raw 250ms wall-clock delta flaked at ~2s under GitHub-`windows-latest` OS descheduling
+  (`unit (windows-latest)`, first seen on the #81 develop→main sync). 4s stays well under the 10s backoff it
+  guards, so a genuine "interrupt didn't cancel the sleep" regression still fails the timeout. Uses the P-CI-4
+  `TIMING_SCALE` mechanism rather than a one-off widen.
 
 *Drive-hardcode* — a test hardcoded drive `C:`, which only resolves on a C:-based runner:
 - `packages/opencode/test/tool/shell.test.ts` — "drive-relative PowerShell paths" now uses the temp
