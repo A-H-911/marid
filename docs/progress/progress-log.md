@@ -11,6 +11,28 @@ Append-only, newest first. Each entry: **Done / Decisions / Deviations / Blocker
 lives in `keystone-state.json` `progress[]`. Volatile "where are we now" is the
 [status report](status-report.md).
 
+## 2026-07-19 — SECURITY (INV-001): channel-token `/pty` shell-execution breach found + fixed (PR-0)
+- **Done:** an adversarial re-review of the "plan complete" claim surfaced a **realized INV-001 breach** — a
+  `channel:` token (WhatsApp **and** Telegram) could reach the top-level `/pty` shell surface and
+  **spawn/drive an OS shell**, bypassing the agent/permission model. Root cause: `marid-gateway/scope.ts`
+  gated channel deny-by-default only on `/session/:id/*`; non-session routes returned the same blanket
+  `ALLOW` as `client`, and `marid/serve.ts:27` deletes `OPENCODE_SERVER_PASSWORD` (marid-auth is the sole
+  gate, upstream `/pty` auth pass-through). Present gateway-wide since PH-4. **Fixed** by
+  `channelNonSessionAllowed` (a deny-by-default allowlist: read-only meta + filtered firehoses/lists +
+  `POST /session` create only; `/pty` and all other top-level execution/mutation routes denied). `client`
+  scope unchanged (operator's own credential; the TUI/web `/pty` terminal uses it).
+- **Proven three ways:** `pty-scope-breach.test.ts` (`authorize()` + `createMaridAuth().handle()`); **live
+  E2E** (`scripts/pty-channel-breach-repro.ts` — real `maridServe`: channel `/pty/shells` **200→403**, admin
+  stays 200, `/config` stays 200); 128 gateway tests green + typecheck clean.
+- **Decisions:** [ADR-0020](../adrs/adr-0020-channel-non-session-deny-by-default.md) **Approved** (2026-07-19);
+  [RISK-026](../risks/risk-register.md) logged (realized, I3×L2=6). Also closes deferred-work **#2 for channel
+  scope** (the flat permission-reply is now a denied non-session POST).
+- **Acceptance:** the INV-001 conjunct of **AC-010/011/012/017/018/022** was invalidated then restored — all
+  remain **Met** post-fix (re-audit note in the acceptance-audit summary; latent capability, no observed exploit).
+- **Deviations:** none — additive in `marid-gateway`, no upstream edit, **no new `P-*`**.
+- **Blockers:** none. **Next:** operator merge of PR-0 into `develop` (INV-005); the WhatsApp docs close-out
+  (PR-A: usage.md + README + version fix + #13) remains queued behind it.
+
 ## 2026-07-18 — deferred-work register + status-report drift reconcile (post-completion hygiene, docs-only)
 - **Done:** reconciled stale tracker rows found after the plan closed. **Deferred-work register:** items **#3
   (branding P-2), #4 (config P-3), #8 (Telegram firehose reconnect)** were marked `Open` but had been

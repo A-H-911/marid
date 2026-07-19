@@ -71,3 +71,18 @@ the public `v0.3.0` release closed AC-025..031; AC-007 and AC-016 were closed vi
   **0 Pending.** The three PH-7 criteria closed **MS-008 (MET 2026-07-18, PR #75 squash `3326a5f6b5`, all 23
   CI green)** — the last Marid milestone; the plan (PH-0..8) is complete. MVP acceptance is unchanged (14/16 Met
   + 2 Not-met); the post-MVP criteria do not affect the accepted MS-006 verdict.
+- **INV-001 conjunct re-audit (2026-07-19, [RISK-026](../risks/risk-register.md) /
+  [ADR-0020](../adrs/adr-0020-channel-non-session-deny-by-default.md)):** an adversarial review found a
+  **realized INV-001 breach** — a `channel:` token (WhatsApp **and** Telegram) could reach the top-level
+  `/pty` shell surface and spawn/drive an OS shell, because `scope.ts` gated channel deny-by-default only on
+  `/session/:id/*` and left non-session routes blanket-`ALLOW`ed (`marid/serve.ts` deletes the upstream
+  password, so marid-auth is the sole gate). This **invalidated the "least privilege / no tool-permission
+  widening" conjunct** of **AC-010, AC-011, AC-012** (Telegram), **AC-017**, **AC-018**, **AC-022** (WhatsApp)
+  — each of which asserts a channel token cannot escape its restricted agent. **Closed same-day by ADR-0020**
+  (channel deny-by-default on non-session routes too — an allowlist), proven by
+  `packages/marid-gateway/test/pty-scope-breach.test.ts` (unit + `handle()`) **and** a live end-to-end repro
+  (`packages/opencode/scripts/pty-channel-breach-repro.ts`: channel `/pty/shells` **200→403** on a real
+  `maridServe`, admin stays 200, `/config` stays 200; 128 gateway tests green). All six verdicts **remain Met
+  post-fix** — their non-INV-001 parts were unaffected and the breach was latent capability, not an observed
+  exploit. Also closes [deferred-work](../execution/deferred-work-register.md) #2 for channel scope (the flat
+  permission-reply route is now a denied non-session POST for channel tokens).

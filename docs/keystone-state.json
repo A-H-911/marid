@@ -1317,6 +1317,15 @@
         "context": "ADR-0007 (Approved 2026-07-07) set channel secret safety to authorization-boundary containment, not egress redaction, and deferred a configured-secret-value redactor to PH-5. PH-5 shipped and MS-006 was accepted at gate 14 without it; PH-8 then shipped v0.3.0. The redactor was tracked to a phase that closed without it - never rejected, never built, it outlived its owner. AC-016 sat at Partial across two releases and RISK-007 still promised a PH-5 control with no phase to land in. The same crack also orphaned P-4 (the marid export default-flip).",
         "decision": "Adopt ADR-0007's containment posture as FINAL and DROP the configured-secret-value redactor from scope entirely - no longer deferred, no longer tracked, not a deliverable of any phase. Rationale: Marid is a single-operator private deployment, so the party a redactor would protect the operator from is the operator; the B4/B2 authorization boundary is the control and the threat model itself endorses containment over detection. AC-016 closes as Accepted-with-deviation (NOT Met - the criterion asserts redaction, which is not delivered). RISK-007 accepted + closed. The marid export sub-decision (c) is carried forward unchanged and P-4 stays reserved/not-activated, re-homed from the closed PH-5. INV-002 is not weakened: the redactor was never its enforcement - secrets are kept out of logs/history at the source (env/hashed stores, no bodies in audit, boundary-isolated auth.json).",
         "consequences": "The acceptance surface stops promising a control Marid does not have: AC-016 closes honestly instead of lingering at Partial forever, RISK-007 closes as an accepted residual. ACCEPTED COST, stated so it is not later mistaken for an oversight: channel egress (stream.ts), general logs/errors, and raw marid export carry no secret-value redaction and are tracked NOWHERE; the sole control is the authorization boundary. REVISIT TRIGGER: if the deployment assumption ever changes - more than one operator, an untrusted operator, or a public/multi-tenant surface - ADR-0019 must be reopened first, because its entire rationale rests on that assumption. Rejected: building the redactor (defence-in-depth against a threat containment covers); re-deferring to a future phase (the exact failure mode that produced this ADR); leaving AC-016 Partial (a false tracker is a defect); marking AC-016 Met (would be a lie - redaction is not delivered)."
+      },
+      {
+        "id": "ADR-0020",
+        "title": "A channel: token must be deny-by-default on NON-session routes too (the /pty breach)",
+        "status": "Approved",
+        "date": "2026-07-19",
+        "context": "marid-auth is the sole auth gate (marid/serve.ts deletes OPENCODE_SERVER_PASSWORD, so the upstream per-route pty Authorization/PtyConnectAuthorization become pass-through). scope.ts gated a channel: token deny-by-default only on /session/:id/* (channelOwnedRouteAllowed); for non-session (top-level) routes it returned the same blanket ALLOW as a trusted client token. The served app mounts a top-level /pty surface (POST /pty spawns an OS shell; /pty/:id/connect drives it). Net: an untrusted WhatsApp/Telegram channel token could reach /pty and get arbitrary shell execution, bypassing the agent/permission model. Gateway-wide since PH-4. Invalidated the INV-001 conjunct of AC-010/011/012/017/018/022 (all stamped Met). Live-confirmed: pty-scope-breach.test.ts (channel -> 200 on GET /pty/shells and POST /pty before fix) + a real maridServe E2E (200 before / 403 after).",
+        "decision": "Make channel: scope deny-by-default on non-session routes too, via a channelNonSessionAllowed allowlist in scope.ts. A channel may reach ONLY read-only meta/list (GET /config,/agent,/provider,/doc,/status,/), the filtered firehoses (GET /event,/global/event), the filtered lists (GET /permission,/session,/session/status), and POST /session create. Everything else at the top level - crucially /pty/*, and /file,/tui,/mcp,/command,/experimental,/project,/instance - is DENIED. client scope is unchanged (operator's own trusted credential; the TUI/web /pty terminal uses it). The flat POST /permission/:requestID/reply is now a denied non-session POST for channel scope, closing deferred-work #2 for the untrusted case. Marid-owned (one function+branch in marid-gateway/scope.ts, additive), no upstream edit, no new P-*.",
+        "consequences": "Closes the realized INV-001 shell-execution breach for every channel: scope (WhatsApp+Telegram); also closes deferred-work #2 for channel scope; restores the least-privilege guarantee AC-010/011/012/017/018/022 assert (verdicts remain Met post-fix). Required with the fix (done): a real-request regression test (channel -> 403 on the /pty surface AND still reaches its meta/firehose/session routes; scope.test.ts channel contract stays green = no over-restriction). The fix is an allowlist (deny-by-default) so any top-level route not explicitly listed is denied by construction (/pty not treated as the only dangerous route). admin and client scopes unchanged. Rejected: a blocklist of dangerous routes (fragile - a future top-level route is allowed by default); restoring OPENCODE_SERVER_PASSWORD as the primary fix (breaks the Bearer flow marid-auth is built on, ADR-0003); status quo (a standing INV-001 breach)."
       }
     ],
     "risks": [
@@ -1543,6 +1552,15 @@
         "likelihood": "high",
         "mitigation": "RESOLVED via ADR-0016 (isStream route-based) + ADR-0017 (lazy own-session visibility); real-request regression test (global-event-filter PART 2b) + global-event-isolation-repro.ts + telegram.test.ts; marid-auth 123 green; no upstream edit.",
         "trigger": "already realized - live tier 2026-07-11; resolved same day",
+        "scope": "Full"
+      },
+      {
+        "id": "RISK-026",
+        "description": "REALIZED (2026-07-19) - channel-token shell-execution breach (INV-001): a channel: token (WhatsApp AND Telegram, untrusted-ingress, deny-by-default by design) could reach the top-level /pty shell surface and spawn+drive an OS shell (POST /pty -> connect-token -> WS connect), bypassing the agent/policy/permission model. Root cause: scope.ts gated channel deny-by-default only on /session/:id/*; non-session routes returned the same blanket ALLOW as client. marid/serve.ts:27 deletes OPENCODE_SERVER_PASSWORD so marid-auth is the sole gate (upstream pty auth pass-through). Gateway-wide since PH-4. Invalidated the INV-001 conjunct of AC-010/011/012/017/018/022.",
+        "impact": "high",
+        "likelihood": "medium",
+        "mitigation": "RESOLVED via ADR-0020 (channel deny-by-default on non-session routes too: channelNonSessionAllowed allowlist; /pty + all top-level execution/mutation denied; client unchanged). Also closes deferred-work #2 for channel scope. Proven: pty-scope-breach.test.ts (authorize + handle) + live E2E pty-channel-breach-repro.ts (channel /pty/shells 200->403 on real maridServe) + 128 gateway tests green; no upstream edit, no P-*. Lands in PR-0; operator merge into develop pending (INV-005).",
+        "trigger": "already realized - surfaced by adversarial review 2026-07-19; fix approved same day, awaiting merge",
         "scope": "Full"
       }
     ],
@@ -4653,6 +4671,19 @@
         "PH-0..8 all done; MS-001..009 all MET - the Marid plan is complete",
         "remaining operator follow-up (non-milestone): ruleset 17->20 + the '17 checks' count sweep"
       ]
+    },
+    {
+      "date": "2026-07-19",
+      "author": "execution-agent",
+      "summary": "SECURITY (INV-001) PR-0 - channel-token /pty shell-execution breach found + fixed. An adversarial re-review of the 'plan complete' claim surfaced a realized INV-001 breach: a channel: token (WhatsApp AND Telegram) could reach the top-level /pty shell surface and spawn/drive an OS shell, bypassing the agent/permission model. Root cause: marid-gateway/scope.ts gated channel deny-by-default only on /session/:id/*; non-session routes returned the same blanket ALLOW as client, and marid/serve.ts:27 deletes OPENCODE_SERVER_PASSWORD (marid-auth is the sole gate, upstream /pty auth pass-through). Present gateway-wide since PH-4. Fixed by channelNonSessionAllowed (a deny-by-default allowlist: read-only meta + filtered firehoses/lists + POST /session create only; /pty and all other top-level execution/mutation routes denied). client unchanged. Proven three ways: pty-scope-breach.test.ts (authorize + handle), live E2E scripts/pty-channel-breach-repro.ts (real maridServe: channel /pty/shells 200->403, admin stays 200, /config stays 200), 128 gateway tests green + typecheck clean. ADR-0020 Approved; RISK-026 logged; closes deferred-work #2 for channel scope. INV-001 conjunct of AC-010/011/012/017/018/022 invalidated then restored - all remain Met post-fix. Additive in marid-gateway, no upstream edit, no new P-*. validate_package.py docs/ = RESULT: OK. Next: operator merge of PR-0 into develop (INV-005); WhatsApp docs close-out (PR-A) queued behind it.",
+      "items_completed": [
+        "Root-caused + live-confirmed a realized INV-001 breach: channel: token -> /pty OS shell execution (RISK-026)",
+        "Fixed additively in marid-gateway/scope.ts (channelNonSessionAllowed deny-by-default allowlist); client unchanged; no upstream edit, no P-*",
+        "Regression test pty-scope-breach.test.ts + live E2E repro (channel /pty/shells 200->403 on real maridServe); 128 gateway tests green",
+        "ADR-0020 Approved (2026-07-19) + RISK-026 logged; deferred-work #2 channel-half closed",
+        "AC-010/011/012/017/018/022 INV-001 conjunct re-audited (invalidated -> restored, all remain Met post-fix)",
+        "Lands in PR-0; operator merge into develop pending (INV-005)"
+      ]
     }
   ],
   "change_log": [
@@ -4964,6 +4995,12 @@
       "actor": "execution-agent",
       "action": "Post-completion tracker-drift reconcile (docs-only, no milestone/AC/WBS change; plan stays complete). Deferred-work register: items #3 (branding P-2), #4 (config P-3), #8 (Telegram firehose reconnect) were marked Open but delivered -> flipped to Done with evidence (#3 shipped PH-5 WBS-5.4 + PH-8 WBS-8.4/8.5, user-agent intentionally kept upstream per NFR-001; #4 P-3 lsp:false applied WBS-5.4; #8 folded by WBS-6.5/PR #47 837fb70c - reconnect+re-fetch live in @marid/channel-client, the WBS row literally says 'folds deferred #8'). Item #5 dropped FR-047 (Met via PH-7/ADR-0010/AC-018); FR-037/044/058 remain deferred so #5 stays Open. Status-report Active-work cell: removed the stale 'ruleset 17->20 follow-up' parenthetical (merged in #77). Still genuinely Open (none gate): #2, #7, #10, #11, #12. validate_package.py docs/ = RESULT: OK.",
       "target": "docs/execution/deferred-work-register.md, docs/progress/{status-report,progress-log}.md, docs/keystone-state.json"
+    },
+    {
+      "timestamp": "2026-07-19T12:00:00Z",
+      "actor": "execution-agent",
+      "action": "SECURITY (INV-001) PR-0: adversarial re-review found a realized breach - a channel: token (WhatsApp AND Telegram) could reach the top-level /pty shell surface and spawn/drive an OS shell (scope.ts gated channel deny-by-default only on /session/:id/*; non-session routes blanket-ALLOWed like client; marid/serve.ts deletes the upstream password so marid-auth is the sole gate). Fixed additively in marid-gateway/scope.ts (channelNonSessionAllowed deny-by-default allowlist; /pty + all top-level execution denied; client unchanged). Proven: pty-scope-breach.test.ts (authorize + createMaridAuth().handle()) + live E2E scripts/pty-channel-breach-repro.ts (channel /pty/shells 200->403 on real maridServe, admin stays 200, /config stays 200) + 128 gateway tests green + typecheck clean. ADR-0020 Approved 2026-07-19; RISK-026 logged; deferred-work #2 channel-half closed. INV-001 conjunct of AC-010/011/012/017/018/022 invalidated-then-restored, all remain Met post-fix (re-audit note in acceptance-audit summary). No upstream edit, no new P-*. Lands in PR-0; operator merge into develop pending (INV-005). validate_package.py docs/ = RESULT: OK.",
+      "target": "packages/marid-gateway/src/scope.ts (+ test), packages/opencode/scripts/pty-channel-breach-repro.ts, docs/adrs/adr-0020-*.md, docs/risks/risk-register.md, docs/validation/acceptance-audit.md, docs/execution/deferred-work-register.md, docs/progress/{status-report,progress-log}.md, docs/keystone-state.json"
     }
   ]
 }
