@@ -1,7 +1,7 @@
 ---
-status: Approved (gate 7, 2026-07-03; amended v1.1 2026-07-05 — PH-3, additive + reconnect correction; amended v1.2 2026-07-12 — PH-6, Marid channel gateway surface)
-version: v1.2
-updated: 2026-07-12
+status: Approved (gate 7, 2026-07-03; amended v1.1 2026-07-05 — PH-3, additive + reconnect correction; amended v1.2 2026-07-12 — PH-6, Marid channel gateway surface; amended v1.3 2026-07-17 — PH-7, WhatsApp channel + FR-051 mapping)
+version: v1.3
+updated: 2026-07-19
 owner: operator (STK-001)
 ---
 
@@ -22,6 +22,13 @@ owner: operator (STK-001)
 > `/session/{id}/message`) and outbound file sending (multipart, Marid-side). **No new replay path:**
 > mirroring rides the v1.1 authoritative-store re-fetch-on-reconnect model, not a `seq`/`id:` cursor. See
 > the new *Channel gateway surface & cross-surface mirroring* section.
+
+> **v1.3 (2026-07-17, PH-7 — WhatsApp channel).** Additive, **no new server route or event**. The
+> WhatsApp adapter (`@marid/whatsapp`) is a second client of the exact v1.2 surface — same envelope, same
+> `channel:` token, same `owns ∪ bound` mirroring (reuses `@marid/channel-client` unchanged). Documents the
+> WAHA transport boundary (HTTP-out / WS-in, outbound-only) and the **full FR-051 mapping** (webhook-sig
+> N/A by OQ-004; replay = durable dedup; rate limits = the gateway token-bucket; retry = channel-client
+> capped backoff; dead-letter = log-and-drop). See the new *WhatsApp channel* section.
 
 Basis: ADR-0003 (v1 + SSE behind marid-auth) and ADR-0004 (one server per instance). The contract below
 is what Marid **commits to** for apps, gateways, and UIs; upstream v1 provides the substance (evidence:
@@ -130,6 +137,32 @@ lazy-visibility defect the leak had masked. Regression-pinned by a real-request 
 - **Outbound file sending** is Marid-side, not a server route: when a tool returns a media attachment
   (a `data:` URL part), the gateway decodes the bytes and uploads them to the channel as **multipart**
   (image mime → photo, else document). No public URL / relay is involved.
+
+## WhatsApp channel (PH-7, v1.3)
+
+`@marid/whatsapp` is a **second client of the same surface** — it adds **no server route and no event**. It
+holds a `channel:whatsapp` token, subscribes to the firehose, is bound via the same `/marid/attach`, and is
+mirrored by the same `owns ∪ bound` filter (view-via-binding, act-via-ownership). Everything channel-side
+above (tool calling on the sync route, Marid-side media send, recovery by re-fetch) applies unchanged.
+
+**Transport boundary (WAHA — outbound-only).** The adapter reaches WhatsApp only through an operator-run
+WAHA sidecar (NOWEB engine), and the transport is asymmetric (R-12 §D): **events arrive over a WebSocket,
+sends go over HTTP REST** — both **outbound connections from Marid**. WAHA's webhook event mode (which would
+need a public inbound endpoint) is rejected by config; **WS event mode is the only OQ-004-compatible mode**.
+`waha.ts` opens no listening socket (source-guard test). Permission prompts are **`APPROVE <token>` text**
+(ADR-0015): a strict single-use / JID-bound / TTL parser, run before any other handling (RISK-021), with the
+gateway re-checking scope server-side.
+
+**FR-051 — fully mapped (INV-006: record, never drop).** FR-051 asks for webhook signature validation,
+replay protection, retry, dead-letter, and rate limits:
+
+| FR-051 clause | Marid realization |
+|---|---|
+| Webhook signature validation | **N/A by construction** — OQ-004 means no webhook and no inbound port; Marid dials WAHA out. Recorded as inapplicable, not skipped. |
+| Replay protection | **`dedup.ts`** — a durable `0600` seen-`id` set drops re-delivered WAHA frames. (WAHA's WS carries no `update_id`-style offset, so dedup is the whole replay defense — there is no resume cursor.) |
+| Rate limits | The **gateway token-bucket** on the `channel:` token (10/s, burst 30) + a human-paced outbound throttle (RISK-013). |
+| Retry | **`@marid/channel-client`** capped exponential backoff (500 ms–30 s) on the firehose + re-fetch-on-reconnect; the WAHA WS reconnect uses the same curve. |
+| Dead-letter | An outbound send that fails is **logged and dropped — no queue** (`gateway.ts` `.catch` → `log`; a named ceiling, the upgrade path is recorded in the deferred-work register). |
 
 ## Concurrency semantics (EXP-001 — verified; §7 / FR-040/041)
 

@@ -1,0 +1,65 @@
+# WBS-7.6 · EXP-012 — burner second-account real-protocol probe (live WhatsApp, NON-GATING).
+#
+# ADR-0014 tier 3: real-protocol coverage a deterministic fake can't give. A live WhatsApp
+# session on an unofficial client is BAN-EXPOSED (RISK-013/022) and non-deterministic, so it
+# must NEVER block a merge — this is a SEPARATE workflow (NOT a required check), run only on
+# demand: `workflow_dispatch`, or by adding the `test:whatsapp-live` label to a PR.
+#
+# It is deliberately a RUNBOOK, not an automated probe (docs/experiments/exp-012-runbook.md):
+# the burner loop is a manual operator procedure. This workflow is its non-gating HOME — it
+# warns-and-exits-0 when the burner secrets or a probe script are absent (the default), so it
+# is never red. Wire an actual `scripts/wa-burner-e2e.ts` only if the operator later decides to
+# automate the probe against a throwaway number, accepting number loss.
+#
+# Secrets (repo → Settings → Secrets and variables → Actions), never printed (INV-002):
+#   WAHA_BASE_URL · WAHA_API_KEY · WA_OPERATOR_JID   (all for the burner session only)
+
+name: marid-whatsapp-burner
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  # One live burner session at a time — the throwaway number can't safely run concurrent sessions.
+  group: whatsapp-burner
+  cancel-in-progress: false
+
+jobs:
+  burner-probe:
+    # workflow_dispatch always; on a PR only when explicitly labelled test:whatsapp-live.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.label.name == 'test:whatsapp-live' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: ./.github/actions/bun-install
+      - name: Run burner real-protocol probe (or skip cleanly)
+        # Skip cleanly (not fail) when the burner secrets or the probe script are absent — so a
+        # label/dispatch never turns red. EXP-012 is a manual runbook by default; nothing here
+        # touches a real account unless the operator has both wired the secrets AND added a probe
+        # script accepting number loss.
+        env:
+          WAHA_BASE_URL: ${{ secrets.WAHA_BASE_URL }}
+          WAHA_API_KEY: ${{ secrets.WAHA_API_KEY }}
+          WA_OPERATOR_JID: ${{ secrets.WA_OPERATOR_JID }}
+        run: |
+          if [ -z "$WAHA_API_KEY" ] || [ -z "$WAHA_BASE_URL" ] || [ -z "$WA_OPERATOR_JID" ]; then
+            echo "::warning::WhatsApp burner secrets not configured — EXP-012 is a manual runbook (docs/experiments/exp-012-runbook.md). Skipping (non-gating)."
+            exit 0
+          fi
+          if [ ! -f scripts/wa-burner-e2e.ts ]; then
+            echo "::warning::No scripts/wa-burner-e2e.ts — EXP-012 stays a manual runbook. Skipping (non-gating)."
+            exit 0
+          fi
+          bun run scripts/wa-burner-e2e.ts
+        working-directory: packages/opencode

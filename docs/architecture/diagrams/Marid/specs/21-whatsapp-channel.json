@@ -1,0 +1,206 @@
+{
+  "specVersion": "1.0",
+  "diagramType": "flowchart",
+  "direction": "TB",
+  "meta": {
+    "title": "Marid WhatsApp Channel (PH-7) - WAHA-NOWEB, outbound-only"
+  },
+  "nodes": [
+    {
+      "id": "wa",
+      "shape": "stadium",
+      "label": {
+        "text": "WhatsApp (operator)"
+      }
+    },
+    {
+      "id": "waha",
+      "shape": "roundrect",
+      "label": {
+        "text": "WAHA sidecar (NOWEB engine, pinned by image digest - trust anchor)"
+      }
+    },
+    {
+      "id": "gw",
+      "shape": "rect",
+      "label": {
+        "text": "marid-whatsapp - channel gateway (a client) - APPROVE token permission - presence typing + throttled edits - media"
+      },
+      "styleRefs": [
+        "channel"
+      ]
+    },
+    {
+      "id": "cc",
+      "shape": "rect",
+      "label": {
+        "text": "@marid/channel-client - subscribe - reconnect - re-fetch - poll self-bindings (reused unchanged)"
+      },
+      "styleRefs": [
+        "ccpkg"
+      ]
+    },
+    {
+      "id": "auth",
+      "shape": "rect",
+      "label": {
+        "text": "Marid Gateway - @marid/gateway - channel: token - owns U bound SSE filter - INV-001 server-enforced"
+      },
+      "styleRefs": [
+        "auth"
+      ]
+    },
+    {
+      "id": "sess",
+      "shape": "rect",
+      "label": {
+        "text": "Session run loop + tools + MCP"
+      },
+      "styleRefs": [
+        "core"
+      ]
+    },
+    {
+      "id": "sse",
+      "shape": "roundrect",
+      "label": {
+        "text": "SSE firehose (/event - /global/event)"
+      }
+    },
+    {
+      "id": "legend",
+      "shape": "rect",
+      "label": {
+        "text": "red = @marid/gateway (API/ingress); orange = marid-whatsapp (channel gateway, a client); amber = @marid/channel-client (shared, reused from PH-6); dark = session core (reused). WhatsApp reached ONLY via the WAHA sidecar, outbound-only (WS events in / HTTP out); no WhatsApp npm dep. APPROVE token parser runs first (RISK-021)."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "wa",
+      "target": "waha",
+      "label": {
+        "text": "message / media / APPROVE token"
+      }
+    },
+    {
+      "id": "e2",
+      "source": "waha",
+      "target": "gw",
+      "label": {
+        "text": "WS events in (outbound-only)"
+      }
+    },
+    {
+      "id": "e3",
+      "source": "gw",
+      "target": "auth",
+      "label": {
+        "text": "sync /session/{id}/message (detached)"
+      }
+    },
+    {
+      "id": "e4",
+      "source": "auth",
+      "target": "sess",
+      "label": {
+        "text": "authorized (owns) - full toolset + MCP"
+      }
+    },
+    {
+      "id": "e5",
+      "source": "sess",
+      "target": "sse",
+      "label": {
+        "text": "emit events"
+      }
+    },
+    {
+      "id": "e6",
+      "source": "sse",
+      "target": "auth",
+      "label": {
+        "text": "frames"
+      }
+    },
+    {
+      "id": "e7",
+      "source": "auth",
+      "target": "cc",
+      "label": {
+        "text": "owns U bound filtered"
+      }
+    },
+    {
+      "id": "e8",
+      "source": "cc",
+      "target": "gw",
+      "label": {
+        "text": "rendered parts (edit-in-place)"
+      }
+    },
+    {
+      "id": "e9",
+      "source": "gw",
+      "target": "waha",
+      "label": {
+        "text": "sendText / editText / media (HTTP out)"
+      }
+    },
+    {
+      "id": "e10",
+      "source": "waha",
+      "target": "wa",
+      "label": {
+        "text": "reply - APPROVE token prompt"
+      }
+    },
+    {
+      "id": "e11",
+      "source": "cc",
+      "target": "auth",
+      "label": {
+        "text": "GET /marid/self-bindings (poll)"
+      }
+    }
+  ],
+  "styles": {
+    "channel": {
+      "fill": "#F0731F",
+      "border": {
+        "color": "#D9611A"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "ccpkg": {
+      "fill": "#F0A81F",
+      "border": {
+        "color": "#C4871A"
+      },
+      "text": {
+        "color": "#0B1220"
+      }
+    },
+    "auth": {
+      "fill": "#DC2A16",
+      "border": {
+        "color": "#A81F10"
+      },
+      "text": {
+        "color": "#ffffff"
+      }
+    },
+    "core": {
+      "fill": "#1C1714",
+      "border": {
+        "color": "#000000"
+      },
+      "text": {
+        "color": "#F4F1EA"
+      }
+    }
+  }
+}

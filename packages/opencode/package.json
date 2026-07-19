@@ -87,6 +87,7 @@
     "@marid/gateway": "workspace:*",
     "@marid/instance": "workspace:*",
     "@marid/telegram": "workspace:*",
+    "@marid/whatsapp": "workspace:*",
     "@modelcontextprotocol/sdk": "1.29.0",
     "@octokit/graphql": "9.0.2",
     "@octokit/rest": "catalog:",

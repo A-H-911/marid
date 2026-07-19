@@ -21,9 +21,11 @@ generation: derived
   [ADRs](adrs/) and approved registers are FINAL.
 - **Where you are now:** the live [status report](progress/status-report.md) and
   [acceptance audit](validation/acceptance-audit.md). **PH-0..6 done** (MS-007 MET, 2026-07-12, PR #48
-  `4409d92f`); **PH-8 Isolation & deep rebrand in progress** — WBS-8.0..8.5 merged, AC-025..031 all Met (data
-  isolation, agent identity, TUI + web rebrand); **WBS-8.6 docs reconcile at the operator gate, WBS-8.7 v0.3.0
-  release remains**. **PH-7 WhatsApp** is operator-gated and not started. Do not re-litigate settled decisions.
+  `4409d92f`); **PH-8 Isolation & deep rebrand DONE** (MS-009 MET, 2026-07-16 — public v0.3.0; AC-025..031 all
+  Met). **PH-7 WhatsApp — the last milestone (MS-008) — code-done and at the operator gate:** the adapter
+  (WBS-7.1..7.5) is built + live-green on `feat/ph7-whatsapp` @ `527fe493d2`, and WBS-7.6 (docs + CI + trackers)
+  is done; AC-018/022/023 Met, EXP-006/011 PASS. **Deterministic MS-008 exit achieved; formal MET stamps on the
+  operator merge (INV-005).** Do not re-litigate settled decisions.
 
 ## Invariants — never violate (a violation requires a new ADR)
 
@@ -59,6 +61,7 @@ generation: derived
 ## Kickoff
 
 Start from [handoff/initial-prompt.md](handoff/initial-prompt.md); subsequent phases use
-[handoff/follow-up-prompts.md](handoff/follow-up-prompts.md) (active phase: **PH-8 Isolation & deep rebrand** —
-WBS-8.6 docs at the gate, WBS-8.7 v0.3.0 release remains; see the live
-[status report](progress/status-report.md); PH-7 WhatsApp is operator-gated and not started).
+[handoff/follow-up-prompts.md](handoff/follow-up-prompts.md) (active phase: **PH-7 WhatsApp** — the last
+milestone (MS-008); code-done + live-green on `feat/ph7-whatsapp`, WBS-7.6 docs/CI/trackers done, at the
+operator merge gate. PH-8 is DONE (MS-009, v0.3.0). See the live
+[status report](progress/status-report.md)).

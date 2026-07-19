@@ -1,7 +1,7 @@
 ---
 status: Approved
 version: 1.0.0
-updated: 2026-07-17
+updated: 2026-07-19
 owner: operator (STK-001)
 generation: derived
 ---
@@ -15,12 +15,12 @@ generation: derived
 
 | | |
 |---|---|
-| Reporting date | 2026-07-17 |
-| Active work | **PH-8 COMPLETE — public [v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0) released 2026-07-16; MS-009 MET.** Total DATA isolation + deep rebrand shipped (all 6 reported v0.2.0 issues → Met AC). The final docs reconcile (WBS-8.6, PR #64 `f022fbf005`) brought the docs package into line with what shipped: **usage.md** gains a "Data isolation & coexistence" section (per-OS data/state/config/cache/managed dirs — the XDG layout on every OS, not `~/Library`/`%AppData%`; the `marid.json` config rule + project-`opencode.json` fallback; the five-var `OPENCODE_*` env-pierce table; the one-time v0.2.0 migration; no auto-update); **README** gets a data-isolation Security-model bullet; **branding.md** flips the ADR-0018 note Proposed→realized; **architecture.md** flips P-6/P-7 planned→realized with real sites (`packages/core/src/global.ts:17`, `config.ts maridConfigNames`) + reconcile recipes; **CLAUDE.md**/**CONTRIBUTING.md** corrected; **NFR-010** Draft→Met. Diagrams 01/05/13 reviewed and left as-is (architecture-level, already Marid-accurate). **TUI + Telegram screenshots deferred** to the operator (headless capture can't be faithful). **All prior PH-8 phases merged:** WBS-8.1 (#54 sync) · 8.2 (#55/#56 isolation+config+pierce) · Phase-3 (#57 agent identity) · 4a/4b (#58/#59 TUI) · 5a (#60) · web (#63 `19ad4279f3`, 5b assets + auth-gate P-9 + lockup) · **TUI logo (#62 `7e4157b94c`, MERGED)** · **8.6 docs (#64 `f022fbf005`, MERGED)** — **AC-025..031 all Met**. **v0.3.0 shipped** (WBS-8.7): `develop→main` sync #66 merge-commit `378ba650` → `v0.3.0` tag → 21 signed assets + 3-OS install-smoke green. **MS-009 MET; PH-8 complete.** |
+| Reporting date | 2026-07-19 |
+| Active work | **SECURITY FIX (PR-0) at the operator merge gate — an adversarial re-review found a realized INV-001 breach: a `channel:` token (WhatsApp AND Telegram) could reach the top-level `/pty` shell surface and spawn/drive an OS shell ([RISK-026](../risks/risk-register.md), [ADR-0020](../adrs/adr-0020-channel-non-session-deny-by-default.md) Approved 2026-07-19). Root cause: `marid-gateway/scope.ts` gated channel deny-by-default only on `/session/:id/*`, leaving non-session routes blanket-allowed. FIXED (`channelNonSessionAllowed` deny-by-default allowlist; `/pty` + all top-level execution denied; `client` unchanged), proven by `pty-scope-breach.test.ts` + a live `maridServe` E2E (channel `/pty/shells` 200→403) + 128 gateway tests green; no upstream edit, no new `P-*`. Invalidated-then-restored the INV-001 conjunct of AC-010/011/012/017/018/022 (all remain Met post-fix); also closes deferred-work #2 for channel scope. Awaiting operator merge into `develop` (INV-005). Queued behind it: the WhatsApp docs close-out (usage.md + README + api-event-contract version fix + deferred-row #13). — Prior: PH-7 WhatsApp DONE (MS-008 MET 2026-07-18, PR #75 squash `3326a5f6b5`, all 23 CI green).** `@marid/whatsapp` = WAHA-NOWEB channel (HTTP-out/WS-in, outbound-only), `APPROVE <token>` permission, reuses `@marid/channel-client`; **AC-018/022/023 Met** (139 unit + 3 live TEST-WA; the new 3-OS `marid-whatsapp` gate green on all OSes first run), EXP-006/011 PASS. No new `P-*`; WAHA image digest-pinned (repo's first). **PH-0..8 all done; MS-001..009 all MET.** *(Branch protection is now 20 required checks — `marid-whatsapp` required as of 2026-07-18; nothing outstanding.)* *Prior: PH-8 COMPLETE below.* **PH-8 COMPLETE — public [v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0) released 2026-07-16; MS-009 MET.** Total DATA isolation + deep rebrand shipped (all 6 reported v0.2.0 issues → Met AC). The final docs reconcile (WBS-8.6, PR #64 `f022fbf005`) brought the docs package into line with what shipped: **usage.md** gains a "Data isolation & coexistence" section (per-OS data/state/config/cache/managed dirs — the XDG layout on every OS, not `~/Library`/`%AppData%`; the `marid.json` config rule + project-`opencode.json` fallback; the five-var `OPENCODE_*` env-pierce table; the one-time v0.2.0 migration; no auto-update); **README** gets a data-isolation Security-model bullet; **branding.md** flips the ADR-0018 note Proposed→realized; **architecture.md** flips P-6/P-7 planned→realized with real sites (`packages/core/src/global.ts:17`, `config.ts maridConfigNames`) + reconcile recipes; **CLAUDE.md**/**CONTRIBUTING.md** corrected; **NFR-010** Draft→Met. Diagrams 01/05/13 reviewed and left as-is (architecture-level, already Marid-accurate). **TUI + Telegram screenshots deferred** to the operator (headless capture can't be faithful). **All prior PH-8 phases merged:** WBS-8.1 (#54 sync) · 8.2 (#55/#56 isolation+config+pierce) · Phase-3 (#57 agent identity) · 4a/4b (#58/#59 TUI) · 5a (#60) · web (#63 `19ad4279f3`, 5b assets + auth-gate P-9 + lockup) · **TUI logo (#62 `7e4157b94c`, MERGED)** · **8.6 docs (#64 `f022fbf005`, MERGED)** — **AC-025..031 all Met**. **v0.3.0 shipped** (WBS-8.7): `develop→main` sync #66 merge-commit `378ba650` → `v0.3.0` tag → 21 signed assets + 3-OS install-smoke green. **MS-009 MET; PH-8 complete.** |
 | Last completed phase | **PH-6 (Telegram-first) DONE — MS-007 MET (2026-07-12, PR #48 squash `4409d92f`, all 20 CI green).** The full PH-6 stack is merged to `develop`: **WBS-6.1** (Marid Gateway + `@marid/channel-client` + attach endpoint + `owns ∪ bound` `/global/event` fine-filter), **6.2** (full Telegram experience — markdown/files/slash/inline-kbd, marid-telegram 68→99 green), **6.3** (durable `BindingStore` + binding-aware `isVisible`), **6.4** (cross-surface permission: first-responder-wins, view-via-binding/act-via-ownership), **6.5** (SSE reconnect + backoff + re-fetch recovery + attach-triggered re-subscribe), **6.6** (four live test tiers), **6.7** (docs: contract **v1.2** + architecture **v1.1** + Tarseem `20-gateway-mirroring` + `docs/usage.md` user guide). **All MS-007 ACs Met** (AC-017/019/020/021/024); EXP-005/007/008/009 PASS. **🔒 INV-001 firehose isolation leak found via the live tier & FIXED** — ADR-0016 (route-based `isStream`) + ADR-0017 (lazy own-session visibility); zero upstream edit, no P-\*. Native-mobile EXP-010 **deferred** (never an MS-007 gate). |
 | Overall status | **MVP COMPLETE (gate 14, 2026-07-09) + PH-6 (Telegram-first) COMPLETE (MS-007, 2026-07-12).** Public `v0.1.0` released; KPI-004∧005∧006 green; docs `validate = OK`. PH-6 fully merged to `develop` (PR #48 `4409d92f`) — AC-017/019/020/021/024 all Met. |
-| Last milestone met | **MS-007 (2026-07-12)** — PH-6 Telegram-first: gateway + full experience + bidirectional mirroring + live test tiers (PR #48, squash `4409d92f`, all 20 CI green) |
-| Next milestone | **MS-009 MET (2026-07-16)** — PH-8 complete; public v0.3.0 released (AC-025..031 Met, all 6 reported v0.2.0 issues → Met AC). **Next open work: MS-008 / PH-7 WhatsApp** — not-started, operator-gated, PH-8-independent (ADR-0010 / DEC-015/016). Backlog: stats mechanism (deferred #10), upstream sync cadence, the `process.test.ts` emission-order CI flake (deferred #11). *(Two former backlog items are closed, [ADR-0019](../adrs/adr-0019-channel-secret-containment-final.md) 2026-07-16: the egress secret-redactor is **dropped from scope**, not deferred; AC-007's formal supersede is **done**.)* |
+| Last milestone met | **MS-008 (2026-07-18)** — PH-7 WhatsApp: `@marid/whatsapp` WAHA-NOWEB channel + deterministic fake-WA gate (PR #75, squash `3326a5f6b5`, all 23 CI green). The final Marid milestone. |
+| Next milestone | **NONE — all milestones met. MS-008 (PH-7 WhatsApp) MET 2026-07-18** (PR #75 squash `3326a5f6b5`, all 23 CI green); it was the last one — **MS-001..009 all MET, the plan is complete.** Backlog (non-milestone): stats mechanism (deferred #10), upstream sync cadence, the `process.test.ts` emission-order CI flake (deferred #11), the WhatsApp dead-letter log+drop ceiling (deferred #12). **Ruleset done:** branch protection is now **20 required checks** (`marid-whatsapp (os)` added 2026-07-18) and the "17→20" doc count is reconciled — nothing outstanding. |
 
 ## Phase progress
 
@@ -34,6 +34,7 @@ generation: derived
 | PH-5 Release & sync | **done** | yes | **MS-006 (2026-07-09)**: public `v0.1.0` release (#35→main `8bf4ab61e`); WBS-5.1 (#27) · 5.3 (#28/#31) · 5.4 (#33) · 5.2 (#35/#38) · 5.5 (this PR) | KPI-004∧005∧006 green; `validate = OK`. Gate-14 ACCEPTED 2026-07-09 |
 | PH-6 Telegram-first | **done** | yes | **MS-007 (2026-07-12)**: Marid Gateway + full Telegram + bidirectional mirroring + 4 live test tiers; WBS-6.3 (#44) · 6.1 (#46) · 6.5 (#47) · 6.2/6.4/6.6/6.7 (#48 `4409d92f`) | AC-017/019/020/021/024 all Met; EXP-005/007/008/009 PASS; INV-001 leak fixed (ADR-0016/0017); zero upstream edit, no P-\* |
 | PH-8 Isolation & deep rebrand | **done** | yes | **MS-009 (2026-07-16)**: public v0.3.0 released — #54 (sync) · #55/#56 (isolation+config+pierce) · #57 (agent identity) · #58/#59 (4a/4b TUI) · #60 (5a) · #63 (5b+auth+lockup) · #62 (TUI logo) · #64 (8.6 docs) · **#66 (v0.3.0 sync `378ba650`)** | **AC-025..031 all Met**; 21 signed assets + 3-OS smoke green |
+| PH-7 WhatsApp | **done** | yes | **MS-008 (MET 2026-07-18)**: `@marid/whatsapp` WAHA-NOWEB channel + fake-WA gate; PR #75 squash `3326a5f6b5`, all 23 CI green (WBS-7.1..7.6) | AC-018/022/023 Met; EXP-006/011 PASS; WAHA-NOWEB, no npm dep (digest-pinned); no `P-*`. The last milestone. |
 
 ## Acceptance snapshot
 
@@ -50,6 +51,10 @@ the live 3-OS TEST-TG; AC-012 Met via the faked-SDK permission round trip + `par
 PH-6 (Telegram-first): **AC-017/019/020/021/024 all Met** (2026-07-12, PR #48) — live tool calling, bidirectional
 mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP-005/007/008/009 PASS.
 
+PH-7 (WhatsApp): **AC-018/022/023 all Met** (MS-008 MET 2026-07-18, PR #75 squash `3326a5f6b5`, all 23 CI
+green) — the fake-WA deterministic gate driving a real `marid serve`; round-trip + INV-001 + outbound-only,
+`APPROVE <token>` permission, media/streaming-sim; EXP-006/011 PASS. The last Marid milestone.
+
 ## Completed since last report
 - **WBS-5.2 / AC-014 / KPI-006** (PR #36 finalize, #35 RC → main, #38 smoke fix): **public `v0.1.0` release** —
   7 targets × (archive + `.sha256` + `.minisig`) = 21 signed assets; RC 17 checks green; 3-OS install-smoke
@@ -60,7 +65,13 @@ mirroring, userbot + Web-Playwright real-client tiers, gateway blast-radius; EXP
   sync automation + one real 91-commit cycle; **WBS-5.4** (#33) Marid README + flame logo + P-2/P-3.
 
 ## In progress
-**None — PH-8 complete (MS-009 MET, 2026-07-16).** Public [v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0)
+**None — the plan is complete.** PH-7 WhatsApp merged (PR #75 squash `3326a5f6b5`, 2026-07-18, all 23 CI
+green): `@marid/whatsapp` WAHA-NOWEB channel + the deterministic fake-WA gate (WBS-7.1..7.6); AC-018/022/023
+Met, EXP-006/011 PASS; the new 3-OS `marid-whatsapp` job green on all OSes first run; no new `P-*`. **MS-008
+MET — the last Marid milestone; MS-001..009 all MET.** Branch protection is now **20 required checks**
+(`marid-whatsapp (os)` added to the ruleset 2026-07-18; the "17→20" doc count reconciled) — nothing outstanding.
+
+*Prior (PH-8 complete, MS-009 MET, 2026-07-16):* public [v0.3.0](https://github.com/A-H-911/marid/releases/tag/v0.3.0)
 released: RC dry-run (`v0.3.0-rc.1`) pre-proved the build, then `develop → main` sync #66 merge-commit `378ba650`
 → `v0.3.0` tag → `marid-release.yml` green → **21 signed assets** (7 targets × archive/.sha256/.minisig) + **3-OS
 `install-smoke` green** (3 of 7 targets exercised — linux-x64/darwin-arm64/windows-x64; arm64/musl build-only).
@@ -144,8 +155,12 @@ migration; #55/#56) → **8.3** agent identity (P-8; #57) → **8.4** TUI rebran
 **8.5** web UI (#60/#63) → **8.6** docs/diagrams (#64) → **8.7** release **v0.3.0** (#66 `378ba650` → tag).
 MS-009 closed 2026-07-16: AC-025..031 all Met and all 6 reported v0.2.0 issues map to a passing check.
 
-**The only open work is PH-7 WhatsApp** (MS-008) — not-started, **operator-gated**, PH-8-independent
-(ADR-0010 / DEC-015/016). Backlog: stats mechanism (deferred #10), upstream sync cadence (monthly; last sync
-2026-07-13, so next ≈2026-08-13), and the `process.test.ts` emission-order CI flake (deferred #11 →
-P-CI-4 watch-list). *(Closed since the last report: the egress secret-redactor — **dropped from scope**, not
-deferred — and AC-007's formal supersede, both via ADR-0019 on 2026-07-16.)*
+**PH-7 WhatsApp (MS-008) — the last Marid milestone — is DONE (MET 2026-07-18, PR #75 squash `3326a5f6b5`,
+all 23 CI green).** `@marid/whatsapp` WAHA-NOWEB channel + the deterministic fake-WA gate merged to `develop`;
+AC-018/022/023 Met, EXP-006/011 PASS. **PH-0..8 all done; MS-001..009 all MET — the plan is complete.** The
+`marid-whatsapp` required-check follow-up is **done (2026-07-18):** the ruleset `protect-integration-branches`
+is now **20 required checks** (added `marid-whatsapp (ubuntu/macos/windows-latest)`) and the "17→20" doc count
+is reconciled (CLAUDE.md enum, CONTRIBUTING, the contributor-workflow diagram) — nothing outstanding. Backlog:
+stats mechanism (deferred #10), upstream sync cadence (monthly; last sync 2026-07-13, next ≈2026-08-13), the
+`process.test.ts` emission-order CI flake (deferred #11 → P-CI-4 watch-list), the WhatsApp dead-letter
+log+drop ceiling (deferred #12).
