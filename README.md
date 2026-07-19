@@ -6,7 +6,7 @@
 
 <p align="center">
   A private agent platform: <strong>one runtime</strong> serving a TUI, a token-secured HTTP+SSE API,
-  a web UI, and a Telegram bot — as <strong>isolated multi-instances</strong>, on a private network, for a single operator.
+  a web UI, a Telegram bot, and a WhatsApp channel — as <strong>isolated multi-instances</strong>, on a private network, for a single operator.
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 - [Architecture](#architecture)
 - [Install & verify](#install--verify)
 - [Quick start](#quick-start)
-- [The four interfaces](#the-four-interfaces) · [What needs a token?](#what-needs-a-token)
+- [The five interfaces](#the-five-interfaces) · [What needs a token?](#what-needs-a-token)
 - [Tokens](#tokens) · [Instances](#instances)
 - [Security model](#security-model)
 - [What we kept & what we removed](#what-we-kept--what-we-removed)
@@ -42,9 +42,9 @@ the same tools — from wherever they are: the terminal, a browser, a script, or
 > **public** (DEC-010); "private" refers to the intended deployment — one operator, private network. Contributing?
 > See [CONTRIBUTING.md](CONTRIBUTING.md) — Marid is built **docs-first** (the `docs/` Keystone package).
 
-A single runtime exposes **four interfaces** over **one session engine**, and can run as several **fully isolated
+A single runtime exposes **five interfaces** over **one session engine**, and can run as several **fully isolated
 instances** on one machine. Marid adds only what OpenCode doesn't already provide — a bearer-token auth layer,
-isolated instance lifecycle, and a Telegram gateway — plus a distribution profile that ships a lean keep-list.
+isolated instance lifecycle, and Telegram + WhatsApp channel gateways — plus a distribution profile that ships a lean keep-list.
 Everything else is upstream capability, reused as-is.
 
 ## Screenshots
@@ -61,13 +61,13 @@ Everything else is upstream capability, reused as-is.
 
 ## Architecture
 
-One runtime, one session engine, four interfaces. The **only** authenticated boundary is the **Marid Gateway**
+One runtime, one session engine, five interfaces. The **only** authenticated boundary is the **Marid Gateway**
 (`@marid/gateway`) — it *fronts* the reused HTTP+SSE API (`marid serve`) with bearer auth, scopes, rate-limit,
 audit, the `/marid/*` attach/binding routes, and `owns ∪ bound` mirroring (it fronts the upstream API, never
 absorbs it — DEC-009). The local TUI talks to the engine **in-process, no token** (and only becomes a gateway
-client when you `attach`). Untrusted ingress (Telegram) is bridged by a **channel gateway** (`marid-telegram`)
-**outside** the core that is itself a **client** of the Marid Gateway, speaking to it with a restricted
-`channel:` token.
+client when you `attach`). Untrusted ingress (Telegram, WhatsApp) is bridged by **channel gateways**
+(`marid-telegram`, `marid-whatsapp`) **outside** the core that are themselves **clients** of the Marid Gateway,
+speaking to it with a restricted `channel:` token.
 
 ```mermaid
 graph TB
@@ -192,10 +192,10 @@ marid instance status work       # show its port / pid / state
 marid instance attach work       # open the TUI as a client of that instance
 ```
 
-> **Full usage guide** — every command and flag, worked recipes (Telegram bot, cross-surface mirroring,
-> multi-instance), configuration, and troubleshooting: **[`docs/usage.md`](docs/usage.md)**.
+> **Full usage guide** — every command and flag, worked recipes (Telegram bot, WhatsApp channel,
+> cross-surface mirroring, multi-instance), configuration, and troubleshooting: **[`docs/usage.md`](docs/usage.md)**.
 
-## The four interfaces
+## The five interfaces
 
 ### 🖥️ TUI — `marid`
 
@@ -267,6 +267,32 @@ configured model provider (the instance is isolated from your default store, so
 configure a provider in it if the agent should reply). Senders not in
 `MARID_TG_ALLOW` are silently ignored (deny-by-default, INV-001).
 
+### 💬 WhatsApp
+
+The same agent, over WhatsApp — reached through an operator-run **WAHA (NOWEB engine)** sidecar rather than a
+built-in WhatsApp library, so the adapter carries **no WhatsApp dependency of its own** and is **outbound-only**
+(sends over HTTP, events over a WebSocket, both dialled *out* — no inbound port). Like Telegram it's a **gateway
+process outside the core** holding a restricted **`channel:` token**; secrets come from the environment
+(INV-002). Sensitive tool calls are approved with an **`APPROVE <token>`** text reply (a strict single-use,
+JID-bound, TTL'd parser).
+
+```sh
+# 1. isolated instance for the channel
+marid instance add wabot && marid instance start wabot
+
+# 2. channel token into that instance's store, bound to a restricted agent (secret prints once)
+XDG_DATA_HOME="$(marid instance path wabot)/data" \
+  marid token create wa --scope channel:wa --agent wa
+
+# 3. run the operator's WAHA NOWEB sidecar, then provide URL + allowlist via env (never flags)
+export MARID_WA_WAHA_URL=http://127.0.0.1:3000
+export MARID_WA_ALLOW=11111111111@c.us          # your linked-device number's JID (…@c.us)
+marid whatsapp start wabot --token <the mar_… secret> --agent wa
+```
+
+Only JIDs in `MARID_WA_ALLOW` are answered (deny-by-default, INV-001). Full recipe + env vars:
+[User Guide → WhatsApp channel](docs/usage.md#recipe-whatsapp).
+
 ### What needs a token?
 
 | Interface | Command | Token? | Scope |
@@ -275,6 +301,7 @@ configure a provider in it if the agent should reply). Senders not in
 | **API / SDK** | `marid serve` | **Yes** | `client` (or `admin`) |
 | **Web UI** | `marid serve` + browser | **Yes** | `client` |
 | **Telegram** | `marid telegram start` | **Yes** | `channel:<name>` (restricted, agent-bound) |
+| **WhatsApp** | `marid whatsapp start` | **Yes** | `channel:<name>` (restricted, agent-bound) |
 | **TUI → remote instance** | `marid instance attach` | **Yes** | `client` |
 
 ## Tokens
@@ -285,7 +312,7 @@ scopes — never the secret values** (INV-002); a token secret is printed **once
 ```sh
 marid token create <name> --scope client                     # a normal client
 marid token create <name> --scope admin                      # full access
-marid token create <name> --scope channel:<name> --agent <a> # restricted channel (Telegram)
+marid token create <name> --scope channel:<name> --agent <a> # restricted channel (Telegram, WhatsApp)
 marid token list                                             # names + scopes (never secrets)
 marid token revoke <name>                                    # revoke by name
 ```
@@ -319,8 +346,8 @@ Marid is built for a **single operator on a private network**, and the defaults 
 - **Bearer-token auth** on the HTTP+SSE surface (`marid-auth`) — tokens, scopes, per-token rate limits, and an
   audit log that records token *names*, never secret values or request bodies.
 - **Loopback bind by default** — the server listens on `127.0.0.1`; exposing it is an explicit choice.
-- **Deny-by-default channel policy** (INV-001) — a `channel:` token (Telegram) gets least privilege and cannot
-  reach privileged routes, override tools/permissions, or escape its bound agent.
+- **Deny-by-default channel policy** (INV-001) — a `channel:` token (Telegram, WhatsApp) gets least privilege and
+  cannot reach privileged routes, override tools/permissions, or escape its bound agent.
 - **Per-instance isolation** — each instance namespaces its data, cache, config, state, and temp trees; instances
   do not share credentials or storage.
 - **Data isolation from co-installed OpenCode** — the base `marid` binary keeps all machine-global state under its
@@ -342,7 +369,7 @@ what it doesn't ship (ADR-0002), so upstream syncs stay clean.
 |---|---|---|
 | Session engine · 15+ LLM providers · LSP · MCP · git · config · SQLite | `marid-gateway` — the Marid Gateway (bearer tokens, scopes, rate-limit, audit; marid-auth is its auth module) | Desktop (Electron), cloud/console/function/stats/enterprise |
 | The TUI, the web UI, the HTTP+SSE API | `marid-instance` — isolated instance lifecycle | Slack integration, marketing/docs sites |
-| The v1 session/event contract & SDK | `marid-telegram` — Telegram *channel* gateway, a client of `marid-gateway` (outside the core) | Experimental `codemode` (externalized), the v2/next chain |
+| The v1 session/event contract & SDK | `marid-telegram` · `marid-whatsapp` — Telegram + WhatsApp *channel* gateways, clients of `marid-gateway` (outside the core) | Experimental `codemode` (externalized), the v2/next chain |
 
 **Notable decisions**
 

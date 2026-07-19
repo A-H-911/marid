@@ -1,7 +1,7 @@
 ---
 status: Approved
-version: 1.0.0
-updated: 2026-07-12
+version: 1.1.0
+updated: 2026-07-19
 owner: operator (STK-001)
 ---
 
@@ -18,7 +18,7 @@ this guide describes how to *use* the result.
 
 - [Concepts](#concepts) — instances, tokens & scopes, agents, sessions, the event stream
 - [CLI reference](#cli-reference) — every `marid` command and flag
-- [Recipes](#recipes) — local TUI, API + SDK, web UI, Telegram bot, mirroring, multi-instance
+- [Recipes](#recipes) — local TUI, API + SDK, web UI, Telegram bot, WhatsApp channel, mirroring, multi-instance
 - [Configuration](#configuration) — config layer + environment variables
 - [Data isolation & coexistence](#data-isolation--coexistence) — marid dirs, config name, env-pierce, v0.2.0 migration
 - [Security model](#security-model) — deny-by-default, channel scope vs. agent ruleset
@@ -41,7 +41,7 @@ boundary. Every non-local client (web, SDK, channel gateway, remote TUI) speaks 
 |---|---|---|
 | `admin` | you, full control | everything, unfiltered |
 | `client` | web / SDK / scripts / remote TUI | act on and observe **its own** sessions; read config/agents/providers |
-| `channel:<name>` | untrusted ingress (Telegram) | **only** its bound agent, **only** its own sessions, a minimal deny-by-default route set; can never widen tools/permissions or reach privileged routes |
+| `channel:<name>` | untrusted ingress (Telegram, WhatsApp) | **only** its bound agent, **only** its own sessions, a minimal deny-by-default route set; can never widen tools/permissions or reach privileged routes |
 
 A token secret prints **once**, at creation. The audit log records token *names* and scopes — never secrets.
 
@@ -126,6 +126,18 @@ Runs the gateway **as a separate process** against a running instance. Both flag
 match the agent the `channel:` token was bound to. Secrets come from the **environment**, never flags
 (INV-002) — see [Configuration](#configuration).
 
+### `marid whatsapp start` — WhatsApp channel gateway
+
+```sh
+marid whatsapp start <instance> --token <channel-token> --agent <agent>
+```
+
+Runs the WhatsApp gateway **as a separate process** against a running instance, reaching WhatsApp only through
+an operator-run **WAHA (NOWEB engine)** sidecar — outbound-only (sends over HTTP, events over a WebSocket, both
+dialled *out*; no inbound port). Both flags are required and `--agent` must match the token's bound agent.
+WAHA URL, operator allowlist, and the WAHA key come from the **environment**, never flags (INV-002) — see
+[Configuration](#configuration).
+
 ---
 
 ## Recipes
@@ -189,6 +201,45 @@ inline **Approve/Deny** keyboard per the agent ruleset), and files both ways. Re
 inbound message is an untrusted prompt (INV-004). The per-tool policy is the agent's `permission` ruleset;
 tune it in [Telegram channel tools](execution/telegram-channel-tools.md).
 
+<a id="recipe-whatsapp"></a>
+### WhatsApp channel — end to end
+
+Reaches WhatsApp through an operator-run **WAHA (NOWEB engine)** sidecar; the adapter is **outbound-only** and
+carries **no WhatsApp dependency of its own** (the WhatsApp stack lives entirely in the WAHA container). See the
+*WhatsApp channel* section of [architecture.md](architecture/architecture.md) for the transport boundary.
+
+```sh
+# 1. create + start an isolated instance for the channel
+marid instance add wabot
+marid instance start wabot
+
+# 2. define a restricted channel agent in the instance config (everything, sensitive-gated).
+#    { "agent": { "wa": { "mode": "primary",
+#        "permission": { "*": "ask", "read": "allow", "glob": "allow",
+#                        "grep": "allow", "list": "allow", "task": "deny" } } } }
+
+# 3. mint a channel token INTO THAT INSTANCE's store, bound to the agent (secret prints once)
+XDG_DATA_HOME="$(marid instance path wabot)/data" \
+  marid token create wa --scope channel:wa --agent wa
+
+# 4. run the operator's WAHA NOWEB sidecar (packages/marid-whatsapp/waha.compose.yaml —
+#    loopback 127.0.0.1:3000, NOWEB engine, image digest-pinned). Pair the linked-device
+#    number once via WAHA (scan the QR); auth persists in the ./.waha-sessions volume.
+export WAHA_API_KEY=…                              # required by the WAHA container
+
+# 5. provide the WAHA URL + the operator allowlist via env (never flags — INV-002)
+export MARID_WA_WAHA_URL=http://127.0.0.1:3000
+export MARID_WA_ALLOW=11111111111@c.us            # your linked-device number's JID (…@c.us)
+export MARID_WA_WAHA_API_KEY=$WAHA_API_KEY         # if WAHA has a key set
+
+# 6. run the gateway against the instance
+marid whatsapp start wabot --token <the mar_… secret> --agent wa
+```
+
+Only JIDs in `MARID_WA_ALLOW` are answered (deny-by-default, INV-001); everything else is a silent no-op. An
+inbound message is an untrusted prompt (INV-004). Sensitive tool calls are gated by an **`APPROVE <token>`**
+text reply (a strict single-use, JID-bound, TTL'd parser) rather than a button.
+
 <a id="recipe-mirroring"></a>
 ### Cross-surface mirroring — attach a session
 
@@ -242,6 +293,18 @@ this is where a channel's restricted agent is defined.
 | `MARID_TG_PERMISSION_TIMEOUT_MS` | | How long an Approve/Deny prompt waits before timing out. |
 | `MARID_TG_POLL_TIMEOUT_SEC` | | Long-poll timeout for inbound updates. |
 | `TELEGRAM_TEXT_LIMIT` | | Max characters before a reply is split into multiple messages. |
+
+**WhatsApp gateway environment variables** (read by `marid whatsapp start`):
+
+| Variable | Required | Purpose |
+|---|:--:|---|
+| `MARID_WA_WAHA_URL` | ✅ | Base URL of the operator-run WAHA sidecar, e.g. `http://127.0.0.1:3000`. |
+| `MARID_WA_ALLOW` | ✅ | Comma-separated operator JIDs allowed to message (e.g. `11111111111@c.us`). Invalid/empty → fail-fast at boot. |
+| `MARID_WA_WAHA_API_KEY` | | WAHA API key (sent as `X-Api-Key`). Never logged (the WS URL that carries it is redacted). |
+| `MARID_WA_SESSION` | | WAHA session name (default `default`). |
+| `MARID_WA_CADENCE_MS` | | Edit-coalescing cadence for streamed replies. |
+| `MARID_WA_PERMISSION_TIMEOUT_MS` | | How long an `APPROVE <token>` prompt waits before timing out. |
+| `MARID_WA_APPROVAL_TTL_MS` | | Time-to-live of an approval token. |
 
 Secrets always come from the environment, never CLI flags (INV-002).
 
@@ -330,6 +393,9 @@ channel/upstream content are treated as **data, never executed** (INV-004). Full
 | Telegram gateway `401`s the instance | Same XDG mismatch — the `channel:` token must live in that instance's store. |
 | Bot ignores your messages | Your numeric user ID isn't in `MARID_TG_ALLOW` (get it from @userinfobot). |
 | Bot replies but never runs tools | The bound agent's `permission` ruleset denies/hides them, or `task` is denied by design — see [Telegram channel tools](execution/telegram-channel-tools.md). |
+| WhatsApp gateway `401`s the instance | Same XDG mismatch as above, or `--agent` doesn't match the token's bound agent. |
+| WhatsApp gateway won't start | `MARID_WA_WAHA_URL` unset, or `MARID_WA_ALLOW` empty/malformed (JIDs must look like `…@c.us`) — both fail fast at boot. |
+| No WhatsApp replies | The WAHA session isn't paired/authorized yet (scan the QR in WAHA), the WS can't reach `MARID_WA_WAHA_URL`, or your JID isn't in `MARID_WA_ALLOW` (silent no-op, INV-001). |
 | Can't find the server port | `marid serve` with `--port 0` picks an auto port (printed at startup); `marid instance status <name>` shows a running instance's port. |
 | Web UI blank on connect | Ensure you're using a `client` (or `admin`) token, not a `channel:` token. |
 
@@ -337,7 +403,7 @@ channel/upstream content are treated as **data, never executed** (INV-004). Full
 
 ## Where to go next
 
-- **README** — [`../README.md`](../README.md): overview, install & verify, the four interfaces.
+- **README** — [`../README.md`](../README.md): overview, install & verify, the five interfaces.
 - **Design package** — [`docs/`](README.md): [charter](00-charter.md), [architecture](architecture/architecture.md),
   [API/event contract](architecture/api-event-contract.md), [ADRs](adrs/).
 - **Diagrams** — [`architecture/diagrams/`](architecture/diagrams/README.md).

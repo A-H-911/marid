@@ -1,7 +1,7 @@
 ---
 status: Approved (gate 7, 2026-07-03; amended v1.1 2026-07-05 — PH-3, additive + reconnect correction; amended v1.2 2026-07-12 — PH-6, Marid channel gateway surface; amended v1.3 2026-07-17 — PH-7, WhatsApp channel + FR-051 mapping)
-version: v1.2
-updated: 2026-07-12
+version: v1.3
+updated: 2026-07-19
 owner: operator (STK-001)
 ---
 
