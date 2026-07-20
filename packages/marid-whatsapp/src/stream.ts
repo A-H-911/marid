@@ -1,4 +1,5 @@
 import type { Presence, WhatsAppClient } from "./client"
+import { toWhatsApp } from "./format"
 
 // Streaming simulation for one assistant reply (WBS-7.3, AC-018, ADR-0010 §2).
 //
@@ -44,7 +45,10 @@ export function createStreamer(deps: WaStreamerDeps): Streamer {
     deps.client.setPresence(deps.jid, p).catch((e: unknown) => deps.log?.(`presence ${p} failed: ${String(e)}`))
 
   async function reconcile(fullText: string, force: boolean): Promise<void> {
-    const text = fullText.trimEnd()
+    // Convert the RAW markdown to WhatsApp syntax (F3). Runs on the full accumulated text each
+    // edit; `sentText` below holds this converted output only for the no-op-edit check, so the
+    // converter never sees its own result (no re-conversion).
+    const text = toWhatsApp(fullText).trimEnd()
     if (!text) return
 
     // First real text: signal typing once, then send the opening message. Everything
