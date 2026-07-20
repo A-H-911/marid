@@ -117,15 +117,42 @@ describe("createChannelClient pump", () => {
     }
   }
 
-  test("each assistant text part gets its own streamer (no joined blob)", async () => {
+  // DISTINCT text parts of one message still render as SEPARATE channel messages — the
+  // deliberate Telegram "defect-4" behavior (multi-part replies must not be joined). Only
+  // exact duplicates are suppressed (next test); distinct content is never dropped.
+  test("distinct text parts of one message each render as their own message (defect-4 preserved)", async () => {
     await withClient(async ({ events, created, begin }) => {
       begin("ses_1")
       events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "p1", type: "text", text: "First", messageID: "m1" } } } })
       events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "p2", type: "text", text: "Second", messageID: "m1" } } } })
       expect(await waitFor(() => created.length === 2)).toBe(true)
-      expect(created.map((c) => c.pushes.at(-1))).toEqual(["First", "Second"])
-      // No single streamer ever received both parts joined.
-      expect(created.some((c) => c.pushes.some((t) => t.includes("First") && t.includes("Second")))).toBe(false)
+      expect(created.map((c) => c.pushes.at(-1)).sort()).toEqual(["First", "Second"])
+    })
+  })
+
+  // F2 (EXP-012): a reasoning model re-emits the FULL answer under several new part.ids in one
+  // assistant message — those exact duplicates are suppressed so the reply is not multiplied.
+  test("duplicate text parts (reasoning re-emit) dedup to one message — F2 regression", async () => {
+    await withClient(async ({ events, created, begin }) => {
+      begin("ses_1")
+      // The observed bug: GLM-5.2 re-emitted the full answer under 3 distinct part.ids in ONE
+      // assistant message, tripling the WhatsApp reply. It must render exactly once.
+      for (const id of ["p1", "p2", "p3"]) {
+        events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: { id, type: "text", text: "The answer is 391.", messageID: "m1" } } } })
+      }
+      expect(await waitFor(() => created.length === 1)).toBe(true)
+      // Shown once — never "391...391...391".
+      expect(await waitFor(() => created[0]!.pushes.at(-1) === "The answer is 391.")).toBe(true)
+    })
+  })
+
+  test("different messageIDs still get separate streamers (one per assistant message)", async () => {
+    await withClient(async ({ events, created, begin }) => {
+      begin("ses_1")
+      events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "p1", type: "text", text: "A", messageID: "m1" } } } })
+      events.push({ payload: { type: "message.part.updated", properties: { sessionID: "ses_1", part: { id: "p2", type: "text", text: "B", messageID: "m2" } } } })
+      expect(await waitFor(() => created.length === 2)).toBe(true)
+      expect(created.map((c) => c.pushes.at(-1)).sort()).toEqual(["A", "B"])
     })
   })
 
