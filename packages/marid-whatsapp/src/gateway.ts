@@ -1,6 +1,6 @@
 import type { OpencodeClient } from "@opencode-ai/sdk/v2"
 import { createChannelClient } from "@marid/channel-client"
-import { isAllowed } from "./allowlist"
+import { denialMessage, isAllowed } from "./allowlist"
 import type { InboundMessage, WhatsAppClient } from "./client"
 import { createDedup } from "./dedup"
 import { inboundFileParts, inboundNote, resolveOutboundBytes } from "./media"
@@ -121,8 +121,10 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
     if (message.fromMe) return // our own outbound echoed back on message.any-style frames
     const jid = message.from
     // INV-001 / B1: deny-by-default. A stranger is logged and dropped — no session, no reply.
+    // The log names the exact JID (may be an opaque `@lid` on modern WhatsApp) so the
+    // operator can self-add it — the only recovery surface, since we can't reply (F1).
     if (!isAllowed(jid, deps.allow)) {
-      deps.log(`ignored message from non-allowlisted ${jid}`)
+      deps.log(denialMessage(jid))
       return
     }
     // Idempotency: WhatsApp/WAHA may redeliver on reconnect (at-least-once). commit AFTER.

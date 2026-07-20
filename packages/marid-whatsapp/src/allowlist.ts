@@ -12,3 +12,14 @@ export function isAllowed(jid: string, allow: ReadonlySet<string>): boolean {
 export function normalizeJid(jid: string): string {
   return jid.trim().toLowerCase()
 }
+
+// F1 (EXP-012): modern WhatsApp addresses the operator by an opaque `@lid`, not their
+// `@c.us` phone-JID, and the LID cannot be resolved to a number client-side (WAHA docs:
+// it is a "hidden user ID"; no phone field on the frame, no resolver). Deny-by-default
+// (INV-001) also forbids replying to the un-allowlisted sender, so the *only* recovery
+// surface is this log line — it must name the exact JID the operator has to allow-list.
+// ponytail: log-based self-serve is the ceiling; auto-resolve only if a stable LID→PN
+// mapping ever appears on the transport.
+export function denialMessage(jid: string): string {
+  return `ignored message from non-allowlisted ${jid} — if this is you, add "${jid}" to MARID_WA_ALLOW`
+}

@@ -290,8 +290,9 @@ export MARID_WA_ALLOW=11111111111@c.us          # your linked-device number's JI
 marid whatsapp start wabot --token <the mar_… secret> --agent wa
 ```
 
-Only JIDs in `MARID_WA_ALLOW` are answered (deny-by-default, INV-001). Full recipe + env vars:
-[User Guide → WhatsApp channel](docs/usage.md#recipe-whatsapp).
+Only JIDs in `MARID_WA_ALLOW` are answered (deny-by-default, INV-001). Modern WhatsApp may address you by an
+opaque `…@lid` rather than `…@c.us`; if replies don't come, the gateway log names the exact JID to allow-list.
+Full recipe + env vars: [User Guide → WhatsApp channel](docs/usage.md#recipe-whatsapp).
 
 ### What needs a token?
 
