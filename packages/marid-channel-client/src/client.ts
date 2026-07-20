@@ -94,16 +94,20 @@ export interface ChannelClientDeps {
   bindingPollMs?: number
 }
 
-// A session's live per-turn state: ONE streamer per assistant text part (each distinct
-// part is its own channel message, not a joined blob), the accumulated text per part
-// (keyed by partID, insertion-ordered), and the set of USER message ids. We stream any
-// text part whose message is NOT a user message — excluding user messages (rather than
-// including assistant ones) avoids an ordering race: the user's message.updated reliably
-// precedes the user's text part, whereas an assistant text part can arrive before its
-// message.updated.
+// A session's live per-turn state: ONE streamer per assistant text PART (keyed by partID) —
+// distinct parts render as SEPARATE channel messages, never a joined blob (Telegram defect-4).
+// `textByPart` is the accumulated text per part; `msgOfPart` maps partID → messageID to group a
+// message's parts; `suppressed` holds part ids identified as duplicate re-emits. A reasoning
+// model re-emits the same answer under several new part.ids within ONE assistant message →
+// "3× identical" without suppression (F2, EXP-012). We stream any text part whose message is NOT
+// a user message — excluding user messages (rather than including assistant ones) avoids an
+// ordering race: the user's message.updated reliably precedes the user's text part, whereas an
+// assistant text part can arrive before its message.updated.
 interface SessionState {
   streamers: Map<string, Streamer>
   textByPart: Map<string, string>
+  msgOfPart: Map<string, string> // partID → messageID, groups a message's parts (F2 dedup)
+  suppressed: Set<string> // part ids that duplicate an already-rendered sibling (F2) — never rendered
   userMessages: Set<string>
   // Assistant file part ids already surfaced via onFile — a file part.updated can fire more
   // than once (empty → ready); we send it exactly once when it first has a url.
@@ -128,8 +132,10 @@ export interface ChannelClient {
 export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
   const sessions = new Map<string, SessionState>()
 
-  // One streamer per part (lazily created on the part's first text), so each assistant
-  // text part streams into its own message.
+  // One streamer per assistant text PART (keyed by partID), lazily created on the part's first
+  // text — distinct parts render as separate channel messages (Telegram defect-4: multi-part
+  // replies must not be joined into one blob). Duplicate re-emits are suppressed in the event
+  // loop (see duplicatesRendered), so a reasoning model does not multiply the message.
   function streamerFor(sessionID: string, state: SessionState, partID: string): Streamer {
     const existing = state.streamers.get(partID)
     if (existing) return existing
@@ -138,10 +144,25 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
     return streamer
   }
 
-  // Force-flush every part's final text when the turn ends.
+  // F2 (EXP-012): a reasoning model re-emits the FULL answer under several new part.ids in one
+  // assistant message → 3× identical messages. A not-yet-rendered part whose text exactly matches
+  // an already-rendered sibling of the SAME message is such a re-emit — suppress it; genuinely
+  // distinct parts still render separately. ponytail: exact full-text match catches the observed
+  // case (re-emits arrive complete via message.part.updated); a duplicate that streamed in from
+  // empty could slip one message before it matches — not observed on this transport.
+  function duplicatesRendered(state: SessionState, messageID: string, text: string, partID: string): boolean {
+    for (const rendered of state.streamers.keys()) {
+      if (rendered === partID) continue
+      if (state.msgOfPart.get(rendered) === messageID && state.textByPart.get(rendered) === text) return true
+    }
+    return false
+  }
+
+  // Force-flush every rendered part's final text when the turn ends. Suppressed duplicates never
+  // got a streamer, so they are skipped by the streamers.has(partID) guard.
   function finishAll(sessionID: string, state: SessionState): void {
     for (const [partID, text] of state.textByPart) {
-      if (text) void streamerFor(sessionID, state, partID).finish(text)
+      if (text && state.streamers.has(partID)) void streamerFor(sessionID, state, partID).finish(text)
     }
   }
 
@@ -165,7 +186,7 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
       // ponytail: state maps grow across a long-lived bound session's turns (no beginTurn
       // reset); bounded cleanup is future work, not needed for MVP correctness (each turn's
       // parts still render to their own messages). owned=false → never re-fetched (INV-001).
-      state = { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), sentFiles: new Set(), owned: false }
+      state = { streamers: new Map(), textByPart: new Map(), msgOfPart: new Map(), suppressed: new Set(), userMessages: new Set(), sentFiles: new Set(), owned: false }
       sessions.set(sessionID, state)
     }
 
@@ -214,6 +235,7 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
     if (TEXT_EVENTS.has(payload.type)) {
       const part = props.part as { id?: string; type?: string; text?: string; messageID?: string } | undefined
       let partID: string
+      let messageID: string | undefined
       if (
         part &&
         part.type === "text" &&
@@ -223,16 +245,27 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
         !state.userMessages.has(part.messageID) // never stream the operator's own text back
       ) {
         partID = part.id
+        messageID = part.messageID
         state.textByPart.set(partID, part.text)
+        state.msgOfPart.set(partID, messageID)
       } else if (typeof props.delta === "string") {
-        // delta-style event (session.next.text.delta): inherently assistant text
+        // delta-style event (session.next.text.delta, v2/next — not built on Marid): no messageID
+        // on the frame, so no cross-part dedup (each delta stream is inherently its own part).
         partID = typeof props.textID === "string" ? props.textID : "delta"
         state.textByPart.set(partID, (state.textByPart.get(partID) ?? "") + props.delta)
       } else {
         return
       }
+      if (state.suppressed.has(partID)) return
       const text = state.textByPart.get(partID)!
-      if (text) void streamerFor(sessionID, state, partID).push(text) // each part -> its own message
+      if (!text) return
+      // F2: suppress a not-yet-rendered part that exactly duplicates an already-rendered sibling
+      // of the same message (a reasoning re-emit); distinct parts still render as their own message.
+      if (messageID !== undefined && !state.streamers.has(partID) && duplicatesRendered(state, messageID, text, partID)) {
+        state.suppressed.add(partID)
+        return
+      }
+      void streamerFor(sessionID, state, partID).push(text) // one channel message per distinct text part
       return
     }
 
@@ -322,26 +355,35 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
   // skipped so a no-gap reconnect makes no redundant edit). Bound sessions are owns-gated
   // (403) — skipped (INV-001); they resume live only.
   //
-  // Keying is aligned by construction: on Marid (the v1 chain — the v2/next
-  // session.next.text.* family is not built, per keep-remove) live assistant text renders
-  // via `message.part.updated` keyed by the real `part.id`, which is the same id
-  // session.messages returns here — so a turn finished during the gap renders once and a
-  // partial turn edits in place. `session.messages` is called with no limit → the full
+  // Keying is aligned by construction: live assistant text renders per `part.id`, the same ids
+  // session.messages returns here — so a turn finished during the gap re-flushes to the same
+  // channel message(s) and edits in place. F2 duplicate suppression is re-applied (a persisted
+  // re-emit would otherwise re-render). `session.messages` is called with no limit → the full
   // history, so the latest assistant is never off a page.
   async function refetchOwned(): Promise<void> {
     for (const [sessionID, state] of sessions) {
       if (!state.owned) continue
       const messages = await deps.sdk.session
         .messages({ sessionID })
-        .then((res) => res.data as Array<{ info?: { role?: string }; parts?: Array<{ id?: string; type?: string; text?: string }> }>)
+        .then(
+          (res) =>
+            res.data as Array<{ info?: { role?: string; id?: string }; parts?: Array<{ id?: string; type?: string; text?: string }> }>,
+        )
         .catch(() => undefined)
       if (!messages) continue
       const lastAssistant = [...messages].reverse().find((m) => m.info?.role === "assistant")
-      if (!lastAssistant?.parts) continue
+      const messageID = lastAssistant?.info?.id
+      if (!lastAssistant?.parts || typeof messageID !== "string") continue
       for (const part of lastAssistant.parts) {
         if (part.type !== "text" || typeof part.text !== "string" || !part.text || typeof part.id !== "string") continue
         if (state.textByPart.get(part.id) === part.text) continue // already rendered — no redundant edit
         state.textByPart.set(part.id, part.text)
+        state.msgOfPart.set(part.id, messageID)
+        if (state.suppressed.has(part.id)) continue
+        if (!state.streamers.has(part.id) && duplicatesRendered(state, messageID, part.text, part.id)) {
+          state.suppressed.add(part.id)
+          continue
+        }
         void streamerFor(sessionID, state, part.id).push(part.text)
       }
     }
@@ -367,7 +409,7 @@ export function createChannelClient(deps: ChannelClientDeps): ChannelClient {
 
   return {
     beginTurn(sessionID) {
-      sessions.set(sessionID, { streamers: new Map(), textByPart: new Map(), userMessages: new Set(), sentFiles: new Set(), owned: true })
+      sessions.set(sessionID, { streamers: new Map(), textByPart: new Map(), msgOfPart: new Map(), suppressed: new Set(), userMessages: new Set(), sentFiles: new Set(), owned: true })
     },
     async start() {
       // Subscribe FIRST and AWAIT it before returning (the firehose is live-only and the
