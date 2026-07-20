@@ -14,6 +14,12 @@ owner: operator (STK-001)
 ADR-0012 (cross-surface permission), ADR-0005, [C-14](../architecture/technology-comparison.md),
 [R-12](../research/findings/whatsapp-options.md).
 
+> **Amended 2026-07-20 by [ADR-0021](adr-0021-whatsapp-reply-quote-approval.md).** After the
+> [EXP-012](../experiments/exp-012-runbook.md) live probe (operator feedback: the 8-hex token is unfriendly),
+> the **primary** approval UX becomes **reply-quote** ("yes"/"no" quoting the prompt — the quote is the binding).
+> This token-text flow is **retained as the fallback** and remains the **shipped behaviour until ADR-0021 is
+> implemented**. The security model here (single-use / TTL / JID-bound / server re-check / no-NLP) is unchanged.
+
 > **Fact correction (2026-07-17, design unchanged).** The "**list messages** exist only on WAHA Plus (paid)"
 > premise below is **stale**: WAHA collapsed **Plus → Core (free) on 2026-06-21** (v2026.6.1), so lists are no
 > longer a paid feature. This **does not change the decision** — the reason lists/buttons are rejected is

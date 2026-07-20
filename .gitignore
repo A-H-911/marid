@@ -37,3 +37,7 @@ tsconfig.tsbuildinfo
 .pw-telegram/
 test-results/
 playwright-report/
+
+# WAHA WhatsApp session credential material — never commit (INV-002)
+.waha-sessions/
+**/.waha-sessions/
