@@ -1,7 +1,7 @@
 ---
 status: Approved
-version: 1.1.0
-updated: 2026-07-19
+version: 1.1.1
+updated: 2026-07-20
 owner: operator (STK-001)
 ---
 
@@ -240,6 +240,12 @@ Only JIDs in `MARID_WA_ALLOW` are answered (deny-by-default, INV-001); everythin
 inbound message is an untrusted prompt (INV-004). Sensitive tool calls are gated by an **`APPROVE <token>`**
 text reply (a strict single-use, JID-bound, TTL'd parser) rather than a button.
 
+> **Modern WhatsApp may address you by an opaque `@lid`, not your `…@c.us` number.** The `@lid` is a hidden
+> id that cannot be mapped to a phone number on the gateway, and — being deny-by-default — the gateway can't
+> reply to tell you. So if you list only `…@c.us` and get no replies, check the gateway log for
+> `ignored message from non-allowlisted <jid>` and add that **exact** JID (often `…@lid`) to
+> `MARID_WA_ALLOW` (comma-separated — you can list both your `@c.us` and your `@lid`).
+
 <a id="recipe-mirroring"></a>
 ### Cross-surface mirroring — attach a session
 
@@ -395,7 +401,7 @@ channel/upstream content are treated as **data, never executed** (INV-004). Full
 | Bot replies but never runs tools | The bound agent's `permission` ruleset denies/hides them, or `task` is denied by design — see [Telegram channel tools](execution/telegram-channel-tools.md). |
 | WhatsApp gateway `401`s the instance | Same XDG mismatch as above, or `--agent` doesn't match the token's bound agent. |
 | WhatsApp gateway won't start | `MARID_WA_WAHA_URL` unset, or `MARID_WA_ALLOW` empty/malformed (JIDs must look like `…@c.us`) — both fail fast at boot. |
-| No WhatsApp replies | The WAHA session isn't paired/authorized yet (scan the QR in WAHA), the WS can't reach `MARID_WA_WAHA_URL`, or your JID isn't in `MARID_WA_ALLOW` (silent no-op, INV-001). |
+| No WhatsApp replies | The WAHA session isn't paired/authorized yet (scan the QR in WAHA), the WS can't reach `MARID_WA_WAHA_URL`, or your JID isn't in `MARID_WA_ALLOW` (silent no-op, INV-001). Modern WhatsApp may deliver your messages from an opaque `…@lid`, not `…@c.us` — the gateway log prints `ignored message from non-allowlisted <jid>`; add that exact JID to `MARID_WA_ALLOW`. |
 | Can't find the server port | `marid serve` with `--port 0` picks an auto port (printed at startup); `marid instance status <name>` shows a running instance's port. |
 | Web UI blank on connect | Ensure you're using a `client` (or `admin`) token, not a `channel:` token. |
 
