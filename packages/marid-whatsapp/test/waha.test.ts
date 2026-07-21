@@ -304,4 +304,27 @@ describe("interpret — untrusted inbound frames (INV-004)", () => {
   test("a missing body becomes an empty string, never undefined", async () => {
     expect((await interpret(frame({ id: "m1", from: JID })))!.body).toBe("")
   })
+
+  // ADR-0021: the quoted message-id feeds the approval quote-path, so its extraction from an
+  // untrusted frame is security-relevant. Each candidate field is read; an EMPTY string must
+  // never become a binding (a "no quote" convention on some engines).
+  test.each([["replyTo"], ["reply_to"], ["quotedMsgId"]])("reads a quoted id from %s", async (field) => {
+    const m = await interpret(frame({ id: "m1", from: JID, body: "yes", [field]: "false_1@c.us_Q" }))
+    expect(m!.quoted).toEqual({ id: "false_1@c.us_Q" })
+  })
+
+  test("reads a quoted id from quotedMsg.id", async () => {
+    const m = await interpret(frame({ id: "m1", from: JID, body: "yes", quotedMsg: { id: "false_1@c.us_Q" } }))
+    expect(m!.quoted).toEqual({ id: "false_1@c.us_Q" })
+  })
+
+  test("a non-quoting message has no quoted field", async () => {
+    const m = await interpret(frame({ id: "m1", from: JID, body: "hello" }))
+    expect(m!.quoted).toBeUndefined()
+  })
+
+  test("an EMPTY-string quote id is NOT a binding (M1 — never enters the quote path)", async () => {
+    const m = await interpret(frame({ id: "m1", from: JID, body: "yes", replyTo: "", reply_to: "", quotedMsgId: "" }))
+    expect(m!.quoted).toBeUndefined()
+  })
 })

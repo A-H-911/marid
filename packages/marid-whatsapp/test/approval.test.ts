@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { createApprovals, parseApproval } from "../src/approval"
+import { createApprovals, parseApproval, parseQuoteReply } from "../src/approval"
 
 // AC-022 / RISK-021. The approval parser is the one security-critical piece of the
 // WhatsApp channel: the reply is untrusted input and the strict matcher IS the
@@ -171,5 +171,66 @@ describe("redeem — token binding, single-use, TTL", () => {
     for (let i = 0; i < 200; i++) seen.add(a.issue(`per_${i}`, "ses_1", JID))
     expect(seen.size).toBe(200)
     for (const t of seen) expect(t).toMatch(/^[0-9a-f]{8}$/)
+  })
+})
+
+// ADR-0021: reply-quote approval. The QUOTE is the binding (unforgeable), so a relaxed
+// yes/no is safe — but ONLY when it quotes a live prompt. Same JID-bound / TTL / single-use
+// discipline as the token path.
+describe("redeemQuote — reply-quote approval (ADR-0021)", () => {
+  const PROMPT = "false_111@c.us_PROMPTID"
+
+  function withPrompt(over?: { now?: () => number; ttlMs?: number }) {
+    const a = approvals(over)
+    a.issue("per_1", "ses_1", JID)
+    a.bindPrompt("per_1", PROMPT)
+    return a
+  }
+
+  test("a yes quoting the prompt approves exactly once (single-use)", () => {
+    const a = withPrompt()
+    expect(a.redeemQuote("yes", JID, PROMPT)).toEqual({ ok: true, permissionID: "per_1", sessionID: "ses_1", decision: "approve" })
+    expect(a.redeemQuote("yes", JID, PROMPT)).toEqual({ ok: false, reason: "unknown-token" })
+  })
+
+  test.each(["yes", "y", "ok", "approve", "👍"])("affirmative %p approves", (t) => {
+    expect(withPrompt().redeemQuote(t, JID, PROMPT)).toMatchObject({ ok: true, decision: "approve" })
+  })
+
+  test.each(["no", "n", "deny", "👎"])("negative %p denies", (t) => {
+    expect(withPrompt().redeemQuote(t, JID, PROMPT)).toMatchObject({ ok: true, decision: "deny" })
+  })
+
+  test("quoting an UNKNOWN message is not an approval", () => {
+    expect(withPrompt().redeemQuote("yes", JID, "false_111@c.us_OTHER")).toEqual({ ok: false, reason: "unknown-token" })
+  })
+
+  test("a non-yes/no quote reply is unparsed (flows on, never approves)", () => {
+    expect(withPrompt().redeemQuote("hold on", JID, PROMPT)).toEqual({ ok: false, reason: "unparsed" })
+  })
+
+  test("wrong JID cannot approve via quote", () => {
+    expect(withPrompt().redeemQuote("yes", OTHER, PROMPT)).toEqual({ ok: false, reason: "wrong-jid" })
+  })
+
+  test("an expired prompt quote is rejected", () => {
+    let now = 1_000
+    const a = createApprovals({ now: () => now, ttlMs: 100, token: () => TOKEN })
+    a.issue("per_1", "ses_1", JID)
+    a.bindPrompt("per_1", PROMPT)
+    now = 2_000
+    expect(a.redeemQuote("yes", JID, PROMPT)).toEqual({ ok: false, reason: "expired" })
+  })
+})
+
+describe("parseQuoteReply — relaxed, but only yes/no", () => {
+  test.each(["yes", "y", "ok", "approve", "YES", "👍"])("affirmative %p", (t) => {
+    expect(parseQuoteReply(t)).toBe("approve")
+  })
+  test.each(["no", "n", "deny", "NO", "👎"])("negative %p", (t) => {
+    expect(parseQuoteReply(t)).toBe("deny")
+  })
+  test.each(["maybe", "", "yes please", "approve now", "1", "sure"])("not a decision: %p", (t) => {
+    expect(parseQuoteReply(t)).toBeUndefined()
   })
 })

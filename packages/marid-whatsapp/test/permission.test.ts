@@ -27,7 +27,7 @@ function harness(over?: Partial<PermissionDeps>) {
   const jids = new Map<string, string>([["ses_1", JID]])
   const t = fakeTimers()
   const deps: PermissionDeps = {
-    send: async (sessionID, text) => void sent.push({ sessionID, text }),
+    send: async (sessionID, text) => ({ id: `m_${sent.push({ sessionID, text })}` }), // 1st send -> m_1
     reply: async (sessionID, permissionID, decision) => void replies.push({ sessionID, permissionID, decision }),
     jidOf: (s) => jids.get(s),
     now: () => 1_000,
@@ -160,5 +160,41 @@ describe("surfacing guards", () => {
     await h.permissions.recover([{ id: "per_1", sessionID: "ses_1", title: "bash" }])
     expect(h.sent).toHaveLength(1)
     expect(h.permissions.pendingCount()).toBe(1)
+  })
+})
+
+describe("onReply — reply-quote approval (ADR-0021)", () => {
+  test("a 'yes' quoting the prompt approves", async () => {
+    const h = harness()
+    await h.permissions.onAsk({ id: "per_1", sessionID: "ses_1", title: "bash" })
+    // The prompt was sent as message m_1 (the harness returns m_<sent-count>).
+    const consumed = await h.permissions.onReply(JID, "yes", "m_1")
+    expect(consumed).toBe(true)
+    expect(h.replies).toEqual([{ sessionID: "ses_1", permissionID: "per_1", decision: "once" }])
+  })
+
+  test("a 'no' quoting the prompt denies", async () => {
+    const h = harness()
+    await h.permissions.onAsk({ id: "per_1", sessionID: "ses_1", title: "bash" })
+    await h.permissions.onReply(JID, "no", "m_1")
+    expect(h.replies[0].decision).toBe("reject")
+  })
+
+  // INV-004 — the heart of ADR-0021: a bare "yes" with NO quote is never an authorization.
+  test("a non-quoted 'yes' does NOT approve (INV-004)", async () => {
+    const h = harness()
+    await h.permissions.onAsk({ id: "per_1", sessionID: "ses_1", title: "bash" })
+    const consumed = await h.permissions.onReply(JID, "yes") // no quotedMsgId
+    expect(consumed).toBe(false) // flows on; nothing is authorized
+    expect(h.replies).toEqual([])
+    expect(h.permissions.pendingCount()).toBe(1) // still pending
+  })
+
+  test("a 'yes' quoting the WRONG message does not approve", async () => {
+    const h = harness()
+    await h.permissions.onAsk({ id: "per_1", sessionID: "ses_1", title: "bash" })
+    const consumed = await h.permissions.onReply(JID, "yes", "m_999")
+    expect(consumed).toBe(false)
+    expect(h.replies).toEqual([])
   })
 })

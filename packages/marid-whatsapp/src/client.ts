@@ -31,6 +31,9 @@ export interface InboundMessage {
   fromMe: boolean
   hasMedia: boolean
   media?: InboundMedia
+  // The message-id this reply QUOTES, if any (ADR-0021 reply-quote approval). WhatsApp's
+  // quote/reply context; used only to bind a "yes"/"no" approval to the exact prompt.
+  quoted?: { id: string }
 }
 
 export interface InboundMedia {
