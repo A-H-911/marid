@@ -500,4 +500,153 @@ describe("runGateway permission round trip (AC-012, faked SDK)", () => {
       await gateway.catch(() => {})
     }
   })
+
+  // ADR-0022 BOUNDARY (the load-bearing guarantee of the new inbound-text approval seam):
+  // a message consumed as a quote-reply approval resolves the gate and is NOT ALSO forwarded
+  // to the agent as a prompt. This lives in gateway wiring (onMessage: `if (onReply) return`),
+  // not in permission.ts — so only a gateway-level test proves it. A wiring regression that
+  // still prompts would pass every permission.test.ts case but fail here.
+  test("a quote-reply approval resolves the gate once and is NOT forwarded to the agent", async () => {
+    const events = eventQueue()
+    const updates: unknown[] = []
+    const sent: Array<{ chatId: number; text: string; markup?: unknown; message_id: number }> = []
+    const replies: Array<{ sessionID: string; permissionID: string; response: string }> = []
+    let promptCount = 0
+
+    const bot = {
+      getUpdates: async () => {
+        if (updates.length) return updates.splice(0) as never
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async (chatId: number, text: string, opts?: { reply_markup?: unknown }) => {
+        const message_id = sent.length + 1
+        sent.push({ chatId, text, markup: opts?.reply_markup, message_id })
+        return { message_id, chat: { id: chatId, type: "private" } } as never
+      },
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => { promptCount += 1; return { data: {} } } },
+      permission: {
+        respond: async (p: { sessionID: string; permissionID: string; response: string }) => {
+          replies.push(p)
+          return { data: true }
+        },
+      },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      permissionTimeoutMs: 60_000,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      // 1. Operator prompts → session bound; promptCount = 1.
+      updates.push({ update_id: 1, message: { message_id: 1, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "do a thing" } })
+      expect(await waitFor(() => promptCount === 1)).toBe(true)
+
+      // 2. Server asks a permission for that session → inline keyboard in the operator's chat.
+      events.push({ payload: { id: "evt_1", type: "permission.asked", properties: { id: "per_9", sessionID: "ses_1", permission: "bash", patterns: ["*"], metadata: {}, always: [] } } })
+      expect(await waitFor(() => sent.some((m) => m.markup))).toBe(true)
+      const promptMsgId = sent.find((m) => m.markup)!.message_id
+
+      // 3. Operator quote-replies "yes" to that prompt (reply_to_message carries its id).
+      updates.push({ update_id: 2, message: { message_id: 2, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "yes", reply_to_message: { message_id: promptMsgId } } })
+
+      // 4. The gate resolves ONCE with approve…
+      expect(await waitFor(() => replies.length > 0)).toBe(true)
+      expect(replies).toEqual([{ sessionID: "ses_1", permissionID: "per_9", response: "once" }])
+      // …and the "yes" was NOT forwarded to the agent (promptCount stays 1).
+      await new Promise((r) => setTimeout(r, 60)) // give any errant prompt time to fire
+      expect(promptCount).toBe(1)
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
+
+  // The other half of the boundary: a NON-approval message while pending is acked AND still
+  // reaches the agent (onReply returns false → the gateway keeps prompting). Proves the ack
+  // path never swallows a real message.
+  test("a normal message while an approval is pending is acked AND still reaches the agent", async () => {
+    const events = eventQueue()
+    const updates: unknown[] = []
+    const sent: Array<{ text: string; markup?: unknown }> = []
+    let promptCount = 0
+
+    const bot = {
+      getUpdates: async () => {
+        if (updates.length) return updates.splice(0) as never
+        await new Promise((r) => setTimeout(r, 15))
+        return [] as never
+      },
+      sendMessage: async (_c: number, text: string, opts?: { reply_markup?: unknown }) => {
+        sent.push({ text, markup: opts?.reply_markup })
+        return { message_id: sent.length, chat: { id: OPERATOR, type: "private" } } as never
+      },
+      editMessageText: async () => undefined,
+      editMessageReplyMarkup: async () => undefined,
+      sendChatAction: async () => undefined,
+      answerCallbackQuery: async () => undefined,
+    } as unknown as BotApi
+
+    const sdk = {
+      global: { event: async () => ({ stream: events.iterator() }) },
+      session: { create: async () => ({ data: { id: "ses_1" } }), prompt: async () => { promptCount += 1; return { data: {} } } },
+      permission: { respond: async () => ({ data: true }) },
+    } as unknown as OpencodeClient
+
+    const controller = new AbortController()
+    const gateway = runGateway({
+      sdk,
+      bot,
+      allow: new Set([OPERATOR]),
+      agent: "telegram-channel",
+      dedupFile: path.join(dir, "dedup.json"),
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      timers: { set: (cb, ms) => { const t = setTimeout(cb, ms); return () => clearTimeout(t) } },
+      cadenceMs: 0,
+      permissionTimeoutMs: 60_000,
+      pollTimeoutSec: 1,
+      log: () => {},
+      signal: controller.signal,
+    })
+
+    try {
+      updates.push({ update_id: 1, message: { message_id: 1, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "do a thing" } })
+      expect(await waitFor(() => promptCount === 1)).toBe(true)
+      events.push({ payload: { id: "evt_1", type: "permission.asked", properties: { id: "per_9", sessionID: "ses_1", permission: "bash", patterns: ["*"], metadata: {}, always: [] } } })
+      expect(await waitFor(() => sent.some((m) => m.markup))).toBe(true)
+
+      // Operator types a normal question (no quote) while the approval is pending.
+      updates.push({ update_id: 2, message: { message_id: 2, from: { id: OPERATOR, is_bot: false }, chat: { id: OPERATOR, type: "private" }, text: "actually what's the weather?" } })
+      // The ack appears AND the message still reaches the agent (promptCount 1 → 2).
+      expect(await waitFor(() => sent.some((m) => m.text.includes("Still waiting")))).toBe(true)
+      expect(await waitFor(() => promptCount === 2)).toBe(true)
+    } finally {
+      controller.abort()
+      events.close()
+      await gateway.catch(() => {})
+    }
+  })
 })

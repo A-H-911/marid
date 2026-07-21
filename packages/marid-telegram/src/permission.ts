@@ -40,6 +40,11 @@ export interface PermissionDeps {
 export interface Permissions {
   onAsk(ask: PermissionAsk): Promise<void>
   onCallback(query: { id: string; data?: string }): Promise<void>
+  // Feed an inbound operator message here BEFORE prompting the agent (ADR-0022, #13). Returns true
+  // if it was a quote-reply approval (consumed — the caller does NOT treat it as a prompt); false
+  // otherwise, which flows on to the agent. A non-approval message while an approval is pending in
+  // that chat is acked as a side effect (still returns false — the message flows on, unchanged).
+  onReply(chatId: number, text: string, quotedMessageId?: number): Promise<boolean>
   recover(asks: PermissionAsk[]): Promise<void>
   pendingCount(): number
 }
@@ -81,6 +86,26 @@ function parseCallback(data?: string): { permissionID: string; decision: ReplyDe
 function askText(ask: PermissionAsk): string {
   return `The agent needs approval to run: ${ask.title ?? "a tool"}\nApprove?`
 }
+
+// ADR-0022 quote-reply grammar. RELAXED (approve/yes/y/ok/👍 · deny/no/n/👎) because the binding is
+// the QUOTE — an unforgeable reference to the exact prompt the operator saw — not a secret. It is
+// only ever consulted WITH a quoted id that matches a live prompt in the same chat, so a bare "yes"
+// never authorizes anything (INV-004). Inline buttons remain the primary, safer path. (These ~2
+// regexes are duplicated from marid-whatsapp/src/approval.ts rather than shared — extracting them
+// would couple two sibling channel packages for no real gain.)
+const QUOTE_APPROVE = /^(approve|yes|y|ok|👍)$/
+const QUOTE_DENY = /^(deny|no|n|👎)$/
+function parseQuoteReply(text: string): ReplyDecision | undefined {
+  const t = text.trim().toLowerCase()
+  if (QUOTE_APPROVE.test(t)) return "once"
+  if (QUOTE_DENY.test(t)) return "reject"
+  return undefined
+}
+
+// #13: shown when the operator sends a non-approval message while an approval is pending. Points
+// back to the still-visible inline keyboard (Telegram buttons stay on-screen) rather than a token.
+const PENDING_ACK =
+  "Still waiting on your approval — tap ✅ Approve or 🚫 Deny on the prompt above (or it will time out)."
 
 export function createPermissions(deps: PermissionDeps): Permissions {
   const pending = new Map<string, Pending>()
@@ -132,11 +157,39 @@ export function createPermissions(deps: PermissionDeps): Permissions {
     await deps.bot.answerCallbackQuery(query.id, handled ? note : "Already handled").catch(() => {})
   }
 
+  // Is there a live approval bound to this chat? (#13 ack, and a cheap short-circuit.)
+  function pendingChatHas(chatId: number): boolean {
+    for (const p of pending.values()) if (p.chatId === chatId) return true
+    return false
+  }
+
+  async function onReply(chatId: number, text: string, quotedMessageId?: number): Promise<boolean> {
+    // ADR-0022: a quote-reply is honored ONLY when it quotes a live prompt in THIS chat — the
+    // quoted-id match IS the authorization (cf. WhatsApp redeemQuote). resolve() keeps the
+    // exactly-once claim shared with the buttons and the timeout-deny.
+    if (quotedMessageId !== undefined) {
+      const decision = parseQuoteReply(text)
+      if (decision) {
+        for (const [permissionID, p] of pending) {
+          if (p.messageId === quotedMessageId && p.chatId === chatId) {
+            await resolve(permissionID, decision, decision === "once" ? "✅ Approved" : "🚫 Denied")
+            return true
+          }
+        }
+      }
+    }
+    // #13: a normal message while an approval is pending draws no response otherwise (the run is
+    // suspended on the gate). Ack it, but do NOT consume — normal chat still flows to the agent,
+    // and the gate is untouched (this never approves).
+    if (pendingChatHas(chatId)) await deps.bot.sendMessage(chatId, PENDING_ACK).catch(() => {})
+    return false
+  }
+
   // After a restart the in-memory map is empty and /event is live-only, so re-render
   // keyboards for asks the server still lists as pending (GET /permission).
   async function recover(asks: PermissionAsk[]): Promise<void> {
     for (const ask of asks) if (!pending.has(ask.id)) await onAsk(ask)
   }
 
-  return { onAsk, onCallback, recover, pendingCount: () => pending.size }
+  return { onAsk, onCallback, onReply, recover, pendingCount: () => pending.size }
 }
