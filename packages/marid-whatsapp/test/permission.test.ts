@@ -79,6 +79,24 @@ describe("onReply — non-approval text flows on to the agent", () => {
     expect(await h.permissions.onReply(JID, "what is the weather")).toBe(false)
   })
 
+  // #13 (EXP-012): a non-approval message while an approval is pending drew no response
+  // before. It must be ACKED (the run is suspended) but still NOT swallowed.
+  test("during a pending approval, a normal message is acked but still flows on (#13)", async () => {
+    const h = harness()
+    await h.permissions.onAsk({ id: "per_1", sessionID: "ses_1", title: "bash" })
+    const before = h.sent.length
+    const consumed = await h.permissions.onReply(JID, "what is the weather")
+    expect(consumed).toBe(false) // NOT swallowed — flows on to the agent
+    expect(h.sent.slice(before).some((m) => /still waiting/i.test(m.text))).toBe(true)
+  })
+
+  test("with NO pending approval, a normal message is not acked (#13)", async () => {
+    const h = harness()
+    const consumed = await h.permissions.onReply(JID, "hello")
+    expect(consumed).toBe(false)
+    expect(h.sent).toHaveLength(0) // no pending → no ack
+  })
+
   test("a parsed-but-invalid token is consumed and explained, not passed to the agent", async () => {
     const h = harness()
     await h.permissions.onAsk({ id: "per_1", sessionID: "ses_1", title: "bash" })

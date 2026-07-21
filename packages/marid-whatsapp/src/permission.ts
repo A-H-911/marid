@@ -59,6 +59,11 @@ interface Pending {
   claimed: boolean
 }
 
+// #13: shown when the operator sends a non-approval message while an approval is pending.
+// Plain text; points back to the still-visible prompt rather than re-printing the token.
+const PENDING_ACK =
+  "Still waiting on your approval — reply APPROVE <token> or DENY <token> from the prompt above (or it will time out)."
+
 function promptText(title: string | undefined, token: string): string {
   const tool = title ?? "a tool"
   // Plain text, no markup: the tool name is untrusted model output (same reasoning as
@@ -70,6 +75,12 @@ function promptText(title: string | undefined, token: string): string {
 export function createPermissions(deps: PermissionDeps): Permissions {
   const approvals = createApprovals({ now: deps.now, ttlMs: deps.approvalTtlMs })
   const pending = new Map<string, Pending>() // permissionID -> entry
+
+  // The sessionID of a pending approval bound to this sender's chat, if any (#13).
+  function pendingSessionFor(jid: string): string | undefined {
+    for (const p of pending.values()) if (deps.jidOf(p.sessionID) === jid) return p.sessionID
+    return undefined
+  }
 
   async function resolve(permissionID: string, decision: Decision, note: string): Promise<boolean> {
     const p = pending.get(permissionID)
@@ -114,6 +125,12 @@ export function createPermissions(deps: PermissionDeps): Permissions {
         await deps.send(jid, refusalNote(redeemed.reason)).catch(() => {})
         return true // consumed: it looked like an approval, just an invalid one
       }
+      // #13 (EXP-012): a normal (non-approval) message while an approval is pending drew NO
+      // response before — the run is suspended on the gate, so nothing echoes. Ack it so the
+      // operator knows we're still waiting. We do NOT consume it (return false): normal chat
+      // still flows on to the agent, and the security gate is unchanged — this never approves.
+      const pendingSession = pendingSessionFor(jid)
+      if (pendingSession !== undefined) await deps.send(pendingSession, PENDING_ACK).catch(() => {})
       return false
     }
     const note = redeemed.decision === "approve" ? "Approved." : "Denied."
