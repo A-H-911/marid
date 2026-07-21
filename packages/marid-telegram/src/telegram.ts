@@ -36,6 +36,10 @@ export interface TgMessage {
   caption?: string
   photo?: TgPhotoSize[]
   document?: TgDocument
+  // The quoted message when the operator replies to one (ADR-0022). Only message_id is read — it
+  // binds a quote-reply approval to the prompt it quotes. Present in the raw Bot API JSON, which
+  // getUpdates casts through untouched (bot-api.ts), so typing it here needs no parser change.
+  reply_to_message?: { message_id: number }
 }
 
 export interface TgCallbackQuery {

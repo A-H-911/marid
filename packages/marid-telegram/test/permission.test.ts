@@ -131,3 +131,93 @@ describe("createPermissions (AC-012)", () => {
     expect(h.replies).toEqual([{ sessionID: "ses_1", permissionID: "per_7", decision: "once" }])
   })
 })
+
+// ADR-0022 (reply-quote approval, additive to buttons) + #13 (pending-approval ack).
+// The prompt (onAsk) is sent as message_id 1001 in this harness (nextMessageId starts 1000),
+// bound to chat 42. A quote-reply is honored ONLY when its quoted id matches a live prompt in
+// the SAME chat — a bare "yes" (no quote) never authorizes anything (INV-004).
+describe("onReply — quote approval + pending ack (ADR-0022, #13)", () => {
+  test("a quote-reply 'yes' to the prompt approves exactly once", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask())
+    const consumed = await h.perms.onReply(42, "yes", 1001)
+    expect(consumed).toBe(true)
+    expect(h.replies).toEqual([{ sessionID: "ses_1", permissionID: "per_1", decision: "once" }])
+    expect(h.perms.pendingCount()).toBe(0)
+  })
+
+  test("a quote-reply 'No' to the prompt denies", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask())
+    const consumed = await h.perms.onReply(42, "No", 1001)
+    expect(consumed).toBe(true)
+    expect(h.replies).toEqual([{ sessionID: "ses_1", permissionID: "per_1", decision: "reject" }])
+  })
+
+  test("a bare 'yes' with NO quote never approves (INV-004) — acked, not consumed", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask())
+    const consumed = await h.perms.onReply(42, "yes", undefined)
+    expect(consumed).toBe(false)
+    expect(h.replies).toHaveLength(0)
+    expect(h.perms.pendingCount()).toBe(1)
+    expect(h.sent.at(-1)!.text).toContain("Still waiting")
+  })
+
+  test("a quote of another chat's prompt is refused (chat-bound)", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask()) // bound to chat 42
+    const consumed = await h.perms.onReply(99, "yes", 1001) // right msg id, wrong chat
+    expect(consumed).toBe(false)
+    expect(h.replies).toHaveLength(0)
+    expect(h.perms.pendingCount()).toBe(1)
+  })
+
+  test("a quote of a non-prompt message does not approve", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask())
+    const consumed = await h.perms.onReply(42, "yes", 5555) // no pending carries this id
+    expect(consumed).toBe(false)
+    expect(h.replies).toHaveLength(0)
+    expect(h.perms.pendingCount()).toBe(1)
+  })
+
+  test("a non-approval message while pending is acked but flows on (not consumed)", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask())
+    const before = h.sent.length
+    const consumed = await h.perms.onReply(42, "what is the weather?", undefined)
+    expect(consumed).toBe(false)
+    expect(h.sent.length).toBe(before + 1)
+    expect(h.sent.at(-1)!.text).toContain("Still waiting")
+    expect(h.perms.pendingCount()).toBe(1) // the gate is unchanged
+  })
+
+  test("no pending → a normal message is neither acked nor consumed", async () => {
+    const h = harness()
+    const consumed = await h.perms.onReply(42, "hello", undefined)
+    expect(consumed).toBe(false)
+    expect(h.sent).toHaveLength(0)
+  })
+
+  test("button-then-quote yields exactly ONE server reply", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask())
+    await h.perms.onCallback({ id: "cq1", data: "p:per_1:a" }) // approve via button
+    const consumed = await h.perms.onReply(42, "no", 1001) // late quote
+    expect(consumed).toBe(false) // pending already gone
+    expect(h.replies).toHaveLength(1)
+    expect(h.replies[0]!.decision).toBe("once")
+  })
+
+  test("quote-then-timeout yields exactly ONE server reply", async () => {
+    const h = harness()
+    await h.perms.onAsk(ask())
+    await h.perms.onReply(42, "yes", 1001)
+    h.fireTimeout()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(h.replies).toHaveLength(1)
+    expect(h.replies[0]!.decision).toBe("once")
+  })
+})

@@ -154,6 +154,11 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
       }
     }
 
+    // ADR-0022 / #13: run the message through the approval seam BEFORE prompting. A quote-reply of
+    // the prompt (yes/no) resolves the gate and is consumed — it is NOT forwarded to the agent. A
+    // non-approval message while an approval is pending is acked and flows on (returns false).
+    if (await permissions.onReply(chatId, base, message.reply_to_message?.message_id)) return
+
     const note = inboundNote(message) // media surfaced as untrusted DATA (INV-004)
     const text = base && note ? `${base}\n${note}` : base || note || ""
     // Defect 2: the attachment itself now lands in the workspace as a file part (was
