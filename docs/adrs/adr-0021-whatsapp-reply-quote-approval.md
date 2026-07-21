@@ -1,8 +1,8 @@
 ---
 id: ADR-0021
 status: Approved
-version: 1.0.0
-updated: 2026-07-20
+version: 1.1.0
+updated: 2026-07-21
 supersedes: none
 superseded_by: none
 owner: operator (STK-001)
@@ -10,9 +10,11 @@ owner: operator (STK-001)
 
 # ADR-0021 — Reply-quote as the primary WhatsApp approval UX (amends ADR-0015)
 
-**Status:** **Approved (2026-07-20, operator confirm)** — post-[EXP-012](../experiments/exp-012-runbook.md) live
-burner probe. **Amends [ADR-0015](adr-0015-whatsapp-permission-ux.md)** (does not supersede it — the token flow is
-retained as the fallback and remains the shipped behaviour until this is implemented). Relates to INV-001, INV-004,
+**Status:** **Approved (2026-07-20, operator confirm) · Implemented 2026-07-21 (PR #89)** — post-[EXP-012](../experiments/exp-012-runbook.md)
+live burner probe. Reply-quote is now the **live primary** approval UX (`redeemQuote`/`bindPrompt` in `approval.ts`,
+quoted-id read in `waha.ts interpretFrame`, security-reviewed — the non-quoted-"yes"-rejects invariant is tested).
+**Amends [ADR-0015](adr-0015-whatsapp-permission-ux.md)** (does not supersede it — the token flow is
+retained as the fallback). Relates to INV-001, INV-004,
 [ADR-0010](adr-0010-whatsapp-adapter.md), [ADR-0012](adr-0012-cross-surface-mirroring.md),
 [channel live-test scenarios F4](../validation/channel-live-test-scenarios.md).
 

@@ -1,8 +1,8 @@
 ---
 id: ADR-0015
 status: Approved
-version: 1.0.1
-updated: 2026-07-17
+version: 1.0.2
+updated: 2026-07-21
 supersedes: none
 superseded_by: none
 owner: operator (STK-001)
@@ -17,8 +17,9 @@ ADR-0012 (cross-surface permission), ADR-0005, [C-14](../architecture/technology
 > **Amended 2026-07-20 by [ADR-0021](adr-0021-whatsapp-reply-quote-approval.md).** After the
 > [EXP-012](../experiments/exp-012-runbook.md) live probe (operator feedback: the 8-hex token is unfriendly),
 > the **primary** approval UX becomes **reply-quote** ("yes"/"no" quoting the prompt — the quote is the binding).
-> This token-text flow is **retained as the fallback** and remains the **shipped behaviour until ADR-0021 is
-> implemented**. The security model here (single-use / TTL / JID-bound / server re-check / no-NLP) is unchanged.
+> This token-text flow is **retained as the fallback** (ADR-0021 **implemented 2026-07-21, PR #89** — reply-quote
+> is now the live primary; the token path stays as the fallback). The security model here (single-use / TTL /
+> JID-bound / server re-check / no-NLP) is unchanged.
 
 > **Fact correction (2026-07-17, design unchanged).** The "**list messages** exist only on WAHA Plus (paid)"
 > premise below is **stale**: WAHA collapsed **Plus → Core (free) on 2026-06-21** (v2026.6.1), so lists are no
