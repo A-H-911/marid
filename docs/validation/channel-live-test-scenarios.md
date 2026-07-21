@@ -1,8 +1,8 @@
 ---
 artifact: channel-live-test-scenarios
 status: Draft
-version: 0.1.0
-updated: 2026-07-20
+version: 0.1.1
+updated: 2026-07-21
 owner: operator (STK-001)
 ---
 
@@ -27,7 +27,7 @@ backlog so the same enriched scenarios run on Telegram too.
 | Streaming reply | ✅ `editMessageText` (in-place edits) | ⚠️ `editText` exists but multi-part model → duplicate sends (§B #2) | |
 | Outbound image | ✅ `sendPhoto` | ✅ `sendMedia`→`/api/sendImage` | WA path never exercised live |
 | Outbound file/document | ✅ `sendDocument` | ✅ `sendMedia`→`/api/sendFile` | WA path never exercised live |
-| **Delete a sent message** | ✅ `deleteMessage` | ❌ **not implemented** | WA `WhatsAppClient` has no delete; WAHA offers it (12/136 paths used) |
+| **Delete a sent message** | ✅ `deleteMessage` (unused) | ❌ **not implemented — deferred (no caller)** | Nothing invokes message-deletion anywhere (Telegram's isn't called either), so a WA method + WAHA route would be **dead code** (YAGNI). WAHA offers the route; revisit when a real trigger exists — an agent "unsend" tool or inbound `message.revoke` handling. |
 | Inline approval | ✅ Approve/Deny **keyboard** | ✅ `APPROVE <token>` **text** (ADR-0015) | intentionally different UX |
 | Markdown → channel format | ✅ `telegramify-markdown` | ❌ **passthrough** (§B #3) | |
 | Long-message split | ✅ `TELEGRAM_TEXT_LIMIT` | ❌ none (single message; WAHA errors >~65k) | ponytail ceiling (stream.ts) |
@@ -78,7 +78,7 @@ reasoning-model multi-part interaction, not a per-message bug.
 | C21 | Reconnect recovery | ✅ Done | WAHA container restart → `websocket down, reconnecting` → `connected`; session survived (`WORKING`) |
 | C23 | **Arabic round-trip** (RTL) | ✅ Done | Arabic in → fluent single-message Arabic reply, correct RTL |
 | C1/C2 | Outbound image/file | ⚠️ Gap-in-practice | `sendMedia` exists but **no agent-facing trigger**; agent: "I can't send images…" |
-| C4 | Delete a message | ❌ Gap | not implemented; agent: "…or delete messages" |
+| C4 | Delete a message | ❌ Gap (deferred) | not implemented; **no caller anywhere** → building it now is dead code (YAGNI). Revisit on a real trigger (agent unsend / inbound `message.revoke`). |
 | C7 | Markdown fidelity | ⚠️ Partial | = F3 (bold/italic wrong, inline code OK) |
 | C10 | Inbound reaction | 🚫 Not received | transport subscribes `["message","session.status"]` only; reactions dropped (code-confirmed) — **directly relevant to the approval-UX redesign** |
 | C11 | Inbound reply/quote context | 🚫 Dropped | `InboundMessage` has no quoted field; a quoted reply reaches the agent **without** the quote — this is the exact adapter work the reply-quote approval design needs |
