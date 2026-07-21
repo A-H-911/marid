@@ -58,8 +58,16 @@ export interface Refused {
 export interface Approvals {
   // Mint a token for a pending permission, bound to one sender.
   issue(permissionID: string, sessionID: string, jid: string): string
-  // The ONLY way an inbound reply becomes an authorization.
+  // Record the outbound prompt's WhatsApp message-id so a quote-reply can bind to it (ADR-0021).
+  bindPrompt(permissionID: string, promptMsgId: string): void
+  // The token path: `APPROVE <token>` / `DENY <token>` (ADR-0015). Kept as the fallback.
   redeem(text: string, jid: string): Redeemed | Refused
+  // ADR-0021: a quote-reply (yes/no/approve/deny) whose quoted id matches a pending prompt.
+  // The QUOTE is the binding — unforgeable, it references the exact prompt the operator saw —
+  // which is why a relaxed yes/no is safe HERE but never as bare free text (INV-004). Same
+  // JID-bound / TTL / single-use guarantees as redeem(); a non-quoted message never reaches
+  // this path (the caller only calls it with a real quoted id).
+  redeemQuote(text: string, jid: string, quotedMsgId: string): Redeemed | Refused
   // Drop a pending token (resolved elsewhere: timeout, another surface, restart).
   drop(permissionID: string): void
   pendingCount(): number
@@ -98,6 +106,20 @@ interface Pending {
   sessionID: string
   jid: string
   expiresAt: number
+  promptMsgId?: string // the outbound prompt's WhatsApp id, for ADR-0021 quote-matching
+}
+
+// ADR-0021 quote-reply grammar. RELAXED (approve/yes/y/ok/👍 · deny/no/n/👎) because the
+// binding is the QUOTE, not a secret token. This parser is only ever reached WITH a quoted
+// message-id that matches a live prompt, so a bare "yes" (no quote) never authorizes anything
+// — the ADR-0015 injection defense is intact.
+const QUOTE_APPROVE = /^(approve|yes|y|ok|👍)$/
+const QUOTE_DENY = /^(deny|no|n|👎)$/
+export function parseQuoteReply(text: string): Decision | undefined {
+  const t = text.trim().toLowerCase()
+  if (QUOTE_APPROVE.test(t)) return "approve"
+  if (QUOTE_DENY.test(t)) return "deny"
+  return undefined
 }
 
 export function createApprovals(deps: ApprovalsDeps): Approvals {
@@ -132,9 +154,42 @@ export function createApprovals(deps: ApprovalsDeps): Approvals {
     return { ok: true, permissionID: p.permissionID, sessionID: p.sessionID, decision: parsed.decision }
   }
 
+  function bindPrompt(permissionID: string, promptMsgId: string): void {
+    for (const p of pending.values())
+      if (p.permissionID === permissionID) {
+        p.promptMsgId = promptMsgId
+        break // one pending entry per permissionID (onAsk guards duplicates); stop at the first
+      }
+  }
+
+  function redeemQuote(text: string, jid: string, quotedMsgId: string): Redeemed | Refused {
+    const decision = parseQuoteReply(text)
+    if (!decision) return { ok: false, reason: "unparsed" }
+    // Find the pending prompt this quote references. Scan is bounded by prompts-in-flight.
+    let hit: [string, Pending] | undefined
+    for (const entry of pending) {
+      if (entry[1].promptMsgId === quotedMsgId) {
+        hit = entry
+        break
+      }
+    }
+    if (!hit) return { ok: false, reason: "unknown-token" }
+    const [token, p] = hit
+    // Same discipline as redeem(): JID-bound BEFORE expiry, expiry terminal, single-use claim
+    // synchronously before any await. The quoted-id match replaces the token secret; every
+    // other guarantee is identical.
+    if (p.jid !== jid) return { ok: false, reason: "wrong-jid" }
+    if (deps.now() >= p.expiresAt) {
+      pending.delete(token)
+      return { ok: false, reason: "expired" }
+    }
+    pending.delete(token)
+    return { ok: true, permissionID: p.permissionID, sessionID: p.sessionID, decision }
+  }
+
   function drop(permissionID: string): void {
     for (const [token, p] of pending) if (p.permissionID === permissionID) pending.delete(token)
   }
 
-  return { issue, redeem, drop, pendingCount: () => pending.size }
+  return { issue, bindPrompt, redeem, redeemQuote, drop, pendingCount: () => pending.size }
 }

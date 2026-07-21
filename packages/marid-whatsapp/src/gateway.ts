@@ -61,7 +61,8 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
   const permissions = createPermissions({
     send: (sessionID, text) => {
       const jid = sessionJid.get(sessionID) ?? deps.defaultJid
-      return jid ? deps.client.sendText(jid, text).then(() => undefined) : Promise.resolve()
+      // Return the sent message-id (ADR-0021 quote-matching); undefined if no chat is bound.
+      return jid ? deps.client.sendText(jid, text) : Promise.resolve(undefined)
     },
     // Ownership-gated session-scoped route — NEVER the flat /permission/:id/reply (the
     // wrapper cannot ownership-gate an opaque per_ id). The channel allowlist permits this one.
@@ -134,7 +135,7 @@ export async function runGateway(deps: RunGatewayDeps): Promise<void> {
 
     // PERMISSION FIRST (ADR-0015): an allowlisted sender's text may be an APPROVE/DENY
     // reply. If so it is consumed here and never reaches the agent.
-    if (await permissions.onReply(jid, base)) {
+    if (await permissions.onReply(jid, base, message.quoted?.id)) {
       await dedup.commit(message.id)
       return
     }

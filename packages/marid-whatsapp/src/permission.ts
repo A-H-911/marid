@@ -29,8 +29,9 @@ export interface PermissionAsk {
 }
 
 export interface PermissionDeps {
-  // Send the prompt text to the operator's chat for a session; returns nothing.
-  send(sessionID: string, text: string): Promise<void>
+  // Send the prompt text to the operator's chat for a session; returns the sent WhatsApp
+  // message-id (for ADR-0021 quote-matching) or undefined if the send failed / no chat.
+  send(sessionID: string, text: string): Promise<{ id: string } | undefined>
   // The ownership-gated server reply (POST /session/:id/permissions/:pid).
   reply(sessionID: string, permissionID: string, decision: "once" | "reject"): Promise<void>
   // The JID bound to a session's chat — the sender a token is issued to.
@@ -47,7 +48,7 @@ export interface Permissions {
   // Feed EVERY inbound text from an allowlisted sender here first. Returns true if the
   // text was a valid approval reply (and was consumed) — the caller then does NOT treat
   // it as a prompt. Returns false for anything else, which flows on to the agent.
-  onReply(jid: string, text: string): Promise<boolean>
+  onReply(jid: string, text: string, quotedMsgId?: string): Promise<boolean>
   recover(asks: PermissionAsk[]): Promise<void>
   pendingCount(): number
 }
@@ -69,7 +70,7 @@ function promptText(title: string | undefined, token: string): string {
   // Plain text, no markup: the tool name is untrusted model output (same reasoning as
   // the Telegram askText). The token is what authorizes; the words are just instructions
   // to the human.
-  return `The agent needs approval to run: ${tool}\nReply  APPROVE ${token}  or  DENY ${token}`
+  return `The agent needs approval to run: ${tool}\nReply  APPROVE ${token}  or  DENY ${token}\n(or reply "yes"/"no" to this message)`
 }
 
 export function createPermissions(deps: PermissionDeps): Permissions {
@@ -107,15 +108,32 @@ export function createPermissions(deps: PermissionDeps): Permissions {
     const token = approvals.issue(ask.id, ask.sessionID, jid)
     const entry: Pending = { permissionID: ask.id, sessionID: ask.sessionID, claimed: false, cancel: () => {} }
     pending.set(ask.id, entry)
-    await deps.send(ask.sessionID, promptText(ask.title, token)).catch((e: unknown) => {
+    const sent = await deps.send(ask.sessionID, promptText(ask.title, token)).catch((e: unknown) => {
       deps.log(`permission ${ask.id}: send failed: ${e instanceof Error ? e.message : String(e)}`)
+      return undefined
     })
     if (!pending.has(ask.id)) return // resolved while sending
+    // ADR-0021: record the prompt's message-id so a quote-reply of "yes"/"no" binds to it.
+    if (sent?.id) approvals.bindPrompt(ask.id, sent.id)
     // Deny wins on timeout: an unanswered prompt is rejected after timeoutMs.
     entry.cancel = deps.timers.set(() => void resolve(ask.id, "deny", "Timed out — denied"), deps.timeoutMs)
   }
 
-  async function onReply(jid: string, text: string): Promise<boolean> {
+  async function onReply(jid: string, text: string, quotedMsgId?: string): Promise<boolean> {
+    // ADR-0021: a quote-reply binds by the quoted prompt id — try it first when the message
+    // quotes something. A clean miss (didn't quote a live prompt, or wasn't a yes/no) falls
+    // through to the token path below; only a real wrong-jid/expired attempt is surfaced here.
+    if (quotedMsgId !== undefined) {
+      const q = approvals.redeemQuote(text, jid, quotedMsgId)
+      if (q.ok) {
+        await resolve(q.permissionID, q.decision, q.decision === "approve" ? "Approved." : "Denied.")
+        return true
+      }
+      if (q.reason === "wrong-jid" || q.reason === "expired") {
+        await deps.send(jid, refusalNote(q.reason)).catch(() => {})
+        return true
+      }
+    }
     const redeemed = approvals.redeem(text, jid)
     if (!redeemed.ok) {
       // unparsed = not an approval attempt at all -> flows on to the agent as a normal

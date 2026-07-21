@@ -255,6 +255,15 @@ function interpretFrame(raw: unknown): InboundMessage | undefined {
   const from = typeof p.from === "string" ? p.from : undefined
   if (!id || !from) return undefined
   const media = p.media as { url?: unknown; mimetype?: unknown; filename?: unknown } | null | undefined
+  // ADR-0021: the message-id this reply QUOTES. WAHA's exact inbound field name for the quote
+  // context is engine-dependent, so read the known candidates defensively — a miss simply means
+  // no quote binding (falls back to the token path), never a wrong authorization. Require a
+  // NON-EMPTY string: some engines emit "" (rather than omit) for "no quote", and an empty id
+  // must never become a quote binding — otherwise an ordinary message would enter the approval
+  // quote path (defense-in-depth; the prompt-id side is also truthy-guarded in permission.ts).
+  const nonEmpty = (v: unknown): string | undefined => (typeof v === "string" && v.length > 0 ? v : undefined)
+  const quotedMsg = p.quotedMsg as { id?: unknown } | undefined
+  const quotedId = nonEmpty(p.replyTo) ?? nonEmpty(p.reply_to) ?? nonEmpty(p.quotedMsgId) ?? nonEmpty(quotedMsg?.id)
   return {
     id,
     from,
@@ -270,5 +279,6 @@ function interpretFrame(raw: unknown): InboundMessage | undefined {
             ...(typeof media.filename === "string" ? { filename: media.filename } : {}),
           }
         : undefined,
+    ...(quotedId ? { quoted: { id: quotedId } } : {}),
   }
 }
